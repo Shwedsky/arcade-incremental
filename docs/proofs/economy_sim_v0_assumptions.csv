@@ -1,0 +1,20 @@
+category,name,value,unit_or_note
+active_yield,metal,420.0,kg per active-equivalent hour
+active_yield,copper,27.0,kg per active-equivalent hour
+active_yield,plastic,75.0,kg per active-equivalent hour
+raw_sale_price,metal,8.0,virtual RUB per kg
+raw_sale_price,copper,60.0,virtual RUB per kg
+raw_sale_price,plastic,5.0,virtual RUB per kg
+component_expected_rate,bearing,5.0,expected units per active-equivalent hour
+component_expected_rate,motor,2.0,expected units per active-equivalent hour
+component_expected_rate,hydraulic,0.7,expected units per active-equivalent hour
+component_expected_rate,electronic,1.8,expected units per active-equivalent hour
+offline,efficiency,0.2,fraction of active baseline
+offline,cap,2.0,hours per absence
+combo,average active multiplier after unlock,1.06,assumed after ~2.5 progression h
+press,metal throughput,180,kg/h
+press,sale uplift,0.25,fraction
+press,fabrication time,25,minutes
+van,cash price,70000,virtual RUB
+worker,cash price,35000,virtual RUB
+hangar,cash price,220000,virtual RUB
