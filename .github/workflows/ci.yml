@@ -8,7 +8,7 @@ on:
 jobs:
   build-and-smoke:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -20,6 +20,10 @@ jobs:
         run: npm run build
       - name: Deterministic gameplay smoke
         run: npm run smoke
+      - name: Install browser
+        run: npx playwright install --with-deps chromium
+      - name: Headless browser progression smoke
+        run: npm run smoke:browser
       - name: Package web slice
         run: zip -r arcade-incremental-playable-v0.zip dist
       - uses: actions/upload-artifact@v4
