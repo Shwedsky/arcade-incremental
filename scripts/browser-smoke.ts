@@ -32,7 +32,7 @@ try{
   await p1.click('#garage');await p1.waitForSelector('#garageScreen:not([hidden])');
   await p1.waitForFunction(()=>document.querySelector('[data-machine="press"] .cardGate')?.textContent?.includes('Металл'));
   const pressCard=await p1.locator('[data-machine="press"] .cardGate').textContent();
-  assert.match(pressCard??'',/Металл/);assert.match(pressCard??'',/Подшипник/);assert.match(pressCard??'',/Гидравлик/);
+  assert.match(pressCard??'',/Металл/);assert.match(pressCard??'',/Подшипник/);assert.match(pressCard??'',/Гидравлический узел/);
   await p1.click('#talentsGarage');await p1.waitForSelector('#talentScreen:not([hidden])');
   assert.equal(await p1.locator('.talentBranch').count(),5,'exactly five progression branches must render');
   assert.equal(await p1.locator('.talentNode').count(),35,'all 35 planned nodes must render');
