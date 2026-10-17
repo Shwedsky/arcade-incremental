@@ -84,6 +84,25 @@ Local save persists progression/economy. Offline baseline begins at the approved
 ## Visual policy
 Do not spend the next iteration polishing these placeholder Canvas drawings. Once the system loop is stable, production visuals return to `docs/VISUAL_BASELINE.md` and the approved concept evidence.
 
+## Internal acceptance checklist
+
+- [x] garage action no longer has a cart-fill gate;
+- [x] field state persists through ordinary garage visits;
+- [x] XP / level / mastery runtime exists;
+- [x] 35-node / 5-branch tree exists;
+- [x] Combo is tier 3 in Salvage and has prerequisites;
+- [x] early talent effects modify runtime values;
+- [x] station cards expose concise build/upgrade requirements;
+- [x] inspector exposes exact unlock/build/upgrade requirements and sources;
+- [x] installed station levels/upgrades exist;
+- [x] first processing actions exist;
+- [x] raw/processed sale loop exists;
+- [x] persistence exists;
+- [x] offline baseline/report exists;
+- [x] pure smoke tests cover progression gates and machine requirements;
+- [ ] latest branch head CI fully completed after final docs/presentation commits;
+- [ ] internal runtime/manual browser sanity pass before owner package.
+
 ## Next test gate
 No new ZIP is sent merely because CI is green.
 
