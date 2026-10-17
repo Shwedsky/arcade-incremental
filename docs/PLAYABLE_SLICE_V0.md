@@ -1,75 +1,98 @@
 # Playable Salvage Slice V0
 
-Status: **IMPLEMENTATION CHECKPOINT — OWNER APPROVED TO START**
+Status: **INTERNAL COMPLETION PASS — NOT READY FOR OWNER PACKAGE YET**
 
-This branch implements the first playable active-loop proof from the approved Design V2 and Gameplay Loop Calibration V0.
+This branch started as a narrow active-scavenging proof and is now being completed into a coherent early-game slice before the next human build is sent.
 
-## Scope
+## Accepted foundation
+- dense top-down salvage field;
+- simple player with hand cart;
+- automatic dismantle in range;
+- six early target classes;
+- resource burst + magnetic pickup;
+- early components;
+- garage/base loop;
+- current visuals are functional scaffolding only.
 
-Build only the minimum slice required to test the feel of active scavenging:
+## Hard rules added after owner review
 
-- compact top-down junk field;
-- simple stylized player + hand cart;
-- keyboard and pointer/touch movement;
-- automatic dismantling of the nearest valid target in range;
-- six calibrated target classes;
-- dense deterministic field (~80 nodes);
-- visible target damage/break feedback;
-- resource burst + magnet pickup;
-- metal / copper / plastic counters;
-- 40 kg starter cart capacity;
-- four early component families:
-  - bearings;
-  - electric motor;
-  - hydraulic unit;
-  - electronic module;
-- stronger rare-drop presentation for motor/hydraulic unit;
-- cart-full state;
-- fast transition back to a simplified garage/unload screen;
-- unload summary and return to refreshed field;
-- developer telemetry for break cadence, pickups and trip duration.
+### Garage is home
+The garage can be entered at **any time**. There is no minimum cart fill. `G` is a shortcut.
 
-## Explicitly out of scope
+Returning home unloads current collected cargo and preserves the current salvage route unless the field is almost exhausted.
 
-Do not implement yet:
+### Progression must already exist before next test
+The next owner-facing package must include:
+- XP and levels;
+- mastery points;
+- five development branches;
+- prerequisites;
+- real early talent effects;
+- Combo deeper in Salvage;
+- persistent state;
+- machine unlock/build/upgrade clarity;
+- working first processing/sale loop.
 
-- full garage machinery gameplay;
-- press crafting/economy;
-- talent tree;
-- Combo;
-- workers;
-- offline progression;
-- contracts;
-- Yandex SDK/ads;
-- final art/content catalog;
-- real-world item weights.
+## Current runtime systems
 
-## Feel targets from approved calibration
+### XP / mastery
+XP comes from dismantled target class plus a bonus for component drops. Level thresholds and mastery pacing are defined in `docs/PROGRESSION_RUNTIME_V0.md` and implemented in `src/progression.ts`.
 
-- normal play around ~9 destroyed targets/min;
-- readable target band roughly 6–12/min;
-- ~46–49 visible pickup fragments/min target presentation cadence;
-- starting 40 kg cart trip roughly 4–5.5 minutes;
-- dozens of targets per trip, not a handful of appliances;
-- large targets should feel like jackpots, not HP sponges;
-- component drop should read as clearly more valuable than common material drops;
-- return/unload must be quick and must not dominate active time.
+### Talent tree
+35 visible nodes:
+- Salvage;
+- Logistics;
+- Workshop;
+- Automation;
+- Trade.
 
-## Technical direction
+Early nodes are functional. Later nodes that depend on not-yet-implemented systems remain visible but cannot waste mastery points.
 
-Use TypeScript + Vite + Canvas 2D with lightweight DOM HUD. Avoid a heavy 3D engine for this proof. Keep gameplay state deterministic when a `seed` query parameter is supplied so human/automated tests can reproduce a field.
+### Combo
+Combo is Salvage tier 3 and requires the first two Salvage nodes plus player level 4.
 
-The prototype should be desktop-playable immediately and include pointer/touch movement primitives suitable for later mobile work.
+### Garage / machines
+Machine tiles and inspector show:
+- unlock conditions;
+- build recipe;
+- owned/missing values;
+- source hints;
+- installed level;
+- next upgrade gates;
+- exact next upgrade recipe.
 
-## Acceptance
+Machine tiles also carry a concise direct summary so upgrade requirements are not hidden behind the inspector.
 
-The branch is successful when the owner can open a built package, play several haul cycles, and answer:
+### Early economy
+- raw material sale;
+- processed-material sale;
+- ready-made machine shortcut pricing;
+- Trade talents affect sale/shop multipliers;
+- Workshop talent affects construction cost / processed yield.
 
-1. Is breaking junk inherently satisfying before Combo exists?
-2. Is the field dense enough?
-3. Does the cart fill at a good pace?
-4. Are common resource bursts readable rather than noisy?
-5. Does a rare component drop feel exciting?
-6. Is returning/unloading painless?
+### Machine work
+Prototype immediate-batch actions exist for:
+- press -> briquettes;
+- wire stripper -> clean copper;
+- plastic shredder -> granulate.
 
-Human feel overrides model targets. Deviations discovered in testing must be fed back into the reproducible calibration docs/models.
+Timers/queues remain a later refinement.
+
+### Persistence / offline
+Local save persists progression/economy. Offline baseline begins at the approved 20% / 2h and Automation nodes modify it.
+
+## Visual policy
+Do not spend the next iteration polishing these placeholder Canvas drawings. Once the system loop is stable, production visuals return to `docs/VISUAL_BASELINE.md` and the approved concept evidence.
+
+## Next test gate
+No new ZIP is sent merely because CI is green.
+
+Before the next owner package:
+1. typecheck/build/smoke green;
+2. static review of garage-anytime rule;
+3. XP/mastery cadence and prerequisites verified;
+4. all five branches visible;
+5. machine build/upgrade requirements visible on card and inspector;
+6. press build/process/sale flow internally coherent;
+7. persistence/offline state sanity checked;
+8. docs and PR description match runtime.
