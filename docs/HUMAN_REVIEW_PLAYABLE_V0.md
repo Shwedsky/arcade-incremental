@@ -1,78 +1,114 @@
 # Human Review — Playable Salvage V0
 
-Status: **FIRST OWNER FEEL TEST COMPLETED / ITERATION IN PROGRESS**
+Status: **TWO OWNER REVIEWS COMPLETED / INTERNAL COMPLETION PASS IN PROGRESS**
 
-## Test scope
-Owner played approximately 3–4 full hand-cart runs of the first browser playable slice.
+## Review #1 — first 3–4 cart runs
 
-## Human verdict
-
-### What already works
-- The basic gameplay loop is understandable without explanation:
+### Accepted
+- basic gameplay loop is understandable:
   - dismantle junk;
-  - collect resource drops;
-  - fill the hand cart;
-  - return to the garage.
-- The active mechanic itself is accepted as the correct foundation to continue iterating.
+  - collect drops;
+  - haul to garage;
+- active mechanic is accepted as the foundation.
 
-### What did not yet work
-1. **Visual feedback is still too prototype-like.**
-   The mechanic is readable, but not yet at the approved concept's level of satisfying destruction / growing numbers / arcade reward.
-2. **The garage lacks purpose/readability.**
-   After unloading, the player did not understand how machines are unlocked or why the current resources/components matter.
-3. **Locked machines read as decoration rather than goals.**
-   The game must explicitly answer:
-   - what the machine does;
-   - what exact recipe it needs;
-   - how much the player already owns;
-   - which requirements are missing;
-   - where each missing part can be found;
-   - optional ready-made shop price.
+### Problems found
+- visual feedback was too prototype-like;
+- garage purpose/readability was weak;
+- locked machines looked like decoration;
+- machine UI did not clearly explain recipe / missing pieces / sources.
 
-## Iteration applied after the review
+### Iteration after review #1
+- denser field dressing and clearer target silhouettes;
+- stronger impact/drop presentation;
+- clickable machines;
+- first press goal card;
+- machine inspector with recipe, owned/missing quantities, source hints and ready-made price;
+- first Build/Install action.
 
-### Field / visual pass
-- More dressed arcade environment instead of a bare green test field.
-- Stronger item silhouettes and color separation.
-- Break sparks, screen impact, richer resource bursts and stronger magnetic pickup presentation.
-- Rare component callout now explains why the component matters.
-- Persistent **Next Goal: Small Compactor Press** card shows live progress while scavenging.
+## Review #2 — after visual/garage pass
 
-### Garage progression pass
-- Machines are clickable.
-- The first press is explicitly marked as the current progression goal.
-- Selected-machine inspector contains:
-  - description / output;
-  - build recipe;
-  - owned vs required values;
-  - source hint for every missing requirement;
-  - ready-made Buy shortcut price;
-  - locked/installed state.
-- First press has an actual prototype Build/Install action once the recipe is complete.
-- The prototype uses a small starting cash amount only to allow the recipe interaction to be tested; the full sell/contract cash loop remains out of scope.
+Owner verdict:
 
-## First press prototype recipe
-- metal: 100 kg;
-- bearings: 2;
-- hydraulic unit: 1;
-- cash / consumables: 2,500;
-- ready-made shortcut preview: 24,000.
+### Active loop
+- mechanic is acceptable for now;
+- production visual polish should **not** consume more iteration time yet;
+- final visuals will later follow the separately approved concept baseline.
 
-The recipe remains subject to later balance simulation/human tuning.
+### Garage/home rule
+Current behavior was wrong if garage access depends on cart fill.
 
-## Still deliberately out of scope
-- actual press processing queue / briquette production;
-- sell flow and contract flow;
-- talent tree / Combo;
-- workers;
-- offline progression;
-- full persistence;
-- Yandex SDK;
-- production art.
+Owner requirement:
 
-## Next owner acceptance question
-The next human test should answer two things:
-1. Is the active dismantle/loot presentation now sufficiently satisfying to keep playing several carts?
-2. After the first garage visit, can the player immediately explain what the Small Compactor Press needs and where to obtain the missing parts?
+> The garage is the player's base/home. The player must be able to return whenever they want.
 
-Do not expand scope further until those two questions pass.
+This is now a hard product rule:
+- no minimum cart fill;
+- explicit Home/Garage action is always available;
+- returning unloads collected cargo;
+- returning home does not force a fresh salvage field;
+- player can go back to the same field route.
+
+### Machine progression clarity
+Owner specifically reported that the station still did not clearly state **what is required to get its upgrade/progression**.
+
+The next runtime must therefore show, separately and explicitly:
+1. conditions to unlock the machine;
+2. exact recipe to build it;
+3. current machine level;
+4. conditions for the next machine level;
+5. exact resources/components/cash for that next upgrade;
+6. where missing items come from.
+
+This information is required **before** the upgrade is available.
+
+### Progression scope
+Owner does not want another narrow test build.
+
+Before the next owner package, the playable must include:
+- XP;
+- player levels;
+- mastery points;
+- five progression branches;
+- prerequisites between nodes;
+- actual early talent effects;
+- Combo deeper in Salvage rather than at the tree root;
+- persistence;
+- coherent garage economy/progression.
+
+## Internal completion pass now implemented/in progress
+
+See `docs/PROGRESSION_RUNTIME_V0.md`.
+
+Current runtime direction includes:
+- persistent XP / level / mastery;
+- 35 visible talent nodes across five branches;
+- Combo at Salvage tier 3;
+- functional early Salvage/Logistics/Workshop/Automation/Trade effects;
+- anytime garage access;
+- explicit machine unlock/build/upgrade requirements;
+- machine levels;
+- simple first machine processing;
+- raw/processed sale loop;
+- local persistence;
+- baseline offline progress/report.
+
+## Visual policy
+
+Do not treat the current browser art as final art.
+
+Current visuals are functional scaffolding. Production visual work should return to the approved concept after the systems loop is coherent enough to justify a broader visual pass.
+
+## Next owner test gate
+
+**Do not send another package yet.**
+
+The next human package is allowed only after internal checks confirm:
+- typecheck/build/smoke green;
+- garage available at any moment;
+- progression tree usable and understandable;
+- XP and level cadence wired to active play;
+- Combo cannot be reached without its prerequisite nodes/level;
+- machine cards/inspector expose upgrade requirements;
+- press and early sale loop are functional;
+- save/offline state is sane;
+- docs match runtime.
