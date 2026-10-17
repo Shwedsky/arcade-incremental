@@ -16,7 +16,13 @@ const baseSave=(overrides:Record<string,unknown>={})=>({
   processed:{briquette:0,cleanCopper:0,granulate:0},cash:3000,installed:['workbench'],machineLevels:{workbench:1},talents:[],totalDestroyed:0,lastSeen:Date.now(),...overrides
 });
 
-async function withSave(context:BrowserContext,save:ReturnType<typeof baseSave>){await context.addInitScript(({key,value})=>localStorage.setItem(key,JSON.stringify(value)),{key:SAVE_KEY,value:save})}
+async function withSave(context:BrowserContext,save:ReturnType<typeof baseSave>){
+  await context.addInitScript(({key,value})=>{
+    if(sessionStorage.getItem('__arcade_smoke_seeded__')) return;
+    localStorage.setItem(key,JSON.stringify(value));
+    sessionStorage.setItem('__arcade_smoke_seeded__','1');
+  },{key:SAVE_KEY,value:save});
+}
 async function state(page:Page){return page.evaluate(()=>(globalThis as typeof globalThis & {__SALVAGE_TEST__?:{getState:()=>unknown}}).__SALVAGE_TEST__?.getState()) as Promise<any>}
 
 await waitServer();
