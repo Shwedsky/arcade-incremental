@@ -1,6 +1,6 @@
 # Playable Salvage Slice V0
 
-Status: **INTERNAL COMPLETION PASS — NOT READY FOR OWNER PACKAGE YET**
+Status: **INTERNAL COMPLETION PASS — SYSTEMS BASELINE GREEN, OWNER PACKAGE STILL WITHHELD**
 
 This branch started as a narrow active-scavenging proof and is now being completed into a coherent early-game slice before the next human build is sent.
 
@@ -37,6 +37,11 @@ The next owner-facing package must include:
 
 ### XP / mastery
 XP comes from dismantled target class plus a bonus for component drops. Level thresholds and mastery pacing are defined in `docs/PROGRESSION_RUNTIME_V0.md` and implemented in `src/progression.ts`.
+
+The committed progression proof uses the approved ~9 breaks/minute loop and yields ~962 XP per active hour. Under that expected-value baseline:
+- first mastery point: ~7.5 active minutes;
+- second: ~26 minutes;
+- third / earliest focused Combo: ~112 minutes (~1.87 h).
 
 ### Talent tree
 35 visible nodes:
@@ -81,6 +86,25 @@ Timers/queues remain a later refinement.
 ### Persistence / offline
 Local save persists progression/economy. Offline baseline begins at the approved 20% / 2h and Automation nodes modify it.
 
+## Automated browser acceptance
+
+A real headless Chromium run now validates the integrated UI/runtime rather than only pure functions. It verifies:
+- a fresh player can enter the garage with a **0 kg** cart;
+- the first press tile directly exposes metal, bearings and hydraulic requirements;
+- exactly five talent branches and 35 nodes render;
+- Combo is unavailable at the start;
+- at level 4 with Salvage 1+2, Combo becomes spendable;
+- the purchased Combo talent survives a page reload;
+- an installed press exposes its next-upgrade gates and exact effective recipe on both tile and inspector;
+- Workshop cost discounts are reflected in the displayed effective requirements.
+
+The latest integrated runtime run passed:
+- TypeScript typecheck/build;
+- deterministic gameplay smoke;
+- committed progression pacing proof check;
+- headless Chromium progression smoke;
+- distributable packaging.
+
 ## Visual policy
 Do not spend the next iteration polishing these placeholder Canvas drawings. Once the system loop is stable, production visuals return to `docs/VISUAL_BASELINE.md` and the approved concept evidence.
 
@@ -100,18 +124,13 @@ Do not spend the next iteration polishing these placeholder Canvas drawings. Onc
 - [x] persistence exists;
 - [x] offline baseline/report exists;
 - [x] pure smoke tests cover progression gates and machine requirements;
-- [ ] latest branch head CI fully completed after final docs/presentation commits;
-- [ ] internal runtime/manual browser sanity pass before owner package.
+- [x] XP/mastery pacing has a committed reproducible proof;
+- [x] integrated headless-browser runtime sanity pass covers owner-requested flows;
+- [x] runtime CI/build/smoke/browser/package pipeline is green.
 
 ## Next test gate
 No new ZIP is sent merely because CI is green.
 
-Before the next owner package:
-1. typecheck/build/smoke green;
-2. static review of garage-anytime rule;
-3. XP/mastery cadence and prerequisites verified;
-4. all five branches visible;
-5. machine build/upgrade requirements visible on card and inspector;
-6. press build/process/sale flow internally coherent;
-7. persistence/offline state sanity checked;
-8. docs and PR description match runtime.
+Before the next owner package, the remaining work is product completeness rather than another isolated technical proof. The branch should be reviewed as a small early-game loop: field -> XP/talents -> freely return home -> sell/build/process/upgrade -> return to the same field -> persist/offline return.
+
+Production visual replacement remains intentionally deferred until that systems loop is accepted.
