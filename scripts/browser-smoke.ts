@@ -48,17 +48,18 @@ try{
   await p2.reload();await p2.waitForSelector('#garage');assert.ok((await state(p2)).talents.includes('salvage_3'),'talent unlock must persist through reload');
   await c2.close();
 
-  // Scenario 3: installed press exposes the exact next-upgrade gates and recipe directly on its station card and inspector.
+  // Scenario 3: installed press exposes the exact next-upgrade gates and effective discounted recipe.
   const c3=await browser.newContext();await withSave(c3,baseSave({
     xp:3200,talents:['workshop_1'],installed:['workbench','press'],machineLevels:{workbench:1,press:1},
     storage:{metal:200,copper:0,plastic:0},components:{bearing:3,motor:1,hydraulic:1,electronics:0},cash:7000
   }));
   const p3=await c3.newPage();await p3.goto(`${ORIGIN}/?seed=upgrade-smoke`);await p3.click('#garage');await p3.waitForSelector('#garageScreen:not([hidden])');
-  await p3.waitForFunction(()=>document.querySelector('[data-machine="press"] .cardGate')?.textContent?.includes('160'));
+  await p3.waitForFunction(()=>document.querySelector('[data-machine="press"] .cardGate')?.textContent?.includes('152'));
   const upgradeCard=await p3.locator('[data-machine="press"] .cardGate').textContent();
-  assert.match(upgradeCard??'',/160/);assert.match(upgradeCard??'',/Подшипник/);assert.match(upgradeCard??'',/Электромотор/);assert.match(upgradeCard??'',/4.?000/);
+  // workshop_1 applies a 5% discount: 160 -> 152 metal, 4000 -> 3800 cash; components stay discrete.
+  assert.match(upgradeCard??'',/152/);assert.match(upgradeCard??'',/Подшипник/);assert.match(upgradeCard??'',/Электромотор/);assert.match(upgradeCard??'',/3.?800/);
   await p3.click('[data-machine="press"]');const inspector=await p3.locator('#machineInspector').textContent();
-  assert.match(inspector??'',/Прокачка до ур\. 2/);assert.match(inspector??'',/Уровень игрока 5/);assert.match(inspector??'',/Экономная сборка/);
+  assert.match(inspector??'',/Прокачка до ур\. 2/);assert.match(inspector??'',/Уровень игрока 5/);assert.match(inspector??'',/Экономная сборка/);assert.match(inspector??'',/152/);assert.match(inspector??'',/3.?800/);
   await c3.close();
 
   console.log('browser progression smoke: PASS');
