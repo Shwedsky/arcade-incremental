@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { FIELD_NODE_COUNT, TARGET_CLASSES, WORLD, expectedFieldMix, generateField, getTargetClass, hashSeed, mulberry32, rollDrops } from '../src/sim.ts';
+import { MACHINE_DEFS, STARTING_CASH, canBuild, type GarageInventory } from '../src/garage.ts';
 
 const a = generateField('smoke-seed');
 const b = generateField('smoke-seed');
@@ -32,5 +33,25 @@ assert.ok(totals.plastic > totals.copper, 'plastic should be more common than co
 assert.ok(Object.values(components).reduce((sum, value) => sum + value, 0) > 10, 'component drops should exist');
 assert.ok(components.hydraulic < components.bearing + components.motor, 'hydraulic should remain rarer than common mechanical drops');
 
-console.log(JSON.stringify({ fieldNodes: a.length, rolls, totals, components, mix }, null, 2));
+const press = MACHINE_DEFS.press;
+assert.equal(press.name, 'Малый гидропресс');
+assert.equal(press.buyPrice, 24000);
+assert.ok(press.requirements.some((r) => r.kind === 'resource' && r.key === 'metal' && r.amount === 100));
+assert.ok(press.requirements.some((r) => r.kind === 'component' && r.key === 'bearing' && r.amount === 2));
+assert.ok(press.requirements.some((r) => r.kind === 'component' && r.key === 'hydraulic' && r.amount === 1));
+assert.ok(press.requirements.every((r) => r.source.length > 10), 'every requirement must explain where it comes from');
+
+const insufficient: GarageInventory = {
+  resources: { metal: 99, copper: 0, plastic: 0 },
+  components: { bearing: 2, hydraulic: 1, motor: 0, electronics: 0 },
+  cash: STARTING_CASH
+};
+assert.equal(canBuild(press, insufficient), false, 'press must remain locked while a recipe requirement is missing');
+const sufficient: GarageInventory = {
+  ...insufficient,
+  resources: { ...insufficient.resources, metal: 100 }
+};
+assert.equal(canBuild(press, sufficient), true, 'press must become buildable when all requirements are met');
+
+console.log(JSON.stringify({ fieldNodes: a.length, rolls, totals, components, mix, pressRequirements: press.requirements }, null, 2));
 console.log('salvage slice smoke: PASS');
