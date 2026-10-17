@@ -1,15 +1,19 @@
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
+import { once } from 'node:events';
+import { fileURLToPath } from 'node:url';
 import { chromium, type BrowserContext, type Page } from 'playwright';
 
 const PORT=4173;
 const ORIGIN=`http://127.0.0.1:${PORT}`;
 const SAVE_KEY='arcade-incremental-playable-v0-save-v2';
+const viteBin=fileURLToPath(new URL('../node_modules/vite/bin/vite.js',import.meta.url));
 
-const server=spawn(process.platform==='win32'?'npx.cmd':'npx',['vite','preview','--host','127.0.0.1','--port',String(PORT),'--strictPort'],{stdio:['ignore','pipe','pipe']});
+const server=spawn(process.execPath,[viteBin,'preview','--host','127.0.0.1','--port',String(PORT),'--strictPort'],{stdio:['ignore','pipe','pipe']});
 let serverOutput='';server.stdout.on('data',(b)=>serverOutput+=String(b));server.stderr.on('data',(b)=>serverOutput+=String(b));
 
 async function waitServer(){for(let i=0;i<80;i++){try{const r=await fetch(ORIGIN);if(r.ok)return}catch{}await new Promise(r=>setTimeout(r,125))}throw new Error(`preview server did not start\n${serverOutput}`)}
+async function stopServer(){if(server.exitCode!==null)return;server.kill('SIGTERM');await Promise.race([once(server,'exit'),new Promise(resolve=>setTimeout(resolve,1500))]);if(server.exitCode===null)server.kill('SIGKILL')}
 
 const baseSave=(overrides:Record<string,unknown>={})=>({
   v:2,xp:0,storage:{metal:0,copper:0,plastic:0},components:{bearing:0,motor:0,hydraulic:0,electronics:0},
@@ -70,5 +74,6 @@ try{
 
   console.log('browser progression smoke: PASS');
 } finally {
-  await browser.close();server.kill('SIGTERM');
+  await browser.close();
+  await stopServer();
 }
