@@ -20,6 +20,8 @@ jobs:
         run: npm run build
       - name: Deterministic gameplay smoke
         run: npm run smoke
+      - name: Progression pacing proof
+        run: python models/progression_sim_v0.py --check
       - name: Install browser
         run: npx playwright install --with-deps chromium
       - name: Headless browser progression smoke
