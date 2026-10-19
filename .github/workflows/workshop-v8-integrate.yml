@@ -22,10 +22,11 @@ jobs:
           node-version: 22
       - name: Install dependencies
         run: npm install --no-audit --no-fund
-      - name: Apply Save V8 runtime integration
+      - name: Ensure Save V8 runtime and browser expectations
         run: |
-          python scripts/apply_workshop_v8_runtime.py
-          python - <<'PY'
+          if ! grep -q 'interface SaveStateV8' src/main.ts; then
+            python scripts/apply_workshop_v8_runtime.py
+            python - <<'PY'
           from pathlib import Path
           p=Path('src/main.ts')
           s=p.read_text(encoding='utf-8')
@@ -35,6 +36,8 @@ jobs:
               raise SystemExit(f'compatibility targetLevel anchor count: {s.count(old)}')
           p.write_text(s.replace(old,new,1),encoding='utf-8')
           PY
+          fi
+          python scripts/update_save_v8_browser_expectations.py
       - name: Guarded typecheck and deterministic proofs
         run: |
           npm run build
@@ -45,14 +48,14 @@ jobs:
           npm run smoke:packb
           npm run smoke:packc
           npm run smoke:packd
-      - name: Commit integrated runtime
+      - name: Commit integration updates
         run: |
           if git diff --quiet; then
-            echo "No runtime changes to commit"
+            echo "No integration changes to commit"
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add src/main.ts
-          git commit -m "feat: integrate Workshop scheduler with Save V8 runtime"
+          git add src/main.ts scripts/browser-*-smoke.ts
+          git commit -m "test: migrate browser regressions to Save V8"
           git push origin HEAD:ux/workshop-queue-v1
