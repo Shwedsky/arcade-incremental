@@ -2,6 +2,7 @@ import type {TargetClassId} from './sim.ts';
 
 export type PackEZoneId='z8';
 export type PackEProductionKind='alloyBillet';
+export type PackEAdvancedComponent='industrialController'|'heavyHydraulicCylinder';
 
 export interface PackEZoneProfile{
   id:PackEZoneId;
@@ -24,6 +25,7 @@ export interface PackEProductionJob{
 export interface PackEState{
   portPowerAssemblies:number;
   portPowerPity:number;
+  portPowerDiscovered:boolean;
   processingPlantOwned:boolean;
   plantLines:number;
   production:PackEProductionJob[];
@@ -96,13 +98,14 @@ export const PROCESSING_PLANT_RECIPE={
 } as const;
 
 export function createDefaultPackE():PackEState{
-  return{portPowerAssemblies:0,portPowerPity:0,processingPlantOwned:false,plantLines:0,production:[]};
+  return{portPowerAssemblies:0,portPowerPity:0,portPowerDiscovered:false,processingPlantOwned:false,plantLines:0,production:[]};
 }
 
 export function normalizePackE(value:Partial<PackEState>|undefined):PackEState{
   const base=createDefaultPackE();
   if(!value)return base;
   const processingPlantOwned=!!value.processingPlantOwned;
+  const portPowerAssemblies=Math.max(0,Math.floor(Number(value.portPowerAssemblies)||0));
   const plantLines=processingPlantOwned?Math.max(1,Math.min(PROCESSING_PLANT_LINES,Math.floor(Number(value.plantLines)||PROCESSING_PLANT_LINES))):0;
   const production=(value.production??[])
     .filter(job=>job&&job.kind==='alloyBillet')
@@ -113,8 +116,9 @@ export function normalizePackE(value:Partial<PackEState>|undefined):PackEState{
       outputAmount:Math.max(0,Number(job.outputAmount)||PLANT_ALLOY_OUTPUT)
     }));
   return{
-    portPowerAssemblies:Math.max(0,Math.floor(Number(value.portPowerAssemblies)||0)),
+    portPowerAssemblies,
     portPowerPity:Math.max(0,Math.min(PORT_POWER_ASSEMBLY_PITY-1,Math.floor(Number(value.portPowerPity)||0))),
+    portPowerDiscovered:!!value.portPowerDiscovered||portPowerAssemblies>0||processingPlantOwned,
     processingPlantOwned,plantLines,production
   };
 }
@@ -131,7 +135,7 @@ export function rollPortPowerAssembly(state:PackEState,classId:TargetClassId,rng
   if(classId!=='large_appliance')return false;
   state.portPowerPity++;
   if(state.portPowerPity>=PORT_POWER_ASSEMBLY_PITY||rng()<.035){
-    state.portPowerPity=0;state.portPowerAssemblies++;return true;
+    state.portPowerPity=0;state.portPowerAssemblies++;state.portPowerDiscovered=true;return true;
   }
   return false;
 }
@@ -143,6 +147,15 @@ export function z8AdvancedMetalYield(classId:TargetClassId,rng:()=>number):{alum
     aluminiumScrap:aluminium*(.86+rng()*.28),
     alloyScrap:alloy*(.88+rng()*.28)
   };
+}
+
+export function rollZ8IndustrialComponent(discovered:ReadonlyArray<PackEAdvancedComponent>,classId:TargetClassId,rng:()=>number):PackEAdvancedComponent|undefined{
+  if(!['medium_appliance','large_appliance'].includes(classId)||!discovered.length)return undefined;
+  const chance=classId==='large_appliance'?.07:.025;
+  if(rng()>=chance)return undefined;
+  const available=(['industrialController','heavyHydraulicCylinder'] as PackEAdvancedComponent[]).filter(kind=>discovered.includes(kind));
+  if(!available.length)return undefined;
+  return available[Math.min(available.length-1,Math.floor(rng()*available.length))];
 }
 
 export function canAcquireProcessingPlant(state:PackEState,inv:PackEInventory,ctx:ProcessingPlantContext):boolean{
