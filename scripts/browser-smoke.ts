@@ -21,7 +21,8 @@ const baseSave=(overrides:Record<string,unknown>={})=>({
 });
 async function withSave(context:BrowserContext,save:ReturnType<typeof baseSave>){await context.addInitScript(({key,value})=>{if(sessionStorage.getItem('__arcade_smoke_seeded__'))return;localStorage.setItem(key,JSON.stringify(value));sessionStorage.setItem('__arcade_smoke_seeded__','1')},{key:SAVE_KEY,value:save})}
 async function state(page:Page){return page.evaluate(()=>(globalThis as any).__SALVAGE_TEST__?.getState()) as Promise<any>}
-async function advance(page:Page,ms:number){return page.evaluate((delta)=>{const test=(globalThis as any).__SALVAGE_TEST__,s=test?.getState();const base=Math.max(Date.now(),Number(s?.scheduler?.lastAdvancedAt??0));return test?.advanceWorkshopTo(base+delta)},ms)}
+const workshopClock=new WeakMap<Page,number>();
+async function advance(page:Page,ms:number){const base=Math.max(Date.now(),workshopClock.get(page)??0),target=base+ms;workshopClock.set(page,target);return page.evaluate((at)=>{const test=(globalThis as any).__SALVAGE_TEST__;return test?.advanceWorkshopTo(at)},target)}
 
 await waitServer();
 const browser=await chromium.launch({headless:true});
