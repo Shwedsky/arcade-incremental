@@ -1,0 +1,8 @@
+transport,representative_zone,capacity_kg,zone_bulk_kg_h,estimated_fill_min,equivalent_55kg_cartloads
+cart_40,Z1,40,522.0,4.6,0.73
+cart_55,Z1,55,522.0,6.3,1.00
+cart_75,Z2,75,465.0,9.7,1.36
+cart_100,Z2,100,465.0,12.9,1.82
+van,Z3,400,698.0,34.4,7.27
+truck,Z5,1000,1090.0,55.0,18.18
+recovery_rig,Z7,1800,1555.0,69.5,32.73

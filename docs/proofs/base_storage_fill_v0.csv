@@ -1,0 +1,7 @@
+base,bulk_storage_kg,representative_worker_routes,nominal_inbound_kg_h,hours_to_fill_if_no_processing
+equipped_garage,2000,1,104.4,19.2
+full_garage,4000,2,197.4,20.3
+hangar,12000,3,505.5,23.7
+salvage_yard,30000,5,1375.6,21.8
+industrial_workshop,60000,7,2920.5,20.5
+processing_plant,150000,10,5927.5,25.3

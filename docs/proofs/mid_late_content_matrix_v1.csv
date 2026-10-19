@@ -1,0 +1,10 @@
+stage,target_progress_h,base,player_transport,frontier_zone,new_raw,new_components,automation_milestone,main_player_change
+starter,0-4,Starter Garage,Hand Cart,Old Junkyard,"metal|copper|plastic","bearing|motor|hydraulic|electronics",offline_baseline,"learn dense salvage and first processing"
+equipped_garage,4-8,Equipped Garage,Hand Cart,Garage Cooperative / Backyards,"-","pump|compressor",first_mastery_available,"hunt better mechanical/electrical parts"
+van,8-15,Equipped Garage,Van + Hand Cart,Municipal Dump / Appliance Yard,aluminium,"-",mobile_buffer,"multiple cart loads per expedition"
+first_worker,12-20,Equipped Garage,Van,Mastered Z1/Z2,"-","discovered families passive",first_worker_route,"old zone begins producing while player pushes frontier"
+auto_yard,15-30,Full Garage,Van,Auto Salvage Yard,"-","gearbox|generator_alternator",small_crew,"intact-vs-bulk vehicle salvage"
+hangar,28-50,Hangar,Van -> Truck,Industrial Zone,alloy,industrial_controller,"multiple workers|sorting|more queues","large industrial targets and fabricated modules"
+salvage_yard,45-80,Hangar + Salvage Yard,Truck,Abandoned Factory,"-",heavy_hydraulic_cylinder,"crew+vehicle assignments","heavy equipment and advanced component backbone"
+industrial_workshop,75-120,Industrial Workshop,Truck / Recovery Rig,Heavy Depot / Construction,"-","existing high-tier families",production_cells,"heavy recovery and industrial fabrication"
+processing_plant,120+,Processing Plant,Heavy Hauler,Port / Container Terminal,"-","premium versions/signature salvage","industrial lines|foremen|large contracts","frontier premium salvage feeding a mature network"
