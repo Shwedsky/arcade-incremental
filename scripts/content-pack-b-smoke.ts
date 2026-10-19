@@ -5,9 +5,10 @@ import {
   canHireSecondWorker,createDefaultPackB,fabricateModule,hireSecondWorker,industrialName,normalizePackB,
   refineAluminium,refineSteel,rollIndustrialComponent,simulateSecondWorker,transferCartToTruck,truckWeight,unloadTruck,z4AluminiumYield
 } from '../src/content_pack_b.ts';
+import {createDefaultWorkerEconomy} from '../src/worker_economy_v2.ts';
 import type { ComponentKind, ResourceKind } from '../src/sim.ts';
 
-const state=createDefaultPackB(0);
+const state=createDefaultPackB(0),economy=createDefaultWorkerEconomy(0);
 assert.equal(TRUCK_CAPACITY_KG,1000);
 assert.equal(industrialName('gearbox'),'Коробка передач');
 
@@ -56,9 +57,10 @@ assert.equal(Math.round(state.materials.aluminiumScrap),30);
 assert.equal(canHireSecondWorker(state,true,SECOND_WORKER_COST),true);
 assert.equal(hireSecondWorker(state,0),true);
 assert.equal(assignSecondWorker(state,'z1',true,0),true);
-const gain=simulateSecondWorker(state,2*3_600_000,10);
+const gain=simulateSecondWorker(state,economy,['bearing','motor'],2*3_600_000,false);
 assert.equal(gain.hours,2);
 assert.ok(gain.resources.metal>100);
+assert.equal(gain.source,'legacy','migrated worker uses conservative legacy baseline until active benchmark exists');
 
 const restored=normalizePackB({hangarOwned:true,truck:{owned:true,resources:{metal:5,copper:0,plastic:0},aluminiumScrap:2}} as any,100);
 assert.equal(restored.hangarOwned,true);
