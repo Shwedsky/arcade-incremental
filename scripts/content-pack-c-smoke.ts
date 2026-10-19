@@ -6,8 +6,9 @@ import {
   hireThirdWorker, productionDurationSec, refineAlloy, rollPackCComponent, simulateThirdWorker, startPackCProduction,
   type PackCInventory,
 } from '../src/content_pack_c.ts';
+import {createDefaultWorkerEconomy} from '../src/worker_economy_v2.ts';
 
-const state=createDefaultPackC(0);
+const state=createDefaultPackC(0),economy=createDefaultWorkerEconomy(0);
 assert.deepEqual(Object.keys(PACK_C_ZONE_PROFILES),['z5','z6']);
 assert.ok(PACK_C_ZONE_PROFILES.z6.hpMultiplier>PACK_C_ZONE_PROFILES.z5.hpMultiplier);
 assert.ok(PACK_C_ZONE_PROFILES.z6.masteryTarget>PACK_C_ZONE_PROFILES.z5.masteryTarget);
@@ -31,22 +32,22 @@ assert.ok(z5Alloy>0);assert.ok(z6Alloy>z5Alloy,'Z6 should be the stronger alloy 
 state.materials.alloyScrap=50;assert.equal(refineAlloy(state,2),36);assert.equal(state.materials.alloyBillet,36);
 
 state.industrial.heavyHydraulicCylinder=5;state.industrial.industrialController=5;
-const inv:PackCInventory={cash:500_000,metal:1000,cleanCopper:100,steelBlank:120,structural:6,control:8,hydraulic:4,pump:4};
+const inv:PackCInventory={cash:500_000,metal:1000,cleanCopper:100,briquette:200,steelBlank:120,aluminiumBillet:60,structural:6,control:8,hydraulic:4,pump:4};
 assert.equal(fabricateHeavyModule(state,'hydraulicPower',inv),true);assert.equal(fabricateHeavyModule(state,'heavyFrame',inv),true);
 state.materials.alloyBillet+=20;assert.equal(fabricateHeavyModule(state,'hydraulicPower',inv),true);assert.equal(fabricateHeavyModule(state,'heavyFrame',inv),true);
 
 assert.equal(canAcquireSalvageYard(state,inv,false),false,'Yard cannot bypass Z6 mastery');
 state.materials.alloyBillet=Math.max(state.materials.alloyBillet,SALVAGE_YARD_RECIPE.alloyBillet);
-inv.cash=Math.max(inv.cash,SALVAGE_YARD_CASH);inv.metal=Math.max(inv.metal,SALVAGE_YARD_RECIPE.metal);inv.cleanCopper=Math.max(inv.cleanCopper,SALVAGE_YARD_RECIPE.cleanCopper);inv.steelBlank=Math.max(inv.steelBlank,SALVAGE_YARD_RECIPE.steelBlank);inv.control=Math.max(inv.control,SALVAGE_YARD_RECIPE.control);
+inv.cash=Math.max(inv.cash,SALVAGE_YARD_CASH);inv.metal=Math.max(inv.metal,SALVAGE_YARD_RECIPE.metal);inv.cleanCopper=Math.max(inv.cleanCopper,SALVAGE_YARD_RECIPE.cleanCopper);inv.briquette=Math.max(inv.briquette,SALVAGE_YARD_RECIPE.briquette);inv.steelBlank=Math.max(inv.steelBlank,SALVAGE_YARD_RECIPE.steelBlank);inv.aluminiumBillet=Math.max(inv.aluminiumBillet,SALVAGE_YARD_RECIPE.aluminiumBillet);inv.control=Math.max(inv.control,SALVAGE_YARD_RECIPE.control);
 assert.equal(acquireSalvageYard(state,inv,true),true);assert.equal(state.salvageYardOwned,true);
 
 assert.equal(canHireThirdWorker(state,THIRD_WORKER_COST),true);assert.equal(hireThirdWorker(state,1_000),true);
 assert.equal(assignThirdWorkerScavenger(state,'z5',false,1_000),false,'crew cannot enter unmastered zone');
 assert.equal(assignThirdWorkerScavenger(state,'z4',true,1_000),true);
-const scav=simulateThirdWorker(state,3_601_000);assert.ok(scav.resources.metal>0);
+const scav=simulateThirdWorker(state,economy,['bearing','motor'],3_601_000,false);assert.ok(scav.resources.metal>0);
 const normalDuration=productionDurationSec(state,'alloyBillet');
 assert.equal(assignThirdWorkerOperator(state,4_000_000),true);
-assert.equal(simulateThirdWorker(state,5_000_000).resources.metal,0,'Operator cannot scavenge simultaneously');
+assert.equal(simulateThirdWorker(state,economy,['bearing','motor'],5_000_000,false).resources.metal,0,'Operator cannot scavenge simultaneously');
 const operatorDuration=productionDurationSec(state,'alloyBillet');assert.equal(operatorDuration,normalDuration*.75);
 
 state.materials.alloyScrap=25;

@@ -34,7 +34,7 @@ try{
 
   const normalPage=await context.newPage();
   await normalPage.goto(`${NORMAL_ORIGIN}/?seed=normal-sentinel`);
-  await normalPage.waitForFunction(()=>(globalThis as any).__SALVAGE_TEST__?.getState()?.saveVersion===8);
+  await normalPage.waitForFunction(()=>(globalThis as any).__SALVAGE_TEST__?.getState()?.saveVersion===9);
   await normalPage.evaluate((key)=>{
     localStorage.setItem(key,'ordinary-save-sentinel');
     localStorage.setItem(`${key}.backup`,'ordinary-backup-sentinel');
@@ -46,7 +46,7 @@ try{
   reviewPage.on('pageerror',error=>pageErrors.push(error.message));
   await reviewPage.goto(`${REVIEW_ORIGIN}/review-start.html`);
   await reviewPage.waitForURL(`${REVIEW_ORIGIN}/?seed=owner-review-v1`);
-  await reviewPage.waitForFunction(()=>(globalThis as any).__SALVAGE_TEST__?.getState()?.saveVersion===8);
+  await reviewPage.waitForFunction(()=>(globalThis as any).__SALVAGE_TEST__?.getState()?.saveVersion===9);
   await reviewPage.waitForTimeout(500);
   assert.deepEqual(pageErrors,[],`manual review boot must not throw runtime errors: ${pageErrors.join(' | ')}`);
   const fresh=await reviewPage.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.getState());
@@ -122,7 +122,7 @@ try{
 
   await reviewPage.evaluate(()=>localStorage.setItem('__manual_review_progress_sentinel__','keep-on-reload'));
   await reviewPage.reload();
-  await reviewPage.waitForFunction(()=>(globalThis as any).__SALVAGE_TEST__?.getState()?.saveVersion===8);
+  await reviewPage.waitForFunction(()=>(globalThis as any).__SALVAGE_TEST__?.getState()?.saveVersion===9);
   const reviewSentinel=await reviewPage.evaluate(()=>localStorage.getItem('__manual_review_progress_sentinel__'));
   assert.equal(reviewSentinel,'keep-on-reload','normal review reload must not clear review origin again');
 

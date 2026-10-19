@@ -1,4 +1,5 @@
-import type { ResourceKind, TargetClassId } from './sim.ts';
+import type { ComponentKind, ResourceKind, TargetClassId } from './sim.ts';
+import {simulateBenchmarkedWorker,type WorkerEconomyV2State} from './worker_economy_v2.ts';
 
 export type PackCZoneId='z5'|'z6';
 export type PackCCrewZoneId='z1'|'z2'|'z3'|'z4'|'z5'|'z6';
@@ -71,7 +72,9 @@ export interface PackCInventory{
   cash:number;
   metal:number;
   cleanCopper:number;
+  briquette:number;
   steelBlank:number;
+  aluminiumBillet:number;
   structural:number;
   control:number;
   hydraulic:number;
@@ -80,7 +83,7 @@ export interface PackCInventory{
 
 export const SALVAGE_YARD_CASH=250_000;
 export const THIRD_WORKER_COST=85_000;
-export const SALVAGE_YARD_RECIPE={metal:700,cleanCopper:24,steelBlank:20,alloyBillet:30,hydraulicPower:2,heavyFrame:2,control:2} as const;
+export const SALVAGE_YARD_RECIPE={metal:280,cleanCopper:36,briquette:40,steelBlank:32,aluminiumBillet:12,alloyBillet:42,hydraulicPower:2,heavyFrame:2,control:2} as const;
 
 export const PACK_C_PRODUCTION_SECONDS:Record<PackCProductionKind,number>={
   alloyBillet:240,
@@ -92,6 +95,7 @@ export function emptyHeavyIndustrialComponents():HeavyIndustrialComponents{retur
 export function emptyPackCMaterials():PackCMaterials{return{alloyScrap:0,alloyBillet:0}}
 export function emptyHeavyFabricatedModules():HeavyFabricatedModules{return{hydraulicPower:0,heavyFrame:0}}
 export function emptyResources():Record<ResourceKind,number>{return{metal:0,copper:0,plastic:0}}
+export function emptyComponents():Record<ComponentKind,number>{return{bearing:0,motor:0,hydraulic:0,electronics:0}}
 
 export function createDefaultPackC(now=Date.now()):PackCState{
   return{
@@ -212,14 +216,14 @@ export function productionProgress(state:PackCState,now=Date.now()):number{
 
 export function canAcquireSalvageYard(state:PackCState,inv:PackCInventory,z6Mastered:boolean):boolean{
   return !state.salvageYardOwned&&z6Mastered&&inv.cash>=SALVAGE_YARD_CASH&&inv.metal>=SALVAGE_YARD_RECIPE.metal&&
-    inv.cleanCopper>=SALVAGE_YARD_RECIPE.cleanCopper&&inv.steelBlank>=SALVAGE_YARD_RECIPE.steelBlank&&
+    inv.cleanCopper>=SALVAGE_YARD_RECIPE.cleanCopper&&inv.briquette>=SALVAGE_YARD_RECIPE.briquette&&inv.steelBlank>=SALVAGE_YARD_RECIPE.steelBlank&&inv.aluminiumBillet>=SALVAGE_YARD_RECIPE.aluminiumBillet&&
     state.materials.alloyBillet>=SALVAGE_YARD_RECIPE.alloyBillet&&state.modules.hydraulicPower>=SALVAGE_YARD_RECIPE.hydraulicPower&&
     state.modules.heavyFrame>=SALVAGE_YARD_RECIPE.heavyFrame&&inv.control>=SALVAGE_YARD_RECIPE.control;
 }
 
 export function acquireSalvageYard(state:PackCState,inv:PackCInventory,z6Mastered:boolean):boolean{
   if(!canAcquireSalvageYard(state,inv,z6Mastered))return false;
-  inv.cash-=SALVAGE_YARD_CASH;inv.metal-=SALVAGE_YARD_RECIPE.metal;inv.cleanCopper-=SALVAGE_YARD_RECIPE.cleanCopper;inv.steelBlank-=SALVAGE_YARD_RECIPE.steelBlank;
+  inv.cash-=SALVAGE_YARD_CASH;inv.metal-=SALVAGE_YARD_RECIPE.metal;inv.cleanCopper-=SALVAGE_YARD_RECIPE.cleanCopper;inv.briquette-=SALVAGE_YARD_RECIPE.briquette;inv.steelBlank-=SALVAGE_YARD_RECIPE.steelBlank;inv.aluminiumBillet-=SALVAGE_YARD_RECIPE.aluminiumBillet;
   state.materials.alloyBillet-=SALVAGE_YARD_RECIPE.alloyBillet;state.modules.hydraulicPower-=SALVAGE_YARD_RECIPE.hydraulicPower;state.modules.heavyFrame-=SALVAGE_YARD_RECIPE.heavyFrame;inv.control-=SALVAGE_YARD_RECIPE.control;
   state.salvageYardOwned=true;return true;
 }
@@ -243,9 +247,10 @@ const CREW3_RATES:Record<PackCCrewZoneId,Record<ResourceKind,number>>={
   z4:{metal:132,copper:12,plastic:10},z5:{metal:162,copper:14,plastic:8},z6:{metal:178,copper:15,plastic:6}
 };
 
-export function simulateThirdWorker(state:PackCState,now=Date.now(),maxHours=12):{hours:number;resources:Record<ResourceKind,number>}{
-  const empty={hours:0,resources:emptyResources()},w=state.crew3;
+export function simulateThirdWorker(state:PackCState,economy:WorkerEconomyV2State,discoveredComponents:ReadonlyArray<ComponentKind>,now=Date.now(),offline=false):{hours:number;resources:Record<ResourceKind,number>;components:Record<ComponentKind,number>;weight:number;source:string;offlineRemainingHours:number}{
+  const empty={hours:0,resources:emptyResources(),components:emptyComponents(),weight:0,source:'none',offlineRemainingHours:economy.shifts.w3.remainingOfflineMs/3_600_000},w=state.crew3;
   if(!w.hired||w.role!=='scavenger'||!w.assignment){w.lastTick=now;return empty}
-  const hours=Math.min(Math.max(0,(now-w.lastTick)/3_600_000),maxHours),rates=CREW3_RATES[w.assignment];w.lastTick=now;
-  return{hours,resources:{metal:rates.metal*hours,copper:rates.copper*hours,plastic:rates.plastic*hours}};
+  const gain=simulateBenchmarkedWorker({state:economy,slot:'w3',zone:w.assignment,lastTick:w.lastTick,now,offline,discoveredComponents,legacyRates:CREW3_RATES[w.assignment]});
+  w.lastTick=gain.lastTick;
+  return{hours:gain.hours,resources:gain.resources,components:gain.components,weight:gain.weight,source:gain.source,offlineRemainingHours:gain.offlineRemainingHours};
 }
