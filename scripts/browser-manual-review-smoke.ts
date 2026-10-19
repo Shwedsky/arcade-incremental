@@ -30,16 +30,14 @@ await Promise.all([waitServer(NORMAL_ORIGIN),waitServer(REVIEW_ORIGIN)]);
 const browser=await chromium.launch({headless:true});
 try{
   const context=await browser.newContext();
+
   const normalPage=await context.newPage();
   await normalPage.goto(`${NORMAL_ORIGIN}/?seed=normal-sentinel`);
   await normalPage.waitForFunction(()=>(globalThis as any).__SALVAGE_TEST__?.getState()?.saveVersion===8);
-  await normalPage.evaluate(()=>(globalThis as any).__SALVAGE_PLATFORM__.forceSave());
   await normalPage.evaluate((key)=>{
-    const raw=localStorage.getItem(key);if(!raw)throw new Error('normal save missing');
-    const save=JSON.parse(raw);save.xp=777;save.lastSeen=Date.now();localStorage.setItem(key,JSON.stringify(save));
+    localStorage.setItem(key,'ordinary-save-sentinel');
+    localStorage.setItem(`${key}.backup`,'ordinary-backup-sentinel');
   },SAVE_KEY);
-  await normalPage.reload();
-  await normalPage.waitForFunction(()=>(globalThis as any).__SALVAGE_TEST__?.getState()?.xp===777);
 
   const reviewPage=await context.newPage();
   await reviewPage.goto(`${REVIEW_ORIGIN}/review-start.html`);
@@ -49,18 +47,17 @@ try{
   assert.equal(fresh.xp,0,'manual review must begin from fresh progression');
   assert.equal(fresh.cash,3000,'manual review must begin from canonical starting cash');
   assert.deepEqual(fresh.storage,{metal:0,copper:0,plastic:0});
-  assert.equal(fresh.installed.length,1);
-  assert.equal(fresh.installed[0],'workbench');
+  assert.deepEqual(fresh.installed,['workbench']);
+  assert.equal(new URL(reviewPage.url()).searchParams.has('reset'),false,'review gameplay URL must not retain destructive reset parameters');
 
-  await reviewPage.evaluate(()=>(globalThis as any).__SALVAGE_PLATFORM__.forceSave());
+  await reviewPage.evaluate(()=>localStorage.setItem('__manual_review_progress_sentinel__','keep-on-reload'));
   await reviewPage.reload();
   await reviewPage.waitForFunction(()=>(globalThis as any).__SALVAGE_TEST__?.getState()?.saveVersion===8);
-  assert.equal(new URL(reviewPage.url()).searchParams.has('reset'),false,'review redirect must remove destructive reset parameters');
+  const reviewSentinel=await reviewPage.evaluate(()=>localStorage.getItem('__manual_review_progress_sentinel__'));
+  assert.equal(reviewSentinel,'keep-on-reload','normal review reload must not clear review origin again');
 
-  await normalPage.reload();
-  await normalPage.waitForFunction(()=>(globalThis as any).__SALVAGE_TEST__?.getState()?.xp===777);
-  const normalAfter=await normalPage.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.getState());
-  assert.equal(normalAfter.xp,777,'review origin must not clear or replace ordinary save origin');
+  const ordinary=await normalPage.evaluate((key)=>({primary:localStorage.getItem(key),backup:localStorage.getItem(`${key}.backup`)}),SAVE_KEY);
+  assert.deepEqual(ordinary,{primary:'ordinary-save-sentinel',backup:'ordinary-backup-sentinel'},'review fresh start must not touch ordinary origin save slots');
 
   console.log('manual review isolation browser smoke: PASS');
   await context.close();
