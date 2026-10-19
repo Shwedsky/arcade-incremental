@@ -28,6 +28,8 @@ jobs:
         run: npm run smoke:workshop-migration
       - name: Queued resource reservation smoke
         run: npm run smoke:reservations
+      - name: Worker Economy V2 domain smoke
+        run: npm run smoke:worker-economy-v2
       - name: Midgame domain smoke
         run: npm run smoke:midgame
       - name: Visual foundation smoke
@@ -70,17 +72,19 @@ jobs:
         run: npm run smoke:browser:human-feedback-v2
       - name: Human Feedback V3 persistent discovery + Z2 world-space proof
         run: npm run smoke:browser:human-feedback-v3
+      - name: Worker Economy V2 Save V9 + worker route browser proof
+        run: npm run smoke:browser:worker-economy-v2
       - name: Platform and responsive browser proof
         run: npm run smoke:browser:platform
       - name: Build release manifest
         run: npm run release:manifest
       - name: Package release candidate
-        run: zip -r arcade-incremental-release-candidate-v8.zip dist
-      - name: Package manual review Fix Pack V3 candidate
+        run: zip -r arcade-incremental-release-candidate-v9.zip dist
+      - name: Package Worker Economy V2 manual review candidate
         run: |
           SHORT_SHA="${GITHUB_SHA:0:8}"
-          REVIEW_DIR="manual-review-v1-feedback-fix3"
-          REVIEW_ZIP="arcade-incremental-manual-review-v1-feedback-fix3-run${GITHUB_RUN_NUMBER}-${SHORT_SHA}.zip"
+          REVIEW_DIR="manual-review-v1-worker-economy-v2"
+          REVIEW_ZIP="arcade-incremental-manual-review-v1-worker-economy-v2-run${GITHUB_RUN_NUMBER}-${SHORT_SHA}.zip"
           rm -rf "$REVIEW_DIR"
           mkdir -p "$REVIEW_DIR/dist"
           cp -r dist/. "$REVIEW_DIR/dist/"
@@ -88,16 +92,17 @@ jobs:
           cp review/START_REVIEW.bat "$REVIEW_DIR/START_REVIEW.bat"
           cp review/README_REVIEW.txt "$REVIEW_DIR/README_REVIEW.txt"
           cp docs/MANUAL_TARGET_RUN_V1.md "$REVIEW_DIR/MANUAL_TARGET_RUN_V1.md"
-          printf 'Manual Review V1 - Feedback Fix 3\ncommit=%s\nrun=%s\nseed=owner-review-v1\norigin=http://127.0.0.1:41971\nfeatures=persistent-discovery,z2-world-space-backdrop,reservations,sticky-batches,local-dev-panel\n' "$GITHUB_SHA" "$GITHUB_RUN_ID" > "$REVIEW_DIR/BUILD_INFO.txt"
+          cp docs/WORKER_PROGRESSION_ECONOMY_V2_MODEL.md "$REVIEW_DIR/WORKER_PROGRESSION_ECONOMY_V2_MODEL.md"
+          printf 'Manual Review V1 - Worker Economy V2\ncommit=%s\nrun=%s\nsave=V9\nseed=owner-review-v1\norigin=http://127.0.0.1:41971\nfeatures=benchmark-workers,2h-shifts,van-worker-route,full-clear-medals,z2-z3-value,processed-recipe-gates,persistent-discovery,z2-world-space-backdrop,reservations,sticky-batches,local-dev-panel\n' "$GITHUB_SHA" "$GITHUB_RUN_ID" > "$REVIEW_DIR/BUILD_INFO.txt"
           zip -r "$REVIEW_ZIP" "$REVIEW_DIR"
           echo "REVIEW_ZIP=$REVIEW_ZIP" >> "$GITHUB_ENV"
       - uses: actions/upload-artifact@v4
         with:
-          name: arcade-incremental-release-candidate-v8
-          path: arcade-incremental-release-candidate-v8.zip
+          name: arcade-incremental-release-candidate-v9
+          path: arcade-incremental-release-candidate-v9.zip
           if-no-files-found: error
       - uses: actions/upload-artifact@v4
         with:
-          name: arcade-incremental-manual-review-v1-feedback-fix3-run-${{ github.run_number }}
+          name: arcade-incremental-manual-review-v1-worker-economy-v2-run-${{ github.run_number }}
           path: ${{ env.REVIEW_ZIP }}
           if-no-files-found: error
