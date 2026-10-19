@@ -35,10 +35,10 @@ async function state(page:Page){return page.evaluate(()=>(globalThis as any).__S
 await waitServer();
 const browser=await chromium.launch({headless:true});
 try{
-  // 1. Existing V4 saves migrate through current V6 while preserving empty Pack B defaults.
+  // 1. Existing V4 saves migrate through current V7 while preserving empty Pack B/Pack D defaults.
   const c1=await browser.newContext();await withSave(c1,baseV4({midgame:{...midgame(),currentZone:'z3',mastery:{z1:100,z2:100,z3:100,z4:0,z5:0,z6:0}}}));
   const p1=await c1.newPage();await p1.goto(`${ORIGIN}/?seed=packb-migrate`);await p1.waitForSelector('#garage');
-  const s1=await state(p1);assert.equal(s1.saveVersion,6);assert.equal(s1.packB.hangarOwned,false);assert.equal(s1.packB.truck.owned,false);assert.equal(s1.midgame.mastery.z3,100);assert.equal(s1.midgame.mastery.z4,0);await c1.close();
+  const s1=await state(p1);assert.equal(s1.saveVersion,7);assert.equal(s1.packB.hangarOwned,false);assert.equal(s1.packB.truck.owned,false);assert.equal(s1.packD.recoveryRig.owned,false);assert.equal(s1.midgame.mastery.z3,100);assert.equal(s1.midgame.mastery.z4,0);await c1.close();
 
   // 2. Full production path: Z4 -> Hangar -> Truck -> worker #2.
   const c2=await browser.newContext();await withSave(c2,baseV5());const p2=await c2.newPage();await p2.goto(`${ORIGIN}/?seed=packb-main`);await p2.waitForSelector('#garage');
@@ -52,8 +52,8 @@ try{
   await p2.click('#talentsGarage');await p2.waitForSelector('#talentScreen:not([hidden])');const wide=p2.locator('[data-talent="salvage_8"]');assert.equal(await wide.count(),1);assert.equal(await wide.isDisabled(),false);await wide.click();s2=await state(p2);assert.equal(s2.talents.includes('salvage_8'),true);await p2.click('#talentsClose');
   await p2.click('#next');await p2.waitForSelector('#garageScreen',{state:'hidden'});await p2.waitForFunction(()=>!document.querySelector<HTMLElement>('#vanHud')?.hidden);assert.equal(await p2.locator('#vanHud').evaluate(el=>el.classList.contains('truckMode')),true);assert.match(await p2.locator('#vanText').innerText(),/1000/);
 
-  // 4. Pack B state survives a normal reload under Save V6.
-  await p2.reload();await p2.waitForSelector('#garage');s2=await state(p2);assert.equal(s2.saveVersion,6);assert.equal(s2.packB.hangarOwned,true);assert.equal(s2.packB.truck.owned,true);assert.equal(s2.packB.secondWorker.assignment,'z1');assert.equal(s2.talents.includes('salvage_8'),true);await c2.close();
+  // 4. Pack B state survives a normal reload under Save V7.
+  await p2.reload();await p2.waitForSelector('#garage');s2=await state(p2);assert.equal(s2.saveVersion,7);assert.equal(s2.packB.hangarOwned,true);assert.equal(s2.packB.truck.owned,true);assert.equal(s2.packB.secondWorker.assignment,'z1');assert.equal(s2.talents.includes('salvage_8'),true);await c2.close();
 
   console.log('browser Content Pack B proof: PASS');
 }finally{await browser.close();await stopServer()}
