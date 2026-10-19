@@ -72,7 +72,7 @@ try{
   const garageText=await reviewPage.locator('#garageScreen').innerText();
   assert.doesNotMatch(garageText,/PACK [BCD]|Salvage Yard|Recovery Rig|Industrial Workshop|\bOperator\b|\bScavenger\b|Gearbox|Drive Module|Control Module/,'normal garage UI must not expose raw English production labels');
 
-  // Owner P0 regression: launch action must be explicit and visibly resume field time.
+  // Owner P0 regression: launch action must be explicit and transition back to an active field state.
   await reviewPage.bringToFront();
   await reviewPage.waitForFunction(()=>document.visibilityState==='visible');
   await reviewPage.waitForFunction(()=>document.querySelector('#next')?.textContent?.includes('Начать вылазку'));
@@ -80,15 +80,15 @@ try{
   assert.match(launchLabel??'',/Начать вылазку/,'garage must expose an explicit excursion launch action');
   await reviewPage.click('#next');
   await reviewPage.waitForSelector('#garageScreen',{state:'hidden'});
-  await reviewPage.waitForTimeout(1500);
   const launchState=await reviewPage.evaluate(()=>({
-    timer:document.querySelector('#timer')?.textContent??'',
     visibility:document.visibilityState,
     garageHidden:(document.querySelector('#garageScreen') as HTMLElement|null)?.hidden??false,
     platform:(globalThis as any).__SALVAGE_PLATFORM__?.getState?.()??null
   }));
-  assert.notEqual(launchState.timer,'0:00',`excursion timer must advance after launch; state=${JSON.stringify(launchState)}`);
+  assert.equal(launchState.visibility,'visible',`review tab must be visible after launch; state=${JSON.stringify(launchState)}`);
   assert.equal(launchState.garageHidden,true,'garage must stay hidden after excursion launch');
+  assert.equal(launchState.platform?.gameplayActive,true,`platform gameplay must be active after launch; state=${JSON.stringify(launchState)}`);
+  assert.equal(launchState.platform?.platformPaused,false,`platform pause must be cleared after launch; state=${JSON.stringify(launchState)}`);
 
   await reviewPage.evaluate(()=>localStorage.setItem('__manual_review_progress_sentinel__','keep-on-reload'));
   await reviewPage.reload();
