@@ -13,7 +13,7 @@ async function stop(p:ChildProcess){if(p.exitCode!==null)return;p.kill('SIGTERM'
 const proc=server();await waitServer();const browser=await chromium.launch({headless:true});
 try{
   const seedCtx=await browser.newContext({viewport:{width:1200,height:800}}),seed=await seedCtx.newPage();
-  await seed.goto(`${ORIGIN}/?seed=progression-v2-fixture`);await seed.waitForFunction(()=>(globalThis as any).__SALVAGE_TEST__?.getState()?.saveVersion===9);
+  await seed.goto(`${ORIGIN}/?seed=progression-v2-fixture`);await seed.waitForFunction(()=>(globalThis as any).__SALVAGE_TEST__?.getState()?.saveVersion===10);
   await seed.evaluate(()=>(globalThis as any).__SALVAGE_PLATFORM__.forceSave());
   const raw=await seed.evaluate(key=>localStorage.getItem(key),SAVE_KEY);assert.ok(raw);const base=JSON.parse(raw!);await seedCtx.close();
 
@@ -22,7 +22,7 @@ try{
   const legacyCtx=await browser.newContext({viewport:{width:1280,height:850},storageState:{cookies:[],origins:[{origin:ORIGIN,localStorage:[{name:SAVE_KEY,value:JSON.stringify(legacy)}]}]}}),legacyPage=await legacyCtx.newPage();
   await legacyPage.goto(`${ORIGIN}/?seed=progression-v2-legacy`);await legacyPage.waitForFunction(()=>(globalThis as any).__SALVAGE_TEST__?.getState()?.level===14);
   let state=await legacyPage.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.getState());
-  assert.equal(state.saveVersion,9);assert.ok(state.talents.includes('workshop_8'));assert.ok(state.talents.includes('automation_8'));
+  assert.equal(state.saveVersion,10);assert.ok(state.talents.includes('workshop_8'));assert.ok(state.talents.includes('automation_8'));
   await legacyPage.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.openTalents());
   await legacyPage.waitForSelector('#talentScreen:not([hidden])');
   assert.match(await legacyPage.locator('[data-talent="salvage_8"]').innerText(),/Tier II/);

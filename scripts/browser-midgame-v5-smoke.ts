@@ -31,7 +31,7 @@ try{
   const c1=await browser.newContext();
   await withSave(c1,{...baseSave(),v:3,midgame:undefined,totalDestroyed:750});
   const p1=await c1.newPage();await p1.goto(`${ORIGIN}/?seed=mid-v9-migrate`);await p1.waitForSelector('#garage');
-  const s1=await state(p1);assert.equal(s1.saveVersion,9);assert.ok(s1.midgame.mastery.z1>=99.9);assert.equal(s1.packB.hangarOwned,false);assert.equal(s1.packC.salvageYardOwned,false);assert.equal(s1.packD.recoveryRig.owned,false);
+  const s1=await state(p1);assert.equal(s1.saveVersion,10);assert.ok(s1.midgame.mastery.z1>=99.9);assert.equal(s1.packB.hangarOwned,false);assert.equal(s1.packC.salvageYardOwned,false);assert.equal(s1.packD.recoveryRig.owned,false);
   await p1.click('#garage');await p1.waitForSelector('#garageScreen:not([hidden])');await p1.click('#zonesGarage');await p1.waitForSelector('#zoneScreen:not([hidden])');
   assert.equal(await p1.locator('[data-zone="z1"] .masteryLine').count(),1);assert.equal(await p1.locator('[data-zone="z2"] button').isDisabled(),false);assert.equal(await p1.locator('[data-zone="z3"] button').isDisabled(),true);
   await c1.close();
@@ -42,7 +42,7 @@ try{
   await p2.waitForSelector('#zoneScreen',{state:'hidden'});assert.equal((await state(p2)).midgame.currentZone,'z3');
   const buyVan=p2.locator('#buyVan');assert.equal(await buyVan.isDisabled(),false);await buyVan.click();let s2=await state(p2);assert.equal(s2.midgame.van.owned,true);assert.ok(s2.cash<120000);
   const hire=p2.locator('#hireWorker');assert.equal(await hire.isDisabled(),false);await hire.click();s2=await state(p2);assert.equal(s2.midgame.worker.hired,true);const assign=p2.locator('[data-worker-zone="z1"]');assert.equal(await assign.isDisabled(),false);await assign.click();s2=await state(p2);assert.equal(s2.midgame.worker.assignment,'z1');
-  await p2.reload();await p2.waitForSelector('#garage');s2=await state(p2);assert.equal(s2.saveVersion,9);assert.equal(s2.midgame.van.owned,true);assert.equal(s2.midgame.worker.assignment,'z1');await c2.close();
+  await p2.reload();await p2.waitForSelector('#garage');s2=await state(p2);assert.equal(s2.saveVersion,10);assert.equal(s2.midgame.van.owned,true);assert.equal(s2.midgame.worker.assignment,'z1');await c2.close();
 
   const now=Date.now(),c3=await browser.newContext();const mid3=emptyMid(now-2*3600000);mid3.van.owned=true;mid3.worker={hired:true,assignment:'z1',lastTick:now-2*3600000};mid3.mastery.z1=100;mid3.discoveredComponents=['bearing'];
   await withSave(c3,baseSave({storage:{metal:0,copper:0,plastic:0},components:{bearing:0,motor:0,hydraulic:0,electronics:0},midgame:mid3,lastSeen:now-2*3600000}));

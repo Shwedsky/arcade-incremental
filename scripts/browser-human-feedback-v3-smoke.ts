@@ -17,7 +17,7 @@ const proc=server();await waitServer();const browser=await chromium.launch({head
 try{
   const seedContext=await browser.newContext({viewport:{width:1100,height:760}}),seedPage=await seedContext.newPage();
   await seedPage.goto(`${ORIGIN}/?seed=hf-v3-fixture`);
-  await seedPage.waitForFunction(()=>(globalThis as any).__SALVAGE_TEST__?.getState()?.saveVersion===9);
+  await seedPage.waitForFunction(()=>(globalThis as any).__SALVAGE_TEST__?.getState()?.saveVersion===10);
   await seedPage.evaluate(()=>(globalThis as any).__SALVAGE_PLATFORM__.forceSave());
   const raw=await seedPage.evaluate((key)=>localStorage.getItem(key),SAVE_KEY);assert.ok(raw,'canonical Save V8 fixture must exist');
   const fixture=JSON.parse(raw!);

@@ -39,7 +39,7 @@ const browser=await chromium.launch({headless:true});
 try{
   // 1. V5 -> current V7 migration adds Pack C/Pack D defaults without wiping accepted Pack B progress.
   const c1=await browser.newContext();await withSave(c1,baseV5());const p1=await c1.newPage();await p1.goto(`${ORIGIN}/?seed=packc-migrate`);await p1.waitForSelector('#garage');
-  const s1=await state(p1);assert.equal(s1.saveVersion,9);assert.equal(s1.packB.hangarOwned,true);assert.equal(s1.packB.truck.owned,true);assert.equal(s1.packC.salvageYardOwned,false);assert.equal(s1.packC.materials.alloyScrap,0);assert.equal(s1.packD.recoveryRig.owned,false);await c1.close();
+  const s1=await state(p1);assert.equal(s1.saveVersion,10);assert.equal(s1.packB.hangarOwned,true);assert.equal(s1.packB.truck.owned,true);assert.equal(s1.packC.salvageYardOwned,false);assert.equal(s1.packC.materials.alloyScrap,0);assert.equal(s1.packD.recoveryRig.owned,false);await c1.close();
 
   // 2. Z5 is available after mastered Z4 + Hangar + Truck; Z6 stays locked until active Controller discovery and Z5 mastery.
   const c2=await browser.newContext();await withSave(c2,baseV6({packC:packC({discoveredIndustrial:[],industrial:{industrialController:0,heavyHydraulicCylinder:0}})}));const p2=await c2.newPage();await p2.goto(`${ORIGIN}/?seed=packc-zones`);await p2.click('#garage');await p2.waitForSelector('#garageScreen:not([hidden])');
@@ -52,7 +52,7 @@ try{
   const hire3=p3.locator('#hireWorker3');assert.equal(await hire3.isDisabled(),false);await hire3.click();s3=await state(p3);assert.equal(s3.packC.crew3.hired,true);
   const operator=p3.locator('#assignOperator');assert.equal(await operator.isDisabled(),false);await operator.click();s3=await state(p3);assert.equal(s3.packC.crew3.role,'operator');assert.equal(s3.packC.crew3.assignment,null);
   const alloy=p3.locator('#packCAlloy');assert.equal(await alloy.isDisabled(),false);await alloy.click();s3=await state(p3);assert.equal(s3.packC.production.kind,'alloyBillet');const duration=s3.packC.production.endsAt-s3.packC.production.startedAt;assert.equal(duration,162000,'Workshop ×0.90 and Operator ×0.75 must combine on Pack C cell');
-  await p3.reload();await p3.waitForSelector('#garage');s3=await state(p3);assert.equal(s3.saveVersion,9);assert.equal(s3.packC.salvageYardOwned,true);assert.equal(s3.packC.crew3.hired,true);assert.equal(s3.packC.crew3.role,'operator');assert.equal(s3.packC.production.kind,'alloyBillet');assert.ok(s3.talents.includes('workshop_8'));assert.ok(s3.talents.includes('automation_8'));assert.equal(s3.packD.recoveryRig.owned,false);await c3.close();
+  await p3.reload();await p3.waitForSelector('#garage');s3=await state(p3);assert.equal(s3.saveVersion,10);assert.equal(s3.packC.salvageYardOwned,true);assert.equal(s3.packC.crew3.hired,true);assert.equal(s3.packC.crew3.role,'operator');assert.equal(s3.packC.production.kind,'alloyBillet');assert.ok(s3.talents.includes('workshop_8'));assert.ok(s3.talents.includes('automation_8'));assert.equal(s3.packD.recoveryRig.owned,false);await c3.close();
 
   console.log('browser Content Pack C proof: PASS');
 }finally{await browser.close();await stopServer()}
