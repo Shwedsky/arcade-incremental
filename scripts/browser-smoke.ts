@@ -21,7 +21,8 @@ const baseSave=(overrides:Record<string,unknown>={})=>({
 });
 async function withSave(context:BrowserContext,save:ReturnType<typeof baseSave>){await context.addInitScript(({key,value})=>{if(sessionStorage.getItem('__arcade_smoke_seeded__'))return;localStorage.setItem(key,JSON.stringify(value));sessionStorage.setItem('__arcade_smoke_seeded__','1')},{key:SAVE_KEY,value:save})}
 async function state(page:Page){return page.evaluate(()=>(globalThis as any).__SALVAGE_TEST__?.getState()) as Promise<any>}
-async function advance(page:Page,ms:number){return page.evaluate((delta)=>(globalThis as any).__SALVAGE_TEST__?.advanceWorkshopTo(Date.now()+delta),ms)}
+const workshopClock=new WeakMap<Page,number>();
+async function advance(page:Page,ms:number){const base=Math.max(Date.now(),workshopClock.get(page)??0),target=base+ms;workshopClock.set(page,target);return page.evaluate((at)=>{const test=(globalThis as any).__SALVAGE_TEST__;return test?.advanceWorkshopTo(at)},target)}
 
 await waitServer();
 const browser=await chromium.launch({headless:true});
@@ -50,7 +51,7 @@ try{
   const c6=await browser.newContext();await withSave(c6,baseSave({storage:{metal:35,copper:0,plastic:0},cash:3000}));const p6=await c6.newPage();await p6.goto(`${ORIGIN}/?seed=contract`);await p6.click('#garage');await p6.waitForSelector('#garageScreen:not([hidden])');const contractButton=p6.locator('#completeContract');assert.equal(await contractButton.isDisabled(),false);await contractButton.click();const s6=await state(p6);assert.equal(s6.contract.completed,1);assert.equal(s6.contract.index,1);assert.ok(s6.storage.metal<10);assert.ok(s6.cash>3000);assert.ok(s6.xp>=20);await c6.close();
 
   // 7. A job whose timer elapsed while the game was closed completes on return and is reported offline.
-  const now=Date.now();const c7=await browser.newContext();await withSave(c7,baseSave({installed:['workbench','press'],machineLevels:{workbench:1,press:1},jobs:[{id:'offline-process',kind:'process',label:'Прессование металла',machineId:'press',processKind:'briquette',inputResource:'metal',inputAmount:10,outputAmount:10,startedAt:now-60_000,endsAt:now-30_000}],lastSeen:now-60*60_000}));const p7=await c7.newPage();await p7.goto(`${ORIGIN}/?seed=offline-job`);await p7.waitForSelector('#offlineScreen:not([hidden])');const s7=await state(p7);assert.equal(s7.jobs.length,0);assert.ok(s7.processed.briquette>=10);assert.match((await p7.locator('#offlineLoot').textContent())??'',/Брикеты/);await c7.close();
+  const n=Date.now();const c7=await browser.newContext();await withSave(c7,baseSave({installed:['workbench','press'],machineLevels:{workbench:1,press:1},jobs:[{id:'offline-process',kind:'process',label:'Прессование металла',machineId:'press',processKind:'briquette',inputResource:'metal',inputAmount:10,outputAmount:10,startedAt:n-60_000,endsAt:n-30_000}],lastSeen:n-60*60_000}));const p7=await c7.newPage();await p7.goto(`${ORIGIN}/?seed=offline-job`);await p7.waitForSelector('#offlineScreen:not([hidden])');const s7=await state(p7);assert.equal(s7.jobs.length,0);assert.ok(s7.processed.briquette>=10);assert.match((await p7.locator('#offlineLoot').textContent())??'',/Брикеты/);await c7.close();
 
   // 8. Workshop parallel talent visibly expands queue capacity to two slots.
   const c8=await browser.newContext();await withSave(c8,baseSave({xp:5200,talents:['workshop_1','workshop_2','workshop_3']}));const p8=await c8.newPage();await p8.goto(`${ORIGIN}/?seed=parallel`);await p8.click('#garage');await p8.waitForSelector('#garageScreen:not([hidden])');assert.match((await p8.locator('#queuePanel').textContent())??'',/0 \/ 2/);await c8.close();

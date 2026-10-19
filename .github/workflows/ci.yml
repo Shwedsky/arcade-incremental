@@ -8,7 +8,7 @@ on:
 jobs:
   build-and-smoke:
     runs-on: ubuntu-latest
-    timeout-minutes: 22
+    timeout-minutes: 24
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -22,6 +22,10 @@ jobs:
         run: npm run smoke
       - name: Early-game systems smoke
         run: npm run smoke:early
+      - name: Workshop scheduler domain smoke
+        run: npm run smoke:workshop-scheduler
+      - name: Workshop scheduler V7 migration smoke
+        run: npm run smoke:workshop-migration
       - name: Midgame domain smoke
         run: npm run smoke:midgame
       - name: Visual foundation smoke
@@ -54,14 +58,16 @@ jobs:
         run: npm run smoke:browser:packc
       - name: Headless browser Content Pack D proof
         run: npm run smoke:browser:packd
+      - name: Workshop Queue desktop/mobile browser proof
+        run: npm run smoke:browser:workshop-queue
       - name: Platform and responsive browser proof
         run: npm run smoke:browser:platform
       - name: Build release manifest
         run: npm run release:manifest
       - name: Package release candidate
-        run: zip -r arcade-incremental-release-candidate-v4.zip dist
+        run: zip -r arcade-incremental-release-candidate-v5.zip dist
       - uses: actions/upload-artifact@v4
         with:
-          name: arcade-incremental-release-candidate-v4
-          path: arcade-incremental-release-candidate-v4.zip
+          name: arcade-incremental-release-candidate-v5
+          path: arcade-incremental-release-candidate-v5.zip
           if-no-files-found: error
