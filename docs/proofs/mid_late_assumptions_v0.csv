@@ -1,0 +1,30 @@
+category,key,value,unit_or_note
+zone_value,Z1,5355,cash-equivalent gross per active hour
+zone_value,Z2,5880,cash-equivalent gross per active hour
+zone_value,Z3,8625,cash-equivalent gross per active hour
+zone_value,Z4,10415,cash-equivalent gross per active hour
+zone_value,Z5,15705,cash-equivalent gross per active hour
+zone_value,Z6,20600,cash-equivalent gross per active hour
+zone_value,Z7,23745,cash-equivalent gross per active hour
+zone_value,Z8,31775,cash-equivalent gross per active hour
+milestone,van,8.0,min progress h
+milestone_cost,van,70000,cash-equivalent placeholder
+milestone,worker,12.0,min progress h
+milestone_cost,worker,35000,cash-equivalent placeholder
+milestone,garage_full,18.0,min progress h
+milestone_cost,garage_full,90000,cash-equivalent placeholder
+milestone,hangar,28.0,min progress h
+milestone_cost,hangar,220000,cash-equivalent placeholder
+milestone,truck,38.0,min progress h
+milestone_cost,truck,180000,cash-equivalent placeholder
+milestone,salvage_yard,45.0,min progress h
+milestone_cost,salvage_yard,250000,cash-equivalent placeholder
+milestone,industrial_workshop,75.0,min progress h
+milestone_cost,industrial_workshop,650000,cash-equivalent placeholder
+milestone,processing_plant,120.0,min progress h
+milestone_cost,processing_plant,1200000,cash-equivalent placeholder
+offline,base_efficiency,0.20,active-equivalent
+offline,base_cap,2.0,hours per absence
+worker,early_bulk_ratio,0.20,of zone active bulk rate
+worker,mature_bulk_ratio,0.45,representative industrial-workshop crew
+talent,post_20h_point_cadence,2.0,"progress hours per point, plus milestone bonuses"
