@@ -22,7 +22,7 @@ const baseSave=(overrides:Record<string,unknown>={})=>({
   v:4,xp:8000,storage:{metal:120,copper:20,plastic:20},components:{bearing:3,motor:2,hydraulic:1,electronics:2},processed:{briquette:0,cleanCopper:12,granulate:0},cash:120000,
   installed:['workbench','press','wire'],machineLevels:{workbench:1,press:1,wire:1},talents:[],equipmentLevels:{tool:3,cart:3},jobs:[],contract:{index:0,completed:0},totalDestroyed:900,lastSeen:Date.now(),midgame:emptyMid(),...overrides
 });
-async function withSave(context:BrowserContext,save:any){await context.addInitScript(({key,value})=>{localStorage.setItem(key,JSON.stringify(value))},{key:SAVE_KEY,value:save})}
+async function withSave(context:BrowserContext,save:any){await context.addInitScript(({key,value})=>{if(sessionStorage.getItem('__arcade_midgame_smoke_seeded__'))return;localStorage.setItem(key,JSON.stringify(value));sessionStorage.setItem('__arcade_midgame_smoke_seeded__','1')},{key:SAVE_KEY,value:save})}
 async function state(page:Page){return page.evaluate(()=>(globalThis as any).__SALVAGE_TEST__?.getState()) as Promise<any>}
 
 await waitServer();
