@@ -1,0 +1,15 @@
+process,tier,input_key,input_amount,output_key,output_amount,base_cycle_sec,operator_cycle_sec
+briquette,raw,metal,10,briquette,10,30,22.5
+clean_copper,raw,copper,5,clean_copper,5,38,28.5
+granulate,raw,plastic,10,granulate,10,42,31.5
+steel_blank,processed,briquette,25,steel_blank,20,150,112.5
+aluminium_billet,raw,aluminium,20,aluminium_billet,16,180,135.0
+alloy_billet,raw,alloy_scrap,25,alloy_billet,18,240,180.0
+drive_module,module,mixed,1,drive_module,1,360,270.0
+control_module,module,mixed,1,control_module,1,420,315.0
+hydraulic_power_module,module,mixed,1,hydraulic_power_module,1,480,360.0
+structural_frame,module,mixed,1,structural_frame,1,600,450.0
+industrial_drive,advanced,drive_module,1,industrial_drive,1,720,540.0
+industrial_control,advanced,control_module,1,industrial_control,1,840,630.0
+heavy_hydraulic,advanced,hydraulic_power_module,1,heavy_hydraulic,1,840,630.0
+heavy_frame,advanced,structural_frame,1,heavy_frame,1,960,720.0
