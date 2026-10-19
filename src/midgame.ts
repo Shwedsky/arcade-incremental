@@ -2,6 +2,10 @@ import { BASE_DPS, getTargetClass, type ComponentKind, type ResourceKind, type S
 import type { MachineId } from './garage.ts';
 import { PACK_C_ZONE_PROFILES } from './content_pack_c.ts';
 import { PACK_D_ZONE_PROFILE } from './content_pack_d.ts';
+import {
+  createDefaultWorkerEconomy,normalizeWorkerEconomy,simulateBenchmarkedWorker,
+  type WorkerEconomyV2State
+} from './worker_economy_v2.ts';
 
 export type ZoneId = 'z1' | 'z2' | 'z3' | 'z4' | 'z5' | 'z6' | 'z7';
 export type MidComponentKind = 'pump' | 'compressor';
@@ -31,12 +35,12 @@ export const ZONE_DEFS: Record<ZoneId, ZoneDef> = {
   z2:{
     id:'z2',order:2,name:'Гаражи и дворы',subtitle:'Зона 2',description:'Больше техники, насосов, моторов и кабеля. Первый настоящий шаг за пределы старой свалки.',
     nodeWeights:{small_scrap:.20,cable:.20,small_appliance:.22,bike_fan:.16,medium_appliance:.15,large_appliance:.07},
-    hpMultiplier:1.25,yieldMultiplier:1.15,masteryTarget:2400,recommendedTool:2
+    hpMultiplier:1.25,yieldMultiplier:1.30,masteryTarget:2400,recommendedTool:2
   },
   z3:{
     id:'z3',order:3,name:'Свалка бытовой техники',subtitle:'Зона 3',description:'Плотная крупная техника, холодильники и компрессорные цели. Здесь фургон начинает менять длину вылазки.',
     nodeWeights:{small_scrap:.10,cable:.08,small_appliance:.20,bike_fan:.10,medium_appliance:.32,large_appliance:.20},
-    hpMultiplier:1.50,yieldMultiplier:1.35,masteryTarget:4500,recommendedTool:3
+    hpMultiplier:1.50,yieldMultiplier:1.45,masteryTarget:4500,recommendedTool:3
   },
   z4:{
     id:'z4',order:4,name:'Авторазборка',subtitle:'Зона 4',description:'Кузовщина, агрегаты и силовая электрика. Первый источник коробок передач и генераторов для тяжёлой логистики.',
@@ -79,6 +83,7 @@ export interface MidgameState {
   pity:Record<MidComponentKind,number>;
   van:VanState;
   worker:WorkerState;
+  economyV2:WorkerEconomyV2State;
 }
 
 export interface ZoneUnlockContext {
@@ -109,7 +114,7 @@ export function createDefaultMidgame(now=Date.now()):MidgameState{
     currentZone:'z1',mastery:{z1:0,z2:0,z3:0,z4:0,z5:0,z6:0,z7:0},discoveredComponents:[],discoveredMidComponents:[],midComponents:emptyMidComponentRecord(),
     pity:{pump:0,compressor:0},
     van:{owned:false,resources:emptyResourceRecord(),components:emptyComponentRecord(),midComponents:emptyMidComponentRecord()},
-    worker:{hired:false,assignment:null,lastTick:now}
+    worker:{hired:false,assignment:null,lastTick:now},economyV2:createDefaultWorkerEconomy(now)
   };
 }
 
@@ -132,7 +137,8 @@ export function normalizeMidgame(value:Partial<MidgameState>|undefined,now=Date.
     midComponents:{...base.midComponents,...value.midComponents},
     pity:{...base.pity,...value.pity},
     van:{...base.van,...value.van,resources:{...base.van.resources,...value.van?.resources},components:{...base.van.components,...value.van?.components},midComponents:{...base.van.midComponents,...value.van?.midComponents}},
-    worker:{...base.worker,...value.worker}
+    worker:{...base.worker,...value.worker},
+    economyV2:normalizeWorkerEconomy(value.economyV2,now)
   };
 }
 
@@ -203,6 +209,7 @@ export function applyZoneProfile(targets:SalvageTarget[],zoneId:ZoneId,rng:()=>n
 }
 
 export function zoneYieldMultiplier(id:ZoneId):number{return ZONE_DEFS[id].yieldMultiplier}
+export function zoneXpMultiplier(id:ZoneId):number{return id==='z2'?1.20:id==='z3'?1.30:1}
 
 export function discoverComponent(state:MidgameState,kind:ComponentKind):void{
   if(!state.discoveredComponents.includes(kind))state.discoveredComponents.push(kind);
@@ -245,7 +252,7 @@ export function unloadVanToStorage(van:VanState,storage:Record<ResourceKind,numb
   return weight;
 }
 
-export function canHireFirstWorker(state:MidgameState,cash:number):boolean{return state.van.owned&&!state.worker.hired&&zoneMastered(state,'z1')&&cash>=FIRST_WORKER_COST}
+export function canHireFirstWorker(state:MidgameState,cash:number):boolean{return !state.worker.hired&&zoneMastered(state,'z1')&&cash>=FIRST_WORKER_COST}
 export function canAssignWorker(state:MidgameState,id:ZoneId):boolean{return state.worker.hired&&zoneMastered(state,id)}
 export function assignWorker(state:MidgameState,id:ZoneId,now=Date.now()):boolean{
   if(!canAssignWorker(state,id))return false;
@@ -257,6 +264,9 @@ export interface WorkerGain {
   resources:Record<ResourceKind,number>;
   components:Record<ComponentKind,number>;
   weight:number;
+  source?:'benchmark'|'legacy'|'none';
+  activeShare?:number;
+  offlineRemainingHours?:number;
 }
 
 const WORKER_RATES:Record<ZoneId,Record<ResourceKind,number>>={
@@ -269,19 +279,15 @@ const WORKER_RATES:Record<ZoneId,Record<ResourceKind,number>>={
   z7:{metal:188,copper:14,plastic:5}
 };
 
-export function simulateWorkerGain(state:MidgameState,now=Date.now(),maxHours=8):WorkerGain{
-  const empty:WorkerGain={hours:0,resources:emptyResourceRecord(),components:emptyComponentRecord(),weight:0};
+export function simulateWorkerGain(state:MidgameState,now=Date.now(),_legacyMaxHours=8,offline=false):WorkerGain{
+  const empty:WorkerGain={hours:0,resources:emptyResourceRecord(),components:emptyComponentRecord(),weight:0,source:'none',activeShare:0,offlineRemainingHours:state.economyV2.shifts.w1.remainingOfflineMs/3_600_000};
   if(!state.worker.hired||!state.worker.assignment){state.worker.lastTick=now;return empty}
-  const elapsed=Math.max(0,(now-state.worker.lastTick)/3_600_000),hours=Math.min(elapsed,maxHours);
-  if(hours<=0)return empty;
-  const rates=WORKER_RATES[state.worker.assignment],resources:Record<ResourceKind,number>={metal:rates.metal*hours,copper:rates.copper*hours,plastic:rates.plastic*hours};
-  const components=emptyComponentRecord();
-  if(state.discoveredComponents.includes('bearing'))components.bearing=Math.floor(hours*.12);
-  if(state.discoveredComponents.includes('motor'))components.motor=Math.floor(hours*.045);
-  if(state.discoveredComponents.includes('electronics'))components.electronics=Math.floor(hours*.04);
-  if(state.discoveredComponents.includes('hydraulic'))components.hydraulic=Math.floor(hours*.015);
-  state.worker.lastTick=now;
-  return{hours,resources,components,weight:resources.metal+resources.copper+resources.plastic};
+  const gain=simulateBenchmarkedWorker({
+    state:state.economyV2,slot:'w1',zone:state.worker.assignment,lastTick:state.worker.lastTick,now,offline,
+    discoveredComponents:state.discoveredComponents,legacyRates:WORKER_RATES[state.worker.assignment]
+  });
+  state.worker.lastTick=gain.lastTick;
+  return{hours:gain.hours,resources:gain.resources,components:gain.components,weight:gain.weight,source:gain.source,activeShare:gain.activeShare,offlineRemainingHours:gain.offlineRemainingHours};
 }
 
 export function midComponentName(kind:MidComponentKind):string{return kind==='pump'?'Насос':'Компрессор'}
