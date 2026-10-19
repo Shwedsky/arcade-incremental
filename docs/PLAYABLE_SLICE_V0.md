@@ -1,8 +1,8 @@
 # Playable Salvage Slice V0
 
-Status: **INTERNAL COMPLETION PASS — SYSTEMS BASELINE GREEN, OWNER PACKAGE STILL WITHHELD**
+Status: **EARLY-GAME SYSTEMS COMPLETE / FINAL INTERNAL CI BEFORE OWNER PACKAGE**
 
-This branch started as a narrow active-scavenging proof and is now being completed into a coherent early-game slice before the next human build is sent.
+This branch started as a narrow active-scavenging proof and has now become the coherent early-game systems slice requested by owner review. Production visuals remain intentionally deferred.
 
 ## Accepted foundation
 - dense top-down salvage field;
@@ -14,123 +14,152 @@ This branch started as a narrow active-scavenging proof and is now being complet
 - garage/base loop;
 - current visuals are functional scaffolding only.
 
-## Hard rules added after owner review
+## Hard owner rules
 
 ### Garage is home
 The garage can be entered at **any time**. There is no minimum cart fill. `G` is a shortcut.
 
-Returning home unloads current collected cargo and preserves the current salvage route unless the field is almost exhausted.
+Returning home unloads current cargo and preserves the current salvage route unless the field is almost exhausted.
 
-### Progression must already exist before next test
-The next owner-facing package must include:
-- XP and levels;
-- mastery points;
-- five development branches;
-- prerequisites;
-- real early talent effects;
-- Combo deeper in Salvage;
-- persistent state;
-- machine unlock/build/upgrade clarity;
-- working first processing/sale loop.
+### The next test is a game loop, not another narrow proof
+The owner-facing build must already contain XP, levels, mastery, development branches, physical upgrades, machine progression, persistence, timed work, economy and a reason to keep/select resources.
 
 ## Current runtime systems
 
 ### XP / mastery
-XP comes from dismantled target class plus a bonus for component drops. Level thresholds and mastery pacing are defined in `docs/PROGRESSION_RUNTIME_V0.md` and implemented in `src/progression.ts`.
-
-The committed progression proof uses the approved ~9 breaks/minute loop and yields ~962 XP per active hour. Under that expected-value baseline:
+XP comes from dismantled target class plus component-drop bonuses. The committed progression proof uses the approved ~9 breaks/minute calibration and yields about 962 XP per active hour:
 - first mastery point: ~7.5 active minutes;
 - second: ~26 minutes;
 - third / earliest focused Combo: ~112 minutes (~1.87 h).
 
 ### Talent tree
-35 visible nodes:
+35 visible nodes across:
 - Salvage;
 - Logistics;
 - Workshop;
 - Automation;
 - Trade.
 
-Early nodes are functional. Later nodes that depend on not-yet-implemented systems remain visible but cannot waste mastery points.
+Early nodes are functional. Nodes that depend on later unimplemented systems remain visible but cannot waste mastery points.
 
-### Combo
-Combo is Salvage tier 3 and requires the first two Salvage nodes plus player level 4.
+Combo is Salvage tier 3 and requires Salvage 1+2 plus player level 4.
+
+### Physical equipment
+Tool and cart progression are separate from talents.
+
+Tool levels currently progress from old crowbar -> reinforced pry bar -> battery cutter -> hydraulic shears and materially change dismantle power.
+
+Cart levels currently progress 40 -> 55 -> 75 -> 100 kg base capacity. Logistics talents add bonuses on top.
+
+Both equipment families use player-level gates, explicit recipes and timed fabrication.
+
+See `docs/EARLY_GAME_SYSTEMS_V0.md`.
 
 ### Garage / machines
 Machine tiles and inspector show:
 - unlock conditions;
-- build recipe;
+- exact build recipe;
 - owned/missing values;
 - source hints;
 - installed level;
 - next upgrade gates;
-- exact next upgrade recipe.
+- exact next upgrade recipe;
+- current queued state / remaining time.
 
-Machine tiles also carry a concise direct summary so upgrade requirements are not hidden behind the inspector.
+The first press remains the first major machine milestone.
 
-### Early economy
-- raw material sale;
-- processed-material sale;
-- ready-made machine shortcut pricing;
-- Trade talents affect sale/shop multipliers;
-- Workshop talent affects construction cost / processed yield.
+### Timed workshop queue
+Workshop work is no longer instant.
 
-### Machine work
-Prototype immediate-batch actions exist for:
+The queue handles:
+- machine fabrication;
+- machine upgrades;
+- tool/cart fabrication;
+- processing batches.
+
+Base workshop has one slot. Workshop talent `Parallel work` opens slot 2. `Calibration` speeds work.
+
+Jobs use persisted timestamps, so they continue while scavenging and while the game is closed. Resources are committed when work starts; the result appears only at completion.
+
+Base first press fabrication time is 12 minutes. Ready-made purchase remains the fast/expensive shortcut.
+
+### Timed processing
+Installed machines process through the same queue:
 - press -> briquettes;
 - wire stripper -> clean copper;
 - plastic shredder -> granulate.
 
-Timers/queues remain a later refinement.
+`Automation -> Auto-feed` can continue batches while stock remains, including across offline time.
+
+### Contracts / economy
+The garage now has a rotating first contract loop. Contracts consume requested stock and give both cash and XP.
+
+This creates an early decision between:
+- selling raw stock now;
+- reserving materials/components for machine/equipment recipes;
+- reserving them for a contract;
+- processing them for better value.
+
+Discrete component requirements remain whole items even when contract difficulty scales.
+
+Raw/processed selling, ready-made machine pricing, Workshop modifiers and Trade modifiers remain integrated.
 
 ### Persistence / offline
-Local save persists progression/economy. Offline baseline begins at the approved 20% / 2h and Automation nodes modify it.
+Local save V3 persists progression, economy, equipment levels, machine levels, contract progress and active workshop jobs.
 
-## Automated browser acceptance
+Old V2 saves migrate forward.
 
-A real headless Chromium run now validates the integrated UI/runtime rather than only pure functions. It verifies:
-- a fresh player can enter the garage with a **0 kg** cart;
-- the first press tile directly exposes metal, bearings and hydraulic requirements;
-- exactly five talent branches and 35 nodes render;
-- Combo is unavailable at the start;
-- at level 4 with Salvage 1+2, Combo becomes spendable;
-- the purchased Combo talent survives a page reload;
-- an installed press exposes its next-upgrade gates and exact effective recipe on both tile and inspector;
-- Workshop cost discounts are reflected in the displayed effective requirements.
+On return, the game first resolves workshop jobs that finished while away and then applies the approved passive salvage baseline (20% / 2h before talents). The offline report shows both categories.
 
-The latest integrated runtime run passed:
-- TypeScript typecheck/build;
-- deterministic gameplay smoke;
-- committed progression pacing proof check;
-- headless Chromium progression smoke;
-- distributable packaging.
+## Automated acceptance
+
+Pure/system tests cover:
+- deterministic salvage/drop behavior;
+- machine recipes and progression gates;
+- XP/mastery pacing proof;
+- tool/cart level definitions;
+- queue slots / speed modifiers;
+- timed processing math;
+- auto-feed;
+- contract rotation/scaling;
+- whole-item component requirements.
+
+A real headless Chromium flow additionally verifies:
+- garage access with a 0 kg cart;
+- five branches / 35 nodes;
+- Combo prerequisite and reload persistence;
+- exact next-upgrade press requirements;
+- physical tool fabrication is queued rather than instant and persists;
+- first press fabrication is queued rather than instant;
+- first press processing is timed;
+- first contract consumes stock and grants cash + XP;
+- an elapsed workshop job completes after offline return and appears in the report;
+- Workshop parallel talent visibly creates two queue slots.
 
 ## Visual policy
-Do not spend the next iteration polishing these placeholder Canvas drawings. Once the system loop is stable, production visuals return to `docs/VISUAL_BASELINE.md` and the approved concept evidence.
+Do not spend this pass polishing placeholder Canvas art. Once this systems loop passes the owner feel test, production visuals return to `docs/VISUAL_BASELINE.md` and the approved concept evidence.
 
 ## Internal acceptance checklist
+- [x] anytime garage/home access;
+- [x] field route survives ordinary garage visits;
+- [x] XP / levels / mastery;
+- [x] 35-node / five-branch tree;
+- [x] Combo prerequisites and runtime effect;
+- [x] physical tool progression;
+- [x] physical cart progression;
+- [x] explicit machine build/upgrade gates and recipes;
+- [x] timed persistent workshop queue;
+- [x] offline fabrication/processing completion;
+- [x] timed first processing loop;
+- [x] raw/processed sale loop;
+- [x] rotating first contracts with cash + XP;
+- [x] local save migration V2 -> V3;
+- [x] deterministic/system/browser test coverage;
+- [ ] latest documentation head CI/package green.
 
-- [x] garage action no longer has a cart-fill gate;
-- [x] field state persists through ordinary garage visits;
-- [x] XP / level / mastery runtime exists;
-- [x] 35-node / 5-branch tree exists;
-- [x] Combo is tier 3 in Salvage and has prerequisites;
-- [x] early talent effects modify runtime values;
-- [x] station cards expose concise build/upgrade requirements;
-- [x] inspector exposes exact unlock/build/upgrade requirements and sources;
-- [x] installed station levels/upgrades exist;
-- [x] first processing actions exist;
-- [x] raw/processed sale loop exists;
-- [x] persistence exists;
-- [x] offline baseline/report exists;
-- [x] pure smoke tests cover progression gates and machine requirements;
-- [x] XP/mastery pacing has a committed reproducible proof;
-- [x] integrated headless-browser runtime sanity pass covers owner-requested flows;
-- [x] runtime CI/build/smoke/browser/package pipeline is green.
+## Owner test target
+The next owner test should be played as a coherent early game, not as isolated feature checks:
 
-## Next test gate
-No new ZIP is sent merely because CI is green.
+`свалка -> XP/уровень -> выбор ветки -> физический апгрейд -> свободный возврат домой -> продажа/контракт -> сборка пресса -> ожидание в игре/offline -> переработка -> следующий виток`.
 
-Before the next owner package, the remaining work is product completeness rather than another isolated technical proof. The branch should be reviewed as a small early-game loop: field -> XP/talents -> freely return home -> sell/build/process/upgrade -> return to the same field -> persist/offline return.
-
-Production visual replacement remains intentionally deferred until that systems loop is accepted.
+The main questions for that test are pacing and clarity. Production visual replacement follows after the systems loop is accepted.
