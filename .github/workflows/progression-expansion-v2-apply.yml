@@ -1,0 +1,29 @@
+name: progression-expansion-v2-apply
+
+on:
+  push:
+    branches: [feature/progression-expansion-v2]
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/progression-expansion-v2
+          fetch-depth: 0
+      - name: Apply runtime integration
+        run: node scripts/apply-progression-expansion-v2-runtime.mjs
+      - name: Remove one-shot tooling and persist runtime
+        run: |
+          rm scripts/apply-progression-expansion-v2-runtime.mjs
+          rm .github/workflows/progression-expansion-v2-apply.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/main.ts src/midgame.ts src/contract_board_v2.ts scripts/apply-progression-expansion-v2-runtime.mjs .github/workflows/progression-expansion-v2-apply.yml
+          git commit -m "feat: integrate Progression Expansion V2 runtime"
+          git push origin HEAD:feature/progression-expansion-v2
