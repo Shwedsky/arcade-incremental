@@ -11,7 +11,7 @@ const viteBin=fileURLToPath(new URL('../node_modules/vite/bin/vite.js',import.me
 function server():ChildProcess{return spawn(process.execPath,[viteBin,'preview','--host','127.0.0.1','--port',String(PORT),'--strictPort','--outDir',dist],{stdio:['ignore','pipe','pipe']})}
 async function waitServer(){for(let i=0;i<80;i++){try{const r=await fetch(ORIGIN);if(r.ok)return}catch{}await new Promise(r=>setTimeout(r,125))}throw new Error('server did not start')}
 async function stop(proc:ChildProcess){if(proc.exitCode!==null)return;proc.kill('SIGTERM');await Promise.race([once(proc,'exit'),new Promise(r=>setTimeout(r,1200))]);if(proc.exitCode===null)proc.kill('SIGKILL')}
-async function pseudoContent(page:any,index:number){return page.locator('#components > span').nth(index).evaluate((el:Element)=>getComputedStyle(el,'::before').content)}
+async function knowledgeIcon(page:any,index:number){return page.locator('#components > span').nth(index).locator(':scope > .hfFieldKnowledgeIcon').textContent()}
 
 const proc=server();await waitServer();const browser=await chromium.launch({headless:true});
 try{
@@ -37,21 +37,22 @@ try{
   const page=await context.newPage();await page.goto(`${ORIGIN}/?seed=hf-v3-smoke`);
   await page.waitForFunction(()=>(globalThis as any).__SALVAGE_TEST__?.getState()?.midgame?.currentZone==='z2');
   await page.waitForFunction(()=>document.querySelectorAll('#components > span').length>=9);
-  await page.waitForFunction(()=>document.querySelector('#components > span:nth-child(5)')?.classList.contains('hfKnownOnly'));
+  await page.waitForFunction(()=>document.querySelector('#components > span:nth-child(5) .hfFieldKnowledgeIcon')?.textContent==='◍');
 
-  assert.equal(await pseudoContent(page,4),'"◍"','previously discovered Pump must stay revealed with zero current-haul count');
-  assert.equal(await pseudoContent(page,5),'"?"','undiscovered Compressor must remain hidden');
+  assert.equal(await knowledgeIcon(page,4),'◍','previously discovered Pump must stay visibly revealed with zero current-haul count');
+  assert.equal(await page.locator('#components > span').nth(4).getAttribute('aria-label'),'Насос');
+  assert.equal(await page.locator('#components > span').nth(5).evaluate(el=>el.classList.contains('hfKnownOnly')),false,'undiscovered Compressor must remain unknown');
 
   // Re-entering the field through base must not erase player knowledge.
   await page.click('#garage');await page.waitForSelector('#garageScreen:not([hidden])');await page.click('#next');await page.waitForSelector('#garageScreen[hidden]');
-  await page.waitForFunction(()=>document.querySelector('#components > span:nth-child(5)')?.classList.contains('hfKnownOnly'));
-  assert.equal(await pseudoContent(page,4),'"◍"','Pump must remain revealed after base round-trip');
+  await page.waitForFunction(()=>document.querySelector('#components > span:nth-child(5) .hfFieldKnowledgeIcon')?.textContent==='◍');
+  assert.equal(await knowledgeIcon(page,4),'◍','Pump must remain revealed after base round-trip');
 
   // Save/reload must preserve the discovery too.
   await page.evaluate(()=>(globalThis as any).__SALVAGE_PLATFORM__.forceSave());await page.reload();
   await page.waitForFunction(()=>(globalThis as any).__SALVAGE_TEST__?.getState()?.midgame?.discoveredMidComponents?.includes('pump'));
-  await page.waitForFunction(()=>document.querySelector('#components > span:nth-child(5)')?.classList.contains('hfKnownOnly'));
-  assert.equal(await pseudoContent(page,4),'"◍"','Pump must remain revealed after Save V8 reload');
+  await page.waitForFunction(()=>document.querySelector('#components > span:nth-child(5) .hfFieldKnowledgeIcon')?.textContent==='◍');
+  assert.equal(await knowledgeIcon(page,4),'◍','Pump must remain revealed after Save V8 reload');
 
   // Z2 garage facades used to be hard-coded at y=34. Record their canvas roundRect Y,
   // move vertically, and prove the scenery now follows camera/parallax instead of the viewport.
