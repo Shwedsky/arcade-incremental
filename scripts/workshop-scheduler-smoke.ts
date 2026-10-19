@@ -3,7 +3,7 @@ import {
   activeWorkshopActions, advanceWorkshopScheduler, batchRemainingCount, cancelWorkshopAction,
   createBatchAction, createOneShotAction, createWorkshopScheduler, enqueueWorkshopAction,
   moveWaitingAction, removeTerminalWorkshopActions, reorderWaitingAction, setWaitingBatchCount,
-  waitingWorkshopActions, type WorkshopQueueAction, type WorkshopSchedulerAdapter,
+  waitingWorkshopActions, type WorkshopSchedulerAdapter,
 } from '../src/workshop_scheduler.ts';
 
 interface Inventory{metal:number;copper:number;briquette:number;cleanCopper:number;upgradeCompleted:number;otherCompleted:number}
@@ -69,13 +69,14 @@ const copper=(id:string,count=10,createdAt=0)=>createBatchAction({id,label:'За
   advanceWorkshopScheduler(state,1_000,1,a);assert.equal(activeWorkshopActions(state)[0]?.id,'copper','edited priority must decide the next action after the fixed active item');
 }
 
-// 4. Exactly two logical actions run concurrently with two slots; third stays waiting until a slot frees.
+// 4. Exactly two logical actions run concurrently with two slots. A batch keeps its occupied slot until its whole logical action finishes.
 {
   const state=createWorkshopScheduler(0),inv:Inventory={metal:100,copper:50,briquette:0,cleanCopper:0,upgradeCompleted:0,otherCompleted:0},a=adapter(inv);
   enqueueWorkshopAction(state,upgrade('one',0,100));enqueueWorkshopAction(state,press('two',2));enqueueWorkshopAction(state,copper('three',2));
   advanceWorkshopScheduler(state,0,2,a);assert.deepEqual(activeWorkshopActions(state).map(x=>x.id),['one','two']);assert.equal(waitingWorkshopActions(state)[0]?.id,'three');
-  advanceWorkshopScheduler(state,10,2,a);assert.equal(activeWorkshopActions(state).length,2,'never exceed exactly two active logical actions');
-  assert.ok(activeWorkshopActions(state).some(x=>x.id==='three'),'third action may enter only after the short batch frees its slot');
+  advanceWorkshopScheduler(state,10,2,a);assert.deepEqual(activeWorkshopActions(state).map(x=>x.id),['one','two'],'the batch must keep the slot between stack 1 and stack 2');
+  advanceWorkshopScheduler(state,20,2,a);assert.equal(activeWorkshopActions(state).length,2,'never exceed exactly two active logical actions');
+  assert.ok(activeWorkshopActions(state).some(x=>x.id==='three'),'third action may enter only after the full short batch frees its slot');
 }
 
 // 5. Blocked batch preserves its progress and does not prevent a later eligible action from using the free slot.
