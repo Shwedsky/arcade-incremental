@@ -1,7 +1,7 @@
 import { BASE_DPS, getTargetClass, type ComponentKind, type ResourceKind, type SalvageTarget, type TargetClassId } from './sim.ts';
 import type { MachineId } from './garage.ts';
 
-export type ZoneId = 'z1' | 'z2' | 'z3';
+export type ZoneId = 'z1' | 'z2' | 'z3' | 'z4';
 export type MidComponentKind = 'pump' | 'compressor';
 
 export interface ZoneDef {
@@ -35,6 +35,11 @@ export const ZONE_DEFS: Record<ZoneId, ZoneDef> = {
     id:'z3',order:3,name:'Свалка бытовой техники',subtitle:'Зона 3',description:'Плотная крупная техника, холодильники и компрессорные цели. Здесь фургон начинает менять длину вылазки.',
     nodeWeights:{small_scrap:.10,cable:.08,small_appliance:.20,bike_fan:.10,medium_appliance:.32,large_appliance:.20},
     hpMultiplier:1.50,yieldMultiplier:1.35,masteryTarget:4500,recommendedTool:3
+  },
+  z4:{
+    id:'z4',order:4,name:'Авторазборка',subtitle:'Зона 4',description:'Кузовщина, агрегаты и силовая электрика. Первый источник коробок передач и генераторов для тяжёлой логистики.',
+    nodeWeights:{small_scrap:.10,cable:.11,small_appliance:.11,bike_fan:.14,medium_appliance:.30,large_appliance:.24},
+    hpMultiplier:1.85,yieldMultiplier:1.58,masteryTarget:6200,recommendedTool:4
   }
 };
 
@@ -87,7 +92,7 @@ export function emptyMidComponentRecord():Record<MidComponentKind,number>{return
 
 export function createDefaultMidgame(now=Date.now()):MidgameState{
   return{
-    currentZone:'z1',mastery:{z1:0,z2:0,z3:0},discoveredComponents:[],discoveredMidComponents:[],midComponents:emptyMidComponentRecord(),
+    currentZone:'z1',mastery:{z1:0,z2:0,z3:0,z4:0},discoveredComponents:[],discoveredMidComponents:[],midComponents:emptyMidComponentRecord(),
     pity:{pump:0,compressor:0},
     van:{owned:false,resources:emptyResourceRecord(),components:emptyComponentRecord(),midComponents:emptyMidComponentRecord()},
     worker:{hired:false,assignment:null,lastTick:now}
@@ -96,8 +101,6 @@ export function createDefaultMidgame(now=Date.now()):MidgameState{
 
 export function migrateMidgameFromV3(totalDestroyed:number,components:Record<ComponentKind,number>,now=Date.now()):MidgameState{
   const state=createDefaultMidgame(now);
-  // Do not erase accepted early-game effort when Save V3 moves forward.
-  // ~750 representative Z1 destructions ~= the intended first mastery window.
   state.mastery.z1=Math.min(100,totalDestroyed/750*100);
   state.discoveredComponents=(Object.keys(components) as ComponentKind[]).filter(k=>components[k]>0);
   return state;
@@ -106,8 +109,9 @@ export function migrateMidgameFromV3(totalDestroyed:number,components:Record<Com
 export function normalizeMidgame(value:Partial<MidgameState>|undefined,now=Date.now()):MidgameState{
   const base=createDefaultMidgame(now);
   if(!value)return base;
+  const current=(value.currentZone&&ZONE_DEFS[value.currentZone])?value.currentZone:'z1';
   return{
-    ...base,...value,
+    ...base,...value,currentZone:current,
     mastery:{...base.mastery,...value.mastery},
     discoveredComponents:[...(value.discoveredComponents??[])],
     discoveredMidComponents:[...(value.discoveredMidComponents??[])],
@@ -127,9 +131,15 @@ export function zoneUnlock(state:MidgameState,id:ZoneId,ctx:ZoneUnlockContext):{
     if(!ctx.installed.has('press'))return{ok:false,reason:'Сначала установи малый гидропресс'};
     return{ok:true};
   }
-  if(ctx.level<6)return{ok:false,reason:'Нужен уровень 6'};
-  if(!ctx.installed.has('wire'))return{ok:false,reason:'Нужна зачистка проводов'};
-  if(!zoneMastered(state,'z2'))return{ok:false,reason:'Освой Зону 2 на 100%'};
+  if(id==='z3'){
+    if(ctx.level<6)return{ok:false,reason:'Нужен уровень 6'};
+    if(!ctx.installed.has('wire'))return{ok:false,reason:'Нужна зачистка проводов'};
+    if(!zoneMastered(state,'z2'))return{ok:false,reason:'Освой Зону 2 на 100%'};
+    return{ok:true};
+  }
+  if(ctx.level<8)return{ok:false,reason:'Нужен уровень 8'};
+  if(!zoneMastered(state,'z3'))return{ok:false,reason:'Освой Зону 3 на 100%'};
+  if(!state.van.owned)return{ok:false,reason:'Нужен фургон для дальнего маршрута'};
   return{ok:true};
 }
 
@@ -222,7 +232,8 @@ export interface WorkerGain {
 const WORKER_RATES:Record<ZoneId,Record<ResourceKind,number>>={
   z1:{metal:84,copper:5.4,plastic:15},
   z2:{metal:72,copper:9,plastic:12},
-  z3:{metal:104,copper:9.6,plastic:15}
+  z3:{metal:104,copper:9.6,plastic:15},
+  z4:{metal:118,copper:10.5,plastic:10}
 };
 
 export function simulateWorkerGain(state:MidgameState,now=Date.now(),maxHours=8):WorkerGain{
@@ -232,7 +243,6 @@ export function simulateWorkerGain(state:MidgameState,now=Date.now(),maxHours=8)
   if(hours<=0)return empty;
   const rates=WORKER_RATES[state.worker.assignment],resources:Record<ResourceKind,number>={metal:rates.metal*hours,copper:rates.copper*hours,plastic:rates.plastic*hours};
   const components=emptyComponentRecord();
-  // First proof: small known-component trickle from mastered old zones. Never discovers a family.
   if(state.discoveredComponents.includes('bearing'))components.bearing=Math.floor(hours*.12);
   if(state.discoveredComponents.includes('motor'))components.motor=Math.floor(hours*.045);
   if(state.discoveredComponents.includes('electronics'))components.electronics=Math.floor(hours*.04);
