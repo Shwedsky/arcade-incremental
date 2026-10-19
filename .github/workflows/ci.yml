@@ -32,6 +32,8 @@ jobs:
         run: npm run smoke:worker-economy-v2
       - name: Contract Board V2 domain smoke
         run: npm run smoke:contract-board-v2
+      - name: Progression Expansion V2 domain smoke
+        run: npm run smoke:progression-v2
       - name: Midgame domain smoke
         run: npm run smoke:midgame
       - name: Visual foundation smoke
@@ -48,8 +50,10 @@ jobs:
         run: npm run smoke:save
       - name: Platform adapter smoke
         run: npm run smoke:platform
-      - name: Progression pacing proof
+      - name: Legacy progression pacing proof
         run: python models/progression_sim_v0.py --check
+      - name: Progression Expansion V2 model proof
+        run: python models/progression_expansion_v2.py --check
       - name: Mid/Late mechanics structural proof
         run: python models/mid_late_mechanics_sim_v1.py --check
       - name: Worker / progression economy V2 model proof
@@ -78,17 +82,19 @@ jobs:
         run: npm run smoke:browser:worker-economy-v2
       - name: Contract Board V2 staged pool + repetition browser proof
         run: npm run smoke:browser:contract-board-v2
+      - name: Progression Expansion V2 level + milestone + Tier-II browser proof
+        run: npm run smoke:browser:progression-v2
       - name: Platform and responsive browser proof
         run: npm run smoke:browser:platform
       - name: Build release manifest
         run: npm run release:manifest
       - name: Package release candidate
         run: zip -r arcade-incremental-release-candidate-v9.zip dist
-      - name: Package Contract Board V2 manual review candidate
+      - name: Package Progression Expansion V2 manual review candidate
         run: |
           SHORT_SHA="${GITHUB_SHA:0:8}"
-          REVIEW_DIR="manual-review-v1-contract-board-v2"
-          REVIEW_ZIP="arcade-incremental-manual-review-v1-contract-board-v2-run${GITHUB_RUN_NUMBER}-${SHORT_SHA}.zip"
+          REVIEW_DIR="manual-review-v1-progression-expansion-v2"
+          REVIEW_ZIP="arcade-incremental-manual-review-v1-progression-v2-run${GITHUB_RUN_NUMBER}-${SHORT_SHA}.zip"
           rm -rf "$REVIEW_DIR"
           mkdir -p "$REVIEW_DIR/dist"
           cp -r dist/. "$REVIEW_DIR/dist/"
@@ -96,7 +102,8 @@ jobs:
           cp review/START_REVIEW.bat "$REVIEW_DIR/START_REVIEW.bat"
           cp review/README_REVIEW.txt "$REVIEW_DIR/README_REVIEW.txt"
           cp docs/MANUAL_TARGET_RUN_V1.md "$REVIEW_DIR/MANUAL_TARGET_RUN_V1.md"
-          printf 'Manual Review V1 - Contract Board V2\ncommit=%s\nrun=%s\nsave=V9\nseed=owner-review-v1\norigin=http://127.0.0.1:41971\nfeatures=contract-board-v2,staged-contract-pool,recent-history-cooldown,benchmark-workers,2h-shifts,van-worker-route,full-clear-medals,z2-z3-value,processed-recipe-gates,persistent-discovery,reservations,sticky-batches,local-dev-panel\n' "$GITHUB_SHA" "$GITHUB_RUN_ID" > "$REVIEW_DIR/BUILD_INFO.txt"
+          cp docs/PROGRESSION_EXPANSION_V2_MODEL.md "$REVIEW_DIR/PROGRESSION_EXPANSION_V2_MODEL.md"
+          printf 'Manual Review - Progression Expansion V2\ncommit=%s\nrun=%s\nsave=V9\nseed=owner-review-v1\norigin=http://127.0.0.1:41971\nfeatures=level30,tier2-roots,milestone-gates,van-packing,contract-choice,automation4,trade4,contract-board-v2,worker-economy-v2\n' "$GITHUB_SHA" "$GITHUB_RUN_ID" > "$REVIEW_DIR/BUILD_INFO.txt"
           zip -r "$REVIEW_ZIP" "$REVIEW_DIR"
           echo "REVIEW_ZIP=$REVIEW_ZIP" >> "$GITHUB_ENV"
       - uses: actions/upload-artifact@v4
@@ -106,6 +113,6 @@ jobs:
           if-no-files-found: error
       - uses: actions/upload-artifact@v4
         with:
-          name: arcade-incremental-manual-review-v1-contract-board-v2-run-${{ github.run_number }}
+          name: arcade-incremental-manual-review-v1-progression-v2-run-${{ github.run_number }}
           path: ${{ env.REVIEW_ZIP }}
           if-no-files-found: error
