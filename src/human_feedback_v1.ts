@@ -108,9 +108,16 @@ function translateGarage(){
     if(translated!==text)textNode.nodeValue=translated;
   }
 }
+function normalizeExcursionLaunch(){
+  const next=document.querySelector<HTMLButtonElement>('#next');if(!next)return;
+  next.classList.add('hfExcursionLaunch');
+  const text=(next.textContent??'').trim();
+  if(text.startsWith('Ехать:'))next.textContent=`Начать вылазку · ${text.slice('Ехать:'.length).trim()}`;
+  else if(/Вернуться|Ехать/.test(text))next.textContent='Начать вылазку';
+}
 
 let scheduled=false;
-function enhance(){scheduled=false;renderDiscoveryInventory();translateGarage()}
+function enhance(){scheduled=false;renderDiscoveryInventory();translateGarage();normalizeExcursionLaunch()}
 function schedule(){if(scheduled)return;scheduled=true;requestAnimationFrame(enhance)}
 function boot(){
   const garage=document.querySelector('#garageScreen');
