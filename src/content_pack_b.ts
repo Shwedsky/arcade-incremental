@@ -1,5 +1,6 @@
 import type { ComponentKind, ResourceKind, TargetClassId } from './sim.ts';
 import type { ZoneId } from './midgame.ts';
+import {simulateBenchmarkedWorker,type WorkerEconomyV2State} from './worker_economy_v2.ts';
 
 export type IndustrialComponentKind='gearbox'|'generator';
 export type FabricatedModuleKind='drive'|'control'|'structural';
@@ -58,7 +59,7 @@ export const SECOND_WORKER_COST=55_000;
 export const TRUCK_CAPACITY_KG=1_000;
 
 export const HANGAR_RECIPE={
-  metal:400,cleanCopper:18,steelBlank:8,aluminiumBillet:4,structural:2,control:1
+  metal:240,cleanCopper:24,briquette:40,steelBlank:12,aluminiumBillet:6,structural:2,control:1
 } as const;
 
 export const TRUCK_RECIPE={
@@ -69,6 +70,7 @@ export function emptyIndustrialMaterials():IndustrialMaterials{return{aluminiumS
 export function emptyIndustrialComponents():IndustrialComponents{return{gearbox:0,generator:0}}
 export function emptyFabricatedModules():FabricatedModules{return{drive:0,control:0,structural:0}}
 export function emptyResourceRecord():Record<ResourceKind,number>{return{metal:0,copper:0,plastic:0}}
+export function emptyComponentRecord():Record<ComponentKind,number>{return{bearing:0,motor:0,hydraulic:0,electronics:0}}
 
 export function createDefaultPackB(now=Date.now()):PackBState{
   return{
@@ -144,14 +146,14 @@ export function fabricateModule(state:PackBState,kind:FabricatedModuleKind,inv:P
 }
 
 export function canAcquireHangar(state:PackBState,inv:PackBInventory,z3Mastered:boolean):boolean{
-  return !state.hangarOwned&&z3Mastered&&inv.cash>=HANGAR_CASH&&inv.metal>=HANGAR_RECIPE.metal&&inv.cleanCopper>=HANGAR_RECIPE.cleanCopper&&
+  return !state.hangarOwned&&z3Mastered&&inv.cash>=HANGAR_CASH&&inv.metal>=HANGAR_RECIPE.metal&&inv.cleanCopper>=HANGAR_RECIPE.cleanCopper&&inv.briquette>=HANGAR_RECIPE.briquette&&
     state.materials.steelBlank>=HANGAR_RECIPE.steelBlank&&state.materials.aluminiumBillet>=HANGAR_RECIPE.aluminiumBillet&&
     state.modules.structural>=HANGAR_RECIPE.structural&&state.modules.control>=HANGAR_RECIPE.control;
 }
 
 export function acquireHangar(state:PackBState,inv:PackBInventory,z3Mastered:boolean):boolean{
   if(!canAcquireHangar(state,inv,z3Mastered))return false;
-  inv.cash-=HANGAR_CASH;inv.metal-=HANGAR_RECIPE.metal;inv.cleanCopper-=HANGAR_RECIPE.cleanCopper;
+  inv.cash-=HANGAR_CASH;inv.metal-=HANGAR_RECIPE.metal;inv.cleanCopper-=HANGAR_RECIPE.cleanCopper;inv.briquette-=HANGAR_RECIPE.briquette;
   state.materials.steelBlank-=HANGAR_RECIPE.steelBlank;state.materials.aluminiumBillet-=HANGAR_RECIPE.aluminiumBillet;
   state.modules.structural-=HANGAR_RECIPE.structural;state.modules.control-=HANGAR_RECIPE.control;state.hangarOwned=true;return true;
 }
@@ -197,10 +199,11 @@ const SECOND_WORKER_RATES:Partial<Record<ZoneId,Record<ResourceKind,number>>>={
   z1:{metal:76,copper:5,plastic:14},z2:{metal:68,copper:8.5,plastic:11},z3:{metal:96,copper:9,plastic:14}
 };
 
-export function simulateSecondWorker(state:PackBState,now=Date.now(),maxHours=10):{hours:number;resources:Record<ResourceKind,number>} {
-  const empty={hours:0,resources:emptyResourceRecord()};
+export function simulateSecondWorker(state:PackBState,economy:WorkerEconomyV2State,discoveredComponents:ReadonlyArray<ComponentKind>,now=Date.now(),offline=false):{hours:number;resources:Record<ResourceKind,number>;components:Record<ComponentKind,number>;weight:number;source:string;offlineRemainingHours:number} {
+  const empty={hours:0,resources:emptyResourceRecord(),components:emptyComponentRecord(),weight:0,source:'none',offlineRemainingHours:economy.shifts.w2.remainingOfflineMs/3_600_000};
   const worker=state.secondWorker;if(!worker.hired||!worker.assignment){worker.lastTick=now;return empty}
-  const rates=SECOND_WORKER_RATES[worker.assignment];if(!rates){worker.lastTick=now;return empty}
-  const hours=Math.min(Math.max(0,(now-worker.lastTick)/3_600_000),maxHours);worker.lastTick=now;
-  return{hours,resources:{metal:rates.metal*hours,copper:rates.copper*hours,plastic:rates.plastic*hours}};
+  const rates=SECOND_WORKER_RATES[worker.assignment];
+  const gain=simulateBenchmarkedWorker({state:economy,slot:'w2',zone:worker.assignment,lastTick:worker.lastTick,now,offline,discoveredComponents,legacyRates:rates});
+  worker.lastTick=gain.lastTick;
+  return{hours:gain.hours,resources:gain.resources,components:gain.components,weight:gain.weight,source:gain.source,offlineRemainingHours:gain.offlineRemainingHours};
 }
