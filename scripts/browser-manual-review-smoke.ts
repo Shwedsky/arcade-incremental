@@ -76,8 +76,18 @@ try{
   await reviewPage.locator('.zone').hover();
   await reviewPage.waitForFunction(()=>Number(getComputedStyle(document.querySelector('.zone')!).opacity)>.9);
   assert.equal(await reviewPage.locator('#seed').evaluate(el=>getComputedStyle(el).display),'none','technical seed must not leak into player-facing Russian HUD');
-  const lateFieldSlot=reviewPage.locator('#components span').nth(4);
-  assert.equal(await lateFieldSlot.evaluate(el=>getComputedStyle(el).fontSize),'0px','late field discoveries must not expose P/C/Al/GB/GEN abbreviations');
+  await reviewPage.waitForFunction(()=>document.querySelectorAll('#components span').length>=9);
+  const lateFieldPresentation=await reviewPage.evaluate(()=>Array.from(document.querySelectorAll<HTMLElement>('#components span')).slice(4,9).map(el=>({
+    text:el.textContent??'',
+    fontSize:getComputedStyle(el).fontSize,
+    marker:getComputedStyle(el,'::before').content,
+    has:el.classList.contains('has')
+  })));
+  assert.equal(lateFieldPresentation.length,5,`late field discovery slots must exist: ${JSON.stringify(lateFieldPresentation)}`);
+  for(const slot of lateFieldPresentation){
+    assert.equal(slot.fontSize,'0px',`late field raw abbreviation must be visually hidden: ${JSON.stringify(lateFieldPresentation)}`);
+    assert.notEqual(slot.marker,'none',`late field slot must expose a mystery/semantic marker instead of abbreviation: ${JSON.stringify(lateFieldPresentation)}`);
+  }
 
   // Garage discovery UX: known basics are readable; future materials/components are mystery slots until found.
   await reviewPage.click('#garage');
