@@ -39,6 +39,7 @@ try{
     localStorage.setItem(key,'ordinary-save-sentinel');
     localStorage.setItem(`${key}.backup`,'ordinary-backup-sentinel');
   },SAVE_KEY);
+  await normalPage.close();
 
   const reviewPage=await context.newPage();
   await reviewPage.goto(`${REVIEW_ORIGIN}/review-start.html`);
@@ -91,7 +92,12 @@ try{
   const reviewSentinel=await reviewPage.evaluate(()=>localStorage.getItem('__manual_review_progress_sentinel__'));
   assert.equal(reviewSentinel,'keep-on-reload','normal review reload must not clear review origin again');
 
-  const ordinary=await normalPage.evaluate((key)=>({primary:localStorage.getItem(key),backup:localStorage.getItem(`${key}.backup`)}),SAVE_KEY);
+  const storageState=await context.storageState();
+  const normalOrigin=storageState.origins.find(origin=>origin.origin===NORMAL_ORIGIN);
+  const ordinary={
+    primary:normalOrigin?.localStorage.find(item=>item.name===SAVE_KEY)?.value??null,
+    backup:normalOrigin?.localStorage.find(item=>item.name===`${SAVE_KEY}.backup`)?.value??null
+  };
   assert.deepEqual(ordinary,{primary:'ordinary-save-sentinel',backup:'ordinary-backup-sentinel'},'review fresh start must not touch ordinary origin save slots');
 
   console.log('manual review launch + HUD/readability/discovery browser smoke: PASS');
