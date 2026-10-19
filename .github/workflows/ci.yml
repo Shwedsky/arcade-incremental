@@ -22,16 +22,22 @@ jobs:
         run: npm run smoke
       - name: Early-game systems smoke
         run: npm run smoke:early
+      - name: Midgame domain smoke
+        run: npm run smoke:midgame
       - name: Progression pacing proof
         run: python models/progression_sim_v0.py --check
+      - name: Mid/Late mechanics structural proof
+        run: python models/mid_late_mechanics_sim_v1.py --check
       - name: Install browser
         run: npx playwright install --with-deps chromium
       - name: Headless browser progression smoke
         run: npm run smoke:browser
+      - name: Headless browser midgame proof
+        run: npm run smoke:browser:midgame
       - name: Package web slice
-        run: zip -r arcade-incremental-playable-v0.zip dist
+        run: zip -r arcade-incremental-midgame-proof-v1.zip dist
       - uses: actions/upload-artifact@v4
         with:
-          name: arcade-incremental-playable-v0
-          path: arcade-incremental-playable-v0.zip
+          name: arcade-incremental-midgame-proof-v1
+          path: arcade-incremental-midgame-proof-v1.zip
           if-no-files-found: error
