@@ -4,8 +4,8 @@ export type BranchId = 'salvage' | 'logistics' | 'workshop' | 'automation' | 'tr
 export type TalentId =
   | 'salvage_1' | 'salvage_2' | 'salvage_3' | 'salvage_4' | 'salvage_5' | 'salvage_6' | 'salvage_7' | 'salvage_8'
   | 'logistics_1' | 'logistics_2' | 'logistics_3' | 'logistics_4' | 'logistics_5' | 'logistics_6' | 'logistics_7'
-  | 'workshop_1' | 'workshop_2' | 'workshop_3' | 'workshop_4' | 'workshop_5' | 'workshop_6' | 'workshop_7'
-  | 'automation_1' | 'automation_2' | 'automation_3' | 'automation_4' | 'automation_5' | 'automation_6' | 'automation_7'
+  | 'workshop_1' | 'workshop_2' | 'workshop_3' | 'workshop_4' | 'workshop_5' | 'workshop_6' | 'workshop_7' | 'workshop_8'
+  | 'automation_1' | 'automation_2' | 'automation_3' | 'automation_4' | 'automation_5' | 'automation_6' | 'automation_7' | 'automation_8'
   | 'trade_1' | 'trade_2' | 'trade_3' | 'trade_4' | 'trade_5' | 'trade_6' | 'trade_7';
 
 export interface TalentDef {
@@ -50,9 +50,11 @@ export const TALENTS: TalentDef[] = [
   ...chain('workshop',
     ['Экономная сборка','Точная настройка','Параллельная работа','Калибровка','Серийные детали','Мастерская II','Промышленная оснастка'],
     ['-5% ресурсов и денег на сборку/апгрейд станков.','+10% выход переработанных материалов.','Открывает второй слот очереди мастерской.','Станки и изготовление работают на 15% быстрее.','Снижает расход компонентов в продвинутых рецептах.','Открывает улучшенные версии гаражных станков.','Подготовка к промышленному оборудованию.'], 4),
+  {id:'workshop_8',branch:'workshop',tier:8,name:'Тяжёлая фабрикация',description:'Промышленная ячейка Pack C выполняет тяжёлые циклы на 10% быстрее.',minLevel:10,requires:'workshop_4',runtime:true},
   ...chain('automation',
     ['Не выключать свет','Дольше без хозяина','Автоподача','Ночная смена','Буфер очереди','Диспетчер','Автономный цех'],
     ['Offline эффективность: 20% → 25%.','Offline лимит: 2 → 3 часа.','Завершённая переработка сама ставит следующую такую же партию, пока есть сырьё.','Offline эффективность растёт ещё сильнее.','Увеличивает очередь станков.','Рабочие распределяются автоматически.','Поздняя почти автономная мастерская.'], 3),
+  {id:'automation_8',branch:'automation',tier:8,name:'Оператор ячейки',description:'Разрешает назначить третьего рабочего Operator промышленной ячейки: цикл ×0.75.',minLevel:10,requires:'automation_3',runtime:true},
   ...chain('trade',
     ['Свои покупатели','Торг с поставщиком','Срочные заказы','Специалист по меди','Оптовик','Контрактник','Биржа лома'],
     ['+5% цена продажи сырья.','-5% цены готовых станков/деталей в магазине.','Контракты становятся сложнее, но награда повышается примерно на 18%.','Дополнительная цена на медь и электронику.','Бонус за крупные партии.','Дополнительный слот контракта.','Поздние динамические цены рынка.'], 3)
@@ -102,6 +104,8 @@ export interface RuntimeEffects {
   workshopYieldMultiplier: number;
   workshopSlots: number;
   workshopSpeedMultiplier: number;
+  industrialProductionMultiplier: number;
+  operatorUnlocked: boolean;
   autoFeed: boolean;
   offlineEfficiency: number;
   offlineCapHours: number;
@@ -128,6 +132,8 @@ export function deriveEffects(unlocked: ReadonlySet<TalentId>): RuntimeEffects {
     workshopYieldMultiplier: has('workshop_2') ? 1.10 : 1,
     workshopSlots: has('workshop_3') ? 2 : 1,
     workshopSpeedMultiplier: has('workshop_4') ? 1.15 : 1,
+    industrialProductionMultiplier: has('workshop_8') ? .90 : 1,
+    operatorUnlocked: has('automation_8'),
     autoFeed: has('automation_3'),
     offlineEfficiency: has('automation_1') ? .25 : .20,
     offlineCapHours: has('automation_2') ? 3 : 2,
