@@ -23,7 +23,9 @@ jobs:
       - name: Install dependencies
         run: npm install --no-audit --no-fund
       - name: Apply Pack C runtime integration
-        run: python scripts/apply_pack_c_integration.py
+        run: |
+          python scripts/apply_pack_c_integration.py
+          python scripts/repair_pack_c_integration_output.py
       - name: Capture typecheck and build
         id: build
         shell: bash
