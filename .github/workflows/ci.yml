@@ -66,17 +66,19 @@ jobs:
         run: npm run smoke:browser:manual-review
       - name: Human Feedback V2 reservations + sticky batch + local DEV proof
         run: npm run smoke:browser:human-feedback-v2
+      - name: Human Feedback V3 persistent discovery + Z2 world-space proof
+        run: npm run smoke:browser:human-feedback-v3
       - name: Platform and responsive browser proof
         run: npm run smoke:browser:platform
       - name: Build release manifest
         run: npm run release:manifest
       - name: Package release candidate
         run: zip -r arcade-incremental-release-candidate-v8.zip dist
-      - name: Package manual review Fix Pack V2 candidate
+      - name: Package manual review Fix Pack V3 candidate
         run: |
           SHORT_SHA="${GITHUB_SHA:0:8}"
-          REVIEW_DIR="manual-review-v1-feedback-fix2"
-          REVIEW_ZIP="arcade-incremental-manual-review-v1-feedback-fix2-run${GITHUB_RUN_NUMBER}-${SHORT_SHA}.zip"
+          REVIEW_DIR="manual-review-v1-feedback-fix3"
+          REVIEW_ZIP="arcade-incremental-manual-review-v1-feedback-fix3-run${GITHUB_RUN_NUMBER}-${SHORT_SHA}.zip"
           rm -rf "$REVIEW_DIR"
           mkdir -p "$REVIEW_DIR/dist"
           cp -r dist/. "$REVIEW_DIR/dist/"
@@ -84,7 +86,7 @@ jobs:
           cp review/START_REVIEW.bat "$REVIEW_DIR/START_REVIEW.bat"
           cp review/README_REVIEW.txt "$REVIEW_DIR/README_REVIEW.txt"
           cp docs/MANUAL_TARGET_RUN_V1.md "$REVIEW_DIR/MANUAL_TARGET_RUN_V1.md"
-          printf 'Manual Review V1 - Feedback Fix 2\ncommit=%s\nrun=%s\nseed=owner-review-v1\norigin=http://127.0.0.1:41971\nfeatures=reservations,sticky-batches,local-dev-panel\n' "$GITHUB_SHA" "$GITHUB_RUN_ID" > "$REVIEW_DIR/BUILD_INFO.txt"
+          printf 'Manual Review V1 - Feedback Fix 3\ncommit=%s\nrun=%s\nseed=owner-review-v1\norigin=http://127.0.0.1:41971\nfeatures=persistent-discovery,z2-world-space-backdrop,reservations,sticky-batches,local-dev-panel\n' "$GITHUB_SHA" "$GITHUB_RUN_ID" > "$REVIEW_DIR/BUILD_INFO.txt"
           zip -r "$REVIEW_ZIP" "$REVIEW_DIR"
           echo "REVIEW_ZIP=$REVIEW_ZIP" >> "$GITHUB_ENV"
       - uses: actions/upload-artifact@v4
@@ -94,6 +96,6 @@ jobs:
           if-no-files-found: error
       - uses: actions/upload-artifact@v4
         with:
-          name: arcade-incremental-manual-review-v1-feedback-fix2-run-${{ github.run_number }}
+          name: arcade-incremental-manual-review-v1-feedback-fix3-run-${{ github.run_number }}
           path: ${{ env.REVIEW_ZIP }}
           if-no-files-found: error

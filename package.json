@@ -25,6 +25,7 @@
     "smoke:browser:workshop-queue": "tsx scripts/browser-workshop-queue-smoke.ts",
     "smoke:browser:manual-review": "tsx scripts/browser-manual-review-smoke.ts",
     "smoke:browser:human-feedback-v2": "tsx scripts/browser-human-feedback-v2-smoke.ts",
+    "smoke:browser:human-feedback-v3": "tsx scripts/browser-human-feedback-v3-smoke.ts",
     "smoke:save": "tsx scripts/save-safety-smoke.ts",
     "smoke:platform": "tsx scripts/platform-smoke.ts",
     "smoke:browser:platform": "tsx scripts/browser-platform-smoke.ts",

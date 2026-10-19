@@ -37,7 +37,8 @@ function drawGround(ctx:CanvasRenderingContext2D,width:number,height:number,came
     ctx.fillStyle=theme.lane;ctx.fillRect(0,roadY-68,width,136);ctx.strokeStyle=theme.laneMark+'66';ctx.setLineDash([22,28]);ctx.lineWidth=3;line(ctx,0,roadY,width,roadY);ctx.setLineDash([]);
   }else if(zone==='z2'){
     ctx.fillStyle=theme.lane;ctx.fillRect(0,roadY-92,width,184);ctx.strokeStyle=theme.edge;ctx.lineWidth=7;line(ctx,0,roadY-92,width,roadY-92);line(ctx,0,roadY+92,width,roadY+92);ctx.strokeStyle=theme.laneMark+'66';ctx.setLineDash([32,24]);ctx.lineWidth=2;line(ctx,0,roadY,width,roadY);ctx.setLineDash([]);
-    ctx.fillStyle='#293136';for(let x=-((camera.x*.4)%190)-80;x<width+180;x+=190){rr(ctx,x,34,154,78,7);ctx.fill();ctx.fillStyle='#526069';ctx.fillRect(x+15,58,54,42);ctx.fillRect(x+86,58,54,42);ctx.fillStyle='#293136'}
+    const facadeY=120-camera.y*.35+camera.shakeY*.2;
+    ctx.fillStyle='#293136';for(let x=-((camera.x*.4)%190)-80;x<width+180;x+=190){rr(ctx,x,facadeY,154,78,7);ctx.fill();ctx.fillStyle='#526069';ctx.fillRect(x+15,facadeY+24,54,42);ctx.fillRect(x+86,facadeY+24,54,42);ctx.fillStyle='#293136'}
   }else{
     ctx.fillStyle=theme.lane;ctx.fillRect(0,roadY-78,width,156);ctx.strokeStyle=theme.laneMark+'44';ctx.lineWidth=2;for(let x=-((camera.x*.2)%120);x<width;x+=120)line(ctx,x,roadY-78,x+55,roadY+78);
     ctx.fillStyle='#2c312e';ctx.fillRect(0,18,width,34);ctx.fillStyle='#8b6746';for(let x=-((camera.x*.25)%240);x<width+240;x+=240){ctx.fillRect(x,20,116,30);ctx.fillStyle='#526365';ctx.fillRect(x+120,20,112,30);ctx.fillStyle='#8b6746'}
