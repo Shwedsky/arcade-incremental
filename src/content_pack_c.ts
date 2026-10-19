@@ -176,7 +176,7 @@ export function fabricateHeavyModule(state:PackCState,kind:HeavyFabricatedModule
 
 export function productionDurationSec(state:PackCState,kind:PackCProductionKind):number{
   const operator=state.crew3.hired&&state.crew3.role==='operator';
-  return PACK_C_PRODUCTION_SECONDS[kind]*(operator?.75:1);
+  return PACK_C_PRODUCTION_SECONDS[kind]*(operator ? .75 : 1);
 }
 
 export function canStartPackCProduction(state:PackCState,kind:PackCProductionKind,inv:PackCInventory):boolean{
