@@ -42,7 +42,7 @@ const browser=await chromium.launch({headless:true});
 try{
   // 1. Accepted Pack C Save V6 migrates forward without losing Truck/Yard and starts Pack D empty.
   const c1=await browser.newContext();await withSave(c1,baseV6());const p1=await c1.newPage();await p1.goto(`${ORIGIN}/?seed=packd-migrate`);await p1.waitForSelector('#garage');
-  const s1=await state(p1);assert.equal(s1.saveVersion,8);assert.equal(s1.packB.truck.owned,true);assert.equal(s1.packC.salvageYardOwned,true);assert.equal(s1.packD.recoveryRig.owned,false);assert.equal(s1.packD.industrialWorkshopOwned,false);assert.equal(s1.midgame.mastery.z7,0);await c1.close();
+  const s1=await state(p1);assert.equal(s1.saveVersion,9);assert.equal(s1.packB.truck.owned,true);assert.equal(s1.packC.salvageYardOwned,true);assert.equal(s1.packD.recoveryRig.owned,false);assert.equal(s1.packD.industrialWorkshopOwned,false);assert.equal(s1.midgame.mastery.z7,0);await c1.close();
 
   // 2. Z7 is a real map frontier after mastered Z6 + Yard + Truck. Rig still requires the active signature assembly.
   const c2=await browser.newContext();await withSave(c2,baseV7({packD:packD({recoveryAssemblies:0})}));const p2=await c2.newPage();await p2.goto(`${ORIGIN}/?seed=packd-z7`);await p2.click('#garage');await p2.waitForSelector('#garageScreen:not([hidden])');
@@ -56,7 +56,7 @@ try{
   const hire4=p3.locator('#hireWorker4');assert.equal(await hire4.isDisabled(),false);await hire4.click();const z7worker=p3.locator('[data-worker4-zone="z7"]');assert.equal(await z7worker.isDisabled(),false);await z7worker.click();s3=await state(p3);assert.equal(s3.packD.crew4.role,'scavenger');assert.equal(s3.packD.crew4.assignment,'z7');
   const op4=p3.locator('#assignOperator4');assert.equal(await op4.isDisabled(),false);await op4.click();s3=await state(p3);assert.equal(s3.packD.crew4.role,'operator');assert.equal(s3.packD.crew4.assignment,null);
   const alloy=p3.locator('#packCAlloy');assert.equal(await alloy.isDisabled(),false);await alloy.click();s3=await state(p3);assert.equal(s3.packC.production.kind,'alloyBillet');assert.equal(s3.packC.production.endsAt-s3.packC.production.startedAt,204000,'Worker #4 Operator must apply its real ×0.85 industrial-cell effect');
-  await p3.reload();await p3.waitForSelector('#garage');s3=await state(p3);assert.equal(s3.saveVersion,8);assert.equal(s3.packD.recoveryRig.owned,true);assert.equal(s3.packD.industrialWorkshopOwned,true);assert.equal(s3.packD.productionCells,2);assert.equal(s3.packD.crew4.hired,true);assert.equal(s3.packD.crew4.role,'operator');assert.equal(s3.packC.production.kind,'alloyBillet');await c3.close();
+  await p3.reload();await p3.waitForSelector('#garage');s3=await state(p3);assert.equal(s3.saveVersion,9);assert.equal(s3.packD.recoveryRig.owned,true);assert.equal(s3.packD.industrialWorkshopOwned,true);assert.equal(s3.packD.productionCells,2);assert.equal(s3.packD.crew4.hired,true);assert.equal(s3.packD.crew4.role,'operator');assert.equal(s3.packC.production.kind,'alloyBillet');await c3.close();
 
   console.log('browser Content Pack D proof: PASS');
 }finally{await browser.close();await stopServer()}
