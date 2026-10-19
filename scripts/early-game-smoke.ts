@@ -40,6 +40,11 @@ assert.equal(activeContract({index:0,completed:0}).id,'metal_pickup');
 assert.equal(activeContract({index:3,completed:3}).id,'metal_pickup');
 assert.ok(contractScale({index:0,completed:0},true)>contractScale({index:0,completed:0},false));
 assert.ok(contractScale({index:1,completed:5},false)>1);
+const repairState={index:1,completed:1};
+const normalizedBearing=activeContract(repairState).needs.find(n=>n.kind==='component')!;
+const experienceNeedMultiplier=1+Math.min(.25,repairState.completed*.025);
+assert.equal(Math.ceil(normalizedBearing.amount*experienceNeedMultiplier),1,'normal repair contract must require exactly one bearing');
+assert.equal(Math.ceil(normalizedBearing.amount*(experienceNeedMultiplier+.08)),1,'urgent repair contract must still require exactly one bearing');
 
 const now=10_000;
 const job:WorkshopJob={id:'proof',kind:'equipment',label:'proof',equipmentId:'tool',targetLevel:2,startedAt:now,endsAt:now+120_000};
@@ -53,6 +58,7 @@ console.log(JSON.stringify({
   baseSlots:baseEffects.workshopSlots,
   parallelSlots:queueEffects.workshopSlots,
   firstPressBuildSec:buildDurationSec('press'),
-  contracts:CONTRACTS.map(c=>c.id)
+  contracts:CONTRACTS.map(c=>c.id),
+  repairBearingDisplayAndConsume:{normal:Math.ceil(normalizedBearing.amount*experienceNeedMultiplier),urgent:Math.ceil(normalizedBearing.amount*(experienceNeedMultiplier+.08))}
 },null,2));
 console.log('early-game systems smoke: PASS');
