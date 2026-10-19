@@ -23,7 +23,17 @@ jobs:
       - name: Install dependencies
         run: npm install --no-audit --no-fund
       - name: Apply queue UX integration
-        run: python scripts/apply_workshop_queue_ui.py
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('scripts/apply_workshop_queue_ui.py')
+          s=p.read_text(encoding='utf-8')
+          marker="# Expose scheduler mutation state for dedicated browser acceptance without bypassing UX."
+          if marker in s:
+              s=s.split(marker,1)[0]+"\np.write_text(t,encoding='utf-8')\nprint('Workshop queue batch/edit/cancel UX integration applied')\n"
+              p.write_text(s,encoding='utf-8')
+          PY
+          python scripts/apply_workshop_queue_ui.py
       - name: Guarded build and domain regressions
         run: |
           npm run build
