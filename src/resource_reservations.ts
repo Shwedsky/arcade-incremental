@@ -1,7 +1,7 @@
 import {EQUIPMENT_DEFS,type EquipmentId} from './early_game.ts';
 import {MACHINE_DEFS,requirementAmount,type GarageInventory,type MachineRequirement} from './garage.ts';
 import type {ComponentKind,ResourceKind} from './sim.ts';
-import type {WorkshopBatchAction,WorkshopQueueAction,WorkshopSchedulerState} from './workshop_scheduler.ts';
+import type {WorkshopBatchAction,WorkshopOneShotAction,WorkshopQueueAction,WorkshopSchedulerState} from './workshop_scheduler.ts';
 
 export interface ReservationLedger{
   resources:Record<ResourceKind,number>;
@@ -26,7 +26,7 @@ function addRequirement(ledger:ReservationLedger,req:MachineRequirement,multipli
   ledger.components[req.key as ComponentKind]+=amount;
 }
 
-function oneShotRequirements(action:WorkshopQueueAction,ctx:ReservationContext):{requirements:MachineRequirement[];multiplier:number}|null{
+function oneShotRequirements(action:WorkshopOneShotAction,ctx:ReservationContext):{requirements:MachineRequirement[];multiplier:number}|null{
   if(action.kind==='build_machine'&&action.machineId){
     return{requirements:MACHINE_DEFS[action.machineId].requirements,multiplier:ctx.machineCostMultiplier};
   }
@@ -55,11 +55,12 @@ export function reservationForAction(action:WorkshopQueueAction,ctx:ReservationC
     return ledger;
   }
   if(action.kind==='industrial_batch')return ledger;
+  const oneShot=action as WorkshopOneShotAction;
   // A one-shot commits its inputs exactly when it becomes active. Only waiting /
   // blocked one-shots therefore need an escrow reservation in the player-facing
   // available balance.
-  if(action.status==='active'||action.inputsCommitted)return ledger;
-  const recipe=oneShotRequirements(action,ctx);if(!recipe)return ledger;
+  if(oneShot.status==='active'||oneShot.inputsCommitted)return ledger;
+  const recipe=oneShotRequirements(oneShot,ctx);if(!recipe)return ledger;
   for(const req of recipe.requirements)addRequirement(ledger,req,recipe.multiplier);
   return ledger;
 }
