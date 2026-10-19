@@ -22,6 +22,8 @@ jobs:
         run: npm run smoke
       - name: Early-game systems smoke
         run: npm run smoke:early
+      - name: Workshop scheduler domain smoke
+        run: npm run smoke:workshop-scheduler
       - name: Midgame domain smoke
         run: npm run smoke:midgame
       - name: Visual foundation smoke
