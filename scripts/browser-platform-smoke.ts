@@ -34,11 +34,34 @@ try{
     const c=await browser.newContext({viewport:{width,height}}),p=await c.newPage();await p.goto(`${ORIGIN}/?seed=${label}&reset=1`);await waitPlatform(p);await assertViewport(p,label);await p.click('#garage');await p.waitForSelector('#garageScreen:not([hidden])');await p.click('#zonesGarage');await p.waitForSelector('#zoneScreen:not([hidden])');const close=p.locator('#zoneClose');assert.equal(await close.isVisible(),true);await close.click();await c.close();
   }
 
-  // Mocked Yandex environment proves initialization, ready and gameplay pause/resume without real Console access.
-  const cy=await browser.newContext();await cy.addInitScript(()=>{
-    const calls:string[]=[];const handlers:Record<string,()=>void>={};(window as any).__YSDK_CALLS__=calls;(window as any).__YSDK_HANDLERS__=handlers;
-    (window as any).YaGames={init:async()=>({features:{LoadingAPI:{ready:()=>calls.push('ready')},GameplayAPI:{start:()=>calls.push('start'),stop:()=>calls.push('stop')}},on:(e:string,h:()=>void)=>handlers[e]=h,off:(e:string)=>delete handlers[e],getPlayer:async()=>({getData:async()=>({}),setData:async()=>{calls.push('cloud')}})})};
-  });const py=await cy.newPage();await py.goto(`${ORIGIN}/?seed=yandex-mock`);await waitPlatform(py);ps=await platformState(py);assert.equal(ps.mode,'yandex');assert.equal(ps.ready,true);const calls=await py.evaluate(()=>(window as any).__YSDK_CALLS__ as string[]);assert.ok(calls.includes('ready'));assert.ok(calls.includes('start'));await py.evaluate(()=>(window as any).__YSDK_HANDLERS__.game_api_pause());assert.equal((await platformState(py)).platformPaused,true);assert.equal((await platformState(py)).gameplayActive,false);await py.evaluate(()=>(window as any).__YSDK_HANDLERS__.game_api_resume());assert.equal((await platformState(py)).gameplayActive,true);await cy.close();
+  // Mock the same /sdk.js path used in Yandex. This proves dynamic SDK loading,
+  // initialization, Game Ready, gameplay markup and platform pause/resume without Console access.
+  const cy=await browser.newContext();const py=await cy.newPage();let sdkRequests=0;
+  await py.route('**/sdk.js',async route=>{
+    sdkRequests++;
+    await route.fulfill({status:200,contentType:'application/javascript',body:`
+      window.__YSDK_CALLS__=[];
+      window.__YSDK_HANDLERS__={};
+      window.YaGames={init:async()=>({
+        features:{
+          LoadingAPI:{ready:()=>window.__YSDK_CALLS__.push('ready')},
+          GameplayAPI:{start:()=>window.__YSDK_CALLS__.push('start'),stop:()=>window.__YSDK_CALLS__.push('stop')}
+        },
+        on:(event,handler)=>window.__YSDK_HANDLERS__[event]=handler,
+        off:(event)=>delete window.__YSDK_HANDLERS__[event],
+        getPlayer:async()=>({
+          getData:async()=>({}),
+          setData:async()=>{window.__YSDK_CALLS__.push('cloud')}
+        })
+      })};
+    `});
+  });
+  await py.goto(`${ORIGIN}/?seed=yandex-mock&platform=yandex`);await waitPlatform(py);ps=await platformState(py);
+  assert.equal(sdkRequests,1,'Yandex-mode boot must load /sdk.js exactly once');
+  assert.equal(ps.mode,'yandex');assert.equal(ps.ready,true);
+  const calls=await py.evaluate(()=>(window as any).__YSDK_CALLS__ as string[]);assert.ok(calls.includes('ready'));assert.ok(calls.includes('start'));
+  await py.evaluate(()=>(window as any).__YSDK_HANDLERS__.game_api_pause());assert.equal((await platformState(py)).platformPaused,true);assert.equal((await platformState(py)).gameplayActive,false);
+  await py.evaluate(()=>(window as any).__YSDK_HANDLERS__.game_api_resume());assert.equal((await platformState(py)).gameplayActive,true);await cy.close();
 
   console.log('browser platform/responsive smoke: PASS');
 }finally{await browser.close();await stopServer()}
