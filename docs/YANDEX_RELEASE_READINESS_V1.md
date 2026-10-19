@@ -10,6 +10,17 @@ Do not attempt publication yet. Access to the Yandex Games Console remains block
 
 When access returns, continue from the current release candidate. Do not rebuild the game from scratch just to begin submission.
 
+## Current runtime baseline
+
+The game has advanced materially since the original platform-foundation pass:
+- canonical runtime save schema is now **Save V8**;
+- migrations preserve supported older saves through the current chain;
+- Workshop Queue V1 is the persisted workshop execution model;
+- content is implemented through Pack D / Z7 / Industrial Workshop;
+- CI produces static release archives and a separate manual-review package.
+
+Historical platform documents may still mention the schema that existed when that foundation was first implemented. This file is the current platform-readiness reference.
+
 ## Code-side checklist
 
 ### SDK
@@ -23,7 +34,8 @@ When access returns, continue from the current release candidate. Do not rebuild
 - [ ] verify with Yandex debug panel after Console access returns.
 
 ### Saves
-- [x] Save V4 remains canonical game schema;
+- [x] Save V8 is the current canonical game schema;
+- [x] supported older save paths migrate forward into the current runtime;
 - [x] primary / backup / temp resilient local slots;
 - [x] recovery from corrupt primary;
 - [x] cloud snapshot validation and newest-valid merge policy;
@@ -41,8 +53,9 @@ When access returns, continue from the current release candidate. Do not rebuild
 - [x] desktop browser acceptance automated;
 - [x] narrow portrait browser acceptance automated;
 - [x] landscape/mobile-ish acceptance automated;
-- [x] no required external server for game runtime;
-- [x] production build is static archive-friendly.
+- [x] no required external server for deployed game runtime;
+- [x] production build is static archive-friendly;
+- [x] dedicated local Manual Review V1 package has an isolated fresh-save launch path.
 
 ### Release artifact
 - [x] production `dist/` package;
@@ -50,6 +63,7 @@ When access returns, continue from the current release candidate. Do not rebuild
 - [x] commit/build metadata in manifest;
 - [x] package contains entrypoint + JS + CSS;
 - [x] all gameplay/model/platform tests run before packaging;
+- [x] manual-review artifact is packaged separately from the ordinary RC;
 - [ ] upload archive in Console after external blocker is resolved;
 - [ ] fill final title/description/icons/screenshots/age tags in Console;
 - [ ] run Yandex debug panel / moderation checklist on hosted candidate.
@@ -63,7 +77,7 @@ When access returns, continue from the current release candidate. Do not rebuild
 - remote analytics vendor;
 - own backend/server.
 
-They are not required to prove the current gameplay/product loop and should not be added before retention/economy review.
+They are not required to prove the current gameplay/product loop and should not be added before the owner manual product-feel review and subsequent retention/economy decisions.
 
 ## Official references
 
