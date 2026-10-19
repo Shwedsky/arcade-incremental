@@ -23,7 +23,18 @@ jobs:
       - name: Install dependencies
         run: npm install --no-audit --no-fund
       - name: Apply Save V8 runtime integration
-        run: python scripts/apply_workshop_v8_runtime.py
+        run: |
+          python scripts/apply_workshop_v8_runtime.py
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('src/main.ts')
+          s=p.read_text(encoding='utf-8')
+          old='targetLevel:a.targetLevel,equipmentId:'
+          new="targetLevel:('targetLevel' in a?a.targetLevel:undefined),equipmentId:"
+          if s.count(old)!=1:
+              raise SystemExit(f'compatibility targetLevel anchor count: {s.count(old)}')
+          p.write_text(s.replace(old,new,1),encoding='utf-8')
+          PY
       - name: Guarded typecheck and deterministic proofs
         run: |
           npm run build
