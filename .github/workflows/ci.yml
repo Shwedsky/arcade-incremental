@@ -30,6 +30,8 @@ jobs:
         run: npm run smoke:content
       - name: Content Pack B smoke
         run: npm run smoke:packb
+      - name: Content Pack C domain smoke
+        run: npm run smoke:packc
       - name: Save safety smoke
         run: npm run smoke:save
       - name: Platform adapter smoke

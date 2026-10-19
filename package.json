@@ -14,6 +14,7 @@
     "smoke:visual": "tsx scripts/visual-smoke.ts",
     "smoke:content": "tsx scripts/content-pack-a-smoke.ts",
     "smoke:packb": "tsx scripts/content-pack-b-smoke.ts",
+    "smoke:packc": "tsx scripts/content-pack-c-smoke.ts",
     "smoke:browser:packb": "tsx scripts/browser-pack-b-smoke.ts",
     "smoke:save": "tsx scripts/save-safety-smoke.ts",
     "smoke:platform": "tsx scripts/platform-smoke.ts",
