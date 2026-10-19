@@ -14,6 +14,7 @@
     "smoke:worker-economy-v2": "tsx scripts/worker-economy-v2-smoke.ts",
     "smoke:contract-board-v2": "tsx scripts/contract-board-v2-smoke.ts",
     "smoke:progression-v2": "tsx scripts/progression-expansion-v2-smoke.ts",
+    "smoke:packe": "tsx scripts/content-pack-e-smoke.ts",
     "smoke:browser": "tsx scripts/browser-smoke.ts",
     "smoke:midgame": "tsx scripts/midgame-smoke.ts",
     "smoke:browser:midgame": "tsx scripts/browser-midgame-v5-smoke.ts",
