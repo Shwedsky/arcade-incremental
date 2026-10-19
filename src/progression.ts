@@ -2,7 +2,7 @@ import type { TargetClassId } from './sim.ts';
 
 export type BranchId = 'salvage' | 'logistics' | 'workshop' | 'automation' | 'trade';
 export type TalentId =
-  | 'salvage_1' | 'salvage_2' | 'salvage_3' | 'salvage_4' | 'salvage_5' | 'salvage_6' | 'salvage_7'
+  | 'salvage_1' | 'salvage_2' | 'salvage_3' | 'salvage_4' | 'salvage_5' | 'salvage_6' | 'salvage_7' | 'salvage_8'
   | 'logistics_1' | 'logistics_2' | 'logistics_3' | 'logistics_4' | 'logistics_5' | 'logistics_6' | 'logistics_7'
   | 'workshop_1' | 'workshop_2' | 'workshop_3' | 'workshop_4' | 'workshop_5' | 'workshop_6' | 'workshop_7'
   | 'automation_1' | 'automation_2' | 'automation_3' | 'automation_4' | 'automation_5' | 'automation_6' | 'automation_7'
@@ -43,6 +43,7 @@ export const TALENTS: TalentDef[] = [
   ...chain('salvage',
     ['Заточенный инструмент','Слабые места','Combo','Длинная серия','Разгон','На кураже','Охотник за деталями'],
     ['+10% скорость авторазбора.','Ещё +10% скорость авторазбора.','Открывает Combo: серия разрушений ускоряет разбор.','Окно Combo дольше на 1,2 сек.','Максимум Combo увеличен с 5 до 8.','На высокой серии растёт скорость движения.','Высокий Combo повышает шанс редких компонентов.'], 7),
+  {id:'salvage_8',branch:'salvage',tier:8,name:'Широкий замах',description:'Авторазбор одновременно цепляет вторую ближайшую цель с 55% мощности.',minLevel:10,requires:'salvage_7',runtime:true},
   ...chain('logistics',
     ['Усиленная тележка','Лёгкая упряжь','Сильный магнит','Грузовая рама','Карман для деталей','Широкая тележка','Полевой сборщик'],
     ['+10 кг к вместимости тележки.','+8% скорость движения.','+45 к радиусу магнитного подбора.','Ещё +15 кг вместимости.','Редкие компоненты не считаются грузом.','Ещё +20 кг вместимости.','Часть мелкого лома автоматически собирается рядом.'], 4),
@@ -59,8 +60,6 @@ export const TALENTS: TalentDef[] = [
 
 export const TALENT_BY_ID = new Map(TALENTS.map((talent) => [talent.id, talent]));
 
-// Cumulative XP. The first point arrives in the first sessions; the third point,
-// needed for Combo on a focused Salvage build, targets roughly ~2h active play.
 export const LEVEL_XP = [0, 120, 420, 1800, 3200, 5200, 7800, 11000, 15000, 20000];
 
 export function levelForXp(xp: number): number {
@@ -98,6 +97,7 @@ export interface RuntimeEffects {
   comboSpeedPerStack: number;
   comboMoveBonus: number;
   componentChanceBonus: number;
+  wideSwingUnlocked: boolean;
   machineCostMultiplier: number;
   workshopYieldMultiplier: number;
   workshopSlots: number;
@@ -123,6 +123,7 @@ export function deriveEffects(unlocked: ReadonlySet<TalentId>): RuntimeEffects {
     comboSpeedPerStack: .03,
     comboMoveBonus: has('salvage_6') ? .08 : 0,
     componentChanceBonus: has('salvage_7') ? .03 : 0,
+    wideSwingUnlocked: has('salvage_8'),
     machineCostMultiplier: has('workshop_1') ? .95 : 1,
     workshopYieldMultiplier: has('workshop_2') ? 1.10 : 1,
     workshopSlots: has('workshop_3') ? 2 : 1,

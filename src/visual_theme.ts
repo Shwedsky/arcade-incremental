@@ -55,6 +55,12 @@ export const ZONE_VISUALS:Record<ZoneId,ZoneVisualTheme>={
     groundTop:'#665c4b',groundBottom:'#3f3b34',groundDust:'#88765d',
     lane:'#49463f',laneMark:'#e6c670',edge:'#2d2b28',accent:'#e48f57',accentSoft:'#e48f5748',shadow:'#140f0bb8',
     decor:['scrapstack','pallet','crate','barrel','cone','puddle','fence']
+  },
+  z4:{
+    id:'z4',label:'Авторазборка',
+    groundTop:'#474b52',groundBottom:'#252b31',groundDust:'#686b72',
+    lane:'#2d3338',laneMark:'#e8b64f',edge:'#1b2025',accent:'#f0a63c',accentSoft:'#f0a63c48',shadow:'#090d12c2',
+    decor:['tire','tire','scrapstack','pallet','barrel','fence','puddle','cone']
   }
 };
 
@@ -78,7 +84,7 @@ export function zoneVisual(id:ZoneId):ZoneVisualTheme{return ZONE_VISUALS[id]}
 
 export function validateVisualFoundation():string[]{
   const errors:string[]=[];
-  for(const id of ['z1','z2','z3'] as ZoneId[]){
+  for(const id of ['z1','z2','z3','z4'] as ZoneId[]){
     const t=ZONE_VISUALS[id];
     if(!t||!t.groundTop||!t.accent||t.decor.length<5)errors.push(`zone:${id}`);
   }
