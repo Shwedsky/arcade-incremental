@@ -1,4 +1,5 @@
-import type { ResourceKind, TargetClassId } from './sim.ts';
+import type { ComponentKind, ResourceKind, TargetClassId } from './sim.ts';
+import {simulateBenchmarkedWorker,type WorkerEconomyV2State} from './worker_economy_v2.ts';
 
 export type PackDZoneId='z7';
 export type PackDCrewZoneId='z1'|'z2'|'z3'|'z4'|'z5'|'z6'|'z7';
@@ -54,7 +55,9 @@ export interface PackDInventory{
   cash:number;
   metal:number;
   cleanCopper:number;
+  granulate:number;
   steelBlank:number;
+  aluminiumBillet:number;
   alloyBillet:number;
   drive:number;
   control:number;
@@ -78,11 +81,12 @@ export const RECOVERY_RIG_RECIPE={
 } as const;
 
 export const INDUSTRIAL_WORKSHOP_RECIPE={
-  metal:1200,cleanCopper:45,steelBlank:60,alloyBillet:120,drive:2,control:3,hydraulicPower:3,heavyFrame:4,
+  metal:360,cleanCopper:70,granulate:60,steelBlank:90,aluminiumBillet:36,alloyBillet:150,drive:3,control:4,hydraulicPower:4,heavyFrame:5,
   industrialController:2,heavyHydraulicCylinder:2
 } as const;
 
 const emptyResources=():Record<ResourceKind,number>=>({metal:0,copper:0,plastic:0});
+const emptyComponents=():Record<ComponentKind,number>=>({bearing:0,motor:0,hydraulic:0,electronics:0});
 
 export function createDefaultPackD(now=Date.now()):PackDState{
   return{
@@ -161,12 +165,12 @@ export function truckWorkerRouteEligible(state:PackDState):boolean{return state.
 
 export function canAcquireIndustrialWorkshop(state:PackDState,inv:PackDInventory,z7Mastered:boolean):boolean{
   const r=INDUSTRIAL_WORKSHOP_RECIPE;
-  return state.recoveryRig.owned&&!state.industrialWorkshopOwned&&z7Mastered&&inv.cash>=INDUSTRIAL_WORKSHOP_CASH&&inv.metal>=r.metal&&inv.cleanCopper>=r.cleanCopper&&inv.steelBlank>=r.steelBlank&&inv.alloyBillet>=r.alloyBillet&&inv.drive>=r.drive&&inv.control>=r.control&&inv.hydraulicPower>=r.hydraulicPower&&inv.heavyFrame>=r.heavyFrame&&inv.industrialController>=r.industrialController&&inv.heavyHydraulicCylinder>=r.heavyHydraulicCylinder;
+  return state.recoveryRig.owned&&!state.industrialWorkshopOwned&&z7Mastered&&inv.cash>=INDUSTRIAL_WORKSHOP_CASH&&inv.metal>=r.metal&&inv.cleanCopper>=r.cleanCopper&&inv.granulate>=r.granulate&&inv.steelBlank>=r.steelBlank&&inv.aluminiumBillet>=r.aluminiumBillet&&inv.alloyBillet>=r.alloyBillet&&inv.drive>=r.drive&&inv.control>=r.control&&inv.hydraulicPower>=r.hydraulicPower&&inv.heavyFrame>=r.heavyFrame&&inv.industrialController>=r.industrialController&&inv.heavyHydraulicCylinder>=r.heavyHydraulicCylinder;
 }
 
 export function acquireIndustrialWorkshop(state:PackDState,inv:PackDInventory,z7Mastered:boolean):boolean{
   if(!canAcquireIndustrialWorkshop(state,inv,z7Mastered))return false;const r=INDUSTRIAL_WORKSHOP_RECIPE;
-  inv.cash-=INDUSTRIAL_WORKSHOP_CASH;inv.metal-=r.metal;inv.cleanCopper-=r.cleanCopper;inv.steelBlank-=r.steelBlank;inv.alloyBillet-=r.alloyBillet;inv.drive-=r.drive;inv.control-=r.control;inv.hydraulicPower-=r.hydraulicPower;inv.heavyFrame-=r.heavyFrame;inv.industrialController-=r.industrialController;inv.heavyHydraulicCylinder-=r.heavyHydraulicCylinder;state.industrialWorkshopOwned=true;state.productionCells=2;return true;
+  inv.cash-=INDUSTRIAL_WORKSHOP_CASH;inv.metal-=r.metal;inv.cleanCopper-=r.cleanCopper;inv.granulate-=r.granulate;inv.steelBlank-=r.steelBlank;inv.aluminiumBillet-=r.aluminiumBillet;inv.alloyBillet-=r.alloyBillet;inv.drive-=r.drive;inv.control-=r.control;inv.hydraulicPower-=r.hydraulicPower;inv.heavyFrame-=r.heavyFrame;inv.industrialController-=r.industrialController;inv.heavyHydraulicCylinder-=r.heavyHydraulicCylinder;state.industrialWorkshopOwned=true;state.productionCells=2;return true;
 }
 
 export function canHireFourthWorker(state:PackDState,cash:number):boolean{return state.industrialWorkshopOwned&&!state.crew4.hired&&cash>=FOURTH_WORKER_COST}
@@ -183,7 +187,8 @@ export function assignFourthWorkerOperator(state:PackDState,cell:number,now=Date
 const CREW4_RATES:Record<PackDCrewZoneId,Record<ResourceKind,number>>={
   z1:{metal:100,copper:6.5,plastic:17},z2:{metal:90,copper:11,plastic:14},z3:{metal:122,copper:12,plastic:16},z4:{metal:145,copper:13,plastic:10},z5:{metal:176,copper:15,plastic:8},z6:{metal:194,copper:16,plastic:6},z7:{metal:225,copper:17,plastic:5}
 };
-export function simulateFourthWorker(state:PackDState,now=Date.now(),maxHours=18):{hours:number;resources:Record<ResourceKind,number>}{
-  const empty={hours:0,resources:emptyResources()},w=state.crew4;if(!w.hired||w.role!=='scavenger'||!w.assignment){w.lastTick=now;return empty}
-  const hours=Math.min(Math.max(0,(now-w.lastTick)/3_600_000),maxHours),rates=CREW4_RATES[w.assignment];w.lastTick=now;return{hours,resources:{metal:rates.metal*hours,copper:rates.copper*hours,plastic:rates.plastic*hours}};
+export function simulateFourthWorker(state:PackDState,economy:WorkerEconomyV2State,discoveredComponents:ReadonlyArray<ComponentKind>,now=Date.now(),offline=false):{hours:number;resources:Record<ResourceKind,number>;components:Record<ComponentKind,number>;weight:number;source:string;offlineRemainingHours:number}{
+  const empty={hours:0,resources:emptyResources(),components:emptyComponents(),weight:0,source:'none',offlineRemainingHours:economy.shifts.w4.remainingOfflineMs/3_600_000},w=state.crew4;if(!w.hired||w.role!=='scavenger'||!w.assignment){w.lastTick=now;return empty}
+  const gain=simulateBenchmarkedWorker({state:economy,slot:'w4',zone:w.assignment,lastTick:w.lastTick,now,offline,discoveredComponents,legacyRates:CREW4_RATES[w.assignment]});
+  w.lastTick=gain.lastTick;return{hours:gain.hours,resources:gain.resources,components:gain.components,weight:gain.weight,source:gain.source,offlineRemainingHours:gain.offlineRemainingHours};
 }
