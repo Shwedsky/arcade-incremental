@@ -7,6 +7,7 @@ import {
 import type { ContractState } from '../src/early_game.ts';
 
 const caps=(...values:string[])=>new Set(values);
+assert.ok(CONTRACT_BOARD_V2.every(x=>x.minLevel<=10),'all contract level gates must be reachable under the current level cap');
 const early:ContractBoardContext={level:1,capabilities:caps()};
 const e=eligibleBoardContracts(early);
 assert.ok(e.length>=2,'early board must have more than one readable contract');
@@ -23,13 +24,13 @@ assert.ok(midEligible.some(x=>x.id==='pump_service'));
 assert.ok(midEligible.some(x=>x.id==='cold_chain'));
 assert.ok(!midEligible.some(x=>x.id==='steel_contract'),'industrial order must stay locked without capability');
 
-const late:ContractBoardContext={level:14,capabilities:caps(
+const late:ContractBoardContext={level:10,capabilities:caps(
   'component:bearing','component:motor','component:hydraulic','component:electronics',
   'processed:briquette','processed:cleanCopper','processed:granulate','mid:pump','mid:compressor',
   'materialB:steelBlank','materialB:aluminiumBillet','moduleB:drive','moduleB:control','industrialB:gearbox','industrialB:generator',
   'materialC:alloyBillet','moduleC:hydraulicPower','moduleC:heavyFrame','industrialC:industrialController','industrialC:heavyHydraulicCylinder'
 )};
-assert.ok(contractBoardPoolStats(late).eligible>=20,'late board should expose a large staged pool');
+assert.ok(contractBoardPoolStats(late).eligible>=20,'late board should expose a large staged pool at reachable level cap');
 assert.equal(contractBoardPoolStats(late).families,4);
 
 const legacy:ContractState={index:0,completed:0};
