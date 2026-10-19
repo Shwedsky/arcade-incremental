@@ -154,8 +154,20 @@ export const CONTRACTS:ContractDef[] = [
   }
 ];
 
+function contractExperienceNeedMultiplier(state:ContractState):number {
+  return 1+Math.min(.25,state.completed*.025);
+}
+
 export function activeContract(state:ContractState):ContractDef {
-  return CONTRACTS[((state.index%CONTRACTS.length)+CONTRACTS.length)%CONTRACTS.length];
+  const def=CONTRACTS[((state.index%CONTRACTS.length)+CONTRACTS.length)%CONTRACTS.length];
+  // main runtime scales all contract needs by experience and +8% for urgent orders.
+  // Pre-normalize discrete components against the maximum multiplier so one bearing
+  // always remains one whole bearing instead of becoming a hidden 1.025 -> ceil(2).
+  const maxNeedMultiplier=contractExperienceNeedMultiplier(state)+.08;
+  return {
+    ...def,
+    needs:def.needs.map(need=>need.kind==='component'?{...need,amount:need.amount/maxNeedMultiplier}:{...need})
+  };
 }
 
 export function contractScale(state:ContractState,urgentUnlocked:boolean):number {
