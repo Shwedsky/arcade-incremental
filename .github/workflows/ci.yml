@@ -20,6 +20,8 @@ jobs:
         run: npm run build
       - name: Deterministic gameplay smoke
         run: npm run smoke
+      - name: Early-game systems smoke
+        run: npm run smoke:early
       - name: Progression pacing proof
         run: python models/progression_sim_v0.py --check
       - name: Install browser
