@@ -1,0 +1,9 @@
+zone,name,base_bulk_kg_h,realized_multiplier,realized_bulk_kg_h,effective_local_capacity_kg,cart_fill_min,mastery_target_active_h,mastery_pct_per_active_min
+Z1,Old Junkyard,522.0,1.0,522.0,55,6.32,1.5,1.1111
+Z2,Garage Backyards,465.0,1.15,534.75,55,6.17,2.0,0.8333
+Z3,Appliance Yard,698.0,1.2,837.6,75,5.37,2.5,0.6667
+Z4,Auto Salvage,845.0,1.25,1056.25,100,5.68,3.0,0.5556
+Z5,Industrial Zone,1090.0,1.2,1308.0,120,5.5,3.5,0.4762
+Z6,Abandoned Factory,1315.0,1.1,1446.5,140,5.81,4.0,0.4167
+Z7,Heavy Depot,1555.0,1.0,1555.0,160,6.17,4.5,0.3704
+Z8,Port Terminal,1905.0,0.9,1714.5,180,6.3,5.0,0.3333
