@@ -75,9 +75,9 @@ export const CONTRACT_BOARD_V2:ContractBoardDef[]=[
   {id:'powertrain_order',family:'industrial',name:'Ремонт силовой линии',description:'Коробка передач и генератор для восстановительной бригады.',needs:[industrialB('gearbox',1,'Коробка передач'),industrialB('generator',1,'Генератор')],cashReward:14500,xpReward:115,minLevel:9,requires:['industrialB:gearbox','industrialB:generator']},
 
   {id:'alloy_billet_order',family:'industrial',name:'Тяжёлые заготовки',description:'Сплавные слитки для промышленной оснастки.',needs:[materialC('alloyBillet',8,'Слитки сплава')],cashReward:18000,xpReward:130,minLevel:10,requires:['materialC:alloyBillet']},
-  {id:'hydraulic_power_order',family:'industrial',name:'Гидростанция',description:'Готовый гидравлический силовой модуль.',needs:[moduleC('hydraulicPower',1,'Гидравлический силовой модуль')],cashReward:24500,xpReward:150,minLevel:11,requires:['moduleC:hydraulicPower']},
-  {id:'heavy_frame_order',family:'industrial',name:'Тяжёлая рама',description:'Усиленная рама для промышленной установки.',needs:[moduleC('heavyFrame',1,'Тяжёлая рама')],cashReward:27000,xpReward:160,minLevel:11,requires:['moduleC:heavyFrame']},
-  {id:'industrial_controls',family:'industrial',name:'Промышленная автоматика',description:'Контроллер и гидроцилиндр для модернизации линии.',needs:[industrialC('industrialController',1,'Промышленный контроллер'),industrialC('heavyHydraulicCylinder',1,'Тяжёлый гидроцилиндр')],cashReward:36000,xpReward:190,minLevel:12,requires:['industrialC:industrialController','industrialC:heavyHydraulicCylinder']}
+  {id:'hydraulic_power_order',family:'industrial',name:'Гидростанция',description:'Готовый гидравлический силовой модуль.',needs:[moduleC('hydraulicPower',1,'Гидравлический силовой модуль')],cashReward:24500,xpReward:150,minLevel:10,requires:['moduleC:hydraulicPower']},
+  {id:'heavy_frame_order',family:'industrial',name:'Тяжёлая рама',description:'Усиленная рама для промышленной установки.',needs:[moduleC('heavyFrame',1,'Тяжёлая рама')],cashReward:27000,xpReward:160,minLevel:10,requires:['moduleC:heavyFrame']},
+  {id:'industrial_controls',family:'industrial',name:'Промышленная автоматика',description:'Контроллер и гидроцилиндр для модернизации линии.',needs:[industrialC('industrialController',1,'Промышленный контроллер'),industrialC('heavyHydraulicCylinder',1,'Тяжёлый гидроцилиндр')],cashReward:36000,xpReward:190,minLevel:10,requires:['industrialC:industrialController','industrialC:heavyHydraulicCylinder']}
 ];
 
 export function contractNeedCapability(need:ContractBoardNeed):string{
