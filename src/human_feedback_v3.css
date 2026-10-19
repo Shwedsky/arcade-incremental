@@ -1,3 +1,9 @@
 /* Human Feedback V3: an already discovered field component remains known even when this excursion currently carries zero of it. */
 #components span.hfKnownOnly{background:#ffffff0b!important;color:#a8b5ae!important;box-shadow:inset 0 0 0 1px #ffffff16!important}
 #components span.hfKnownOnly>b{display:none!important}
+#components span.hfKnownOnly::before{font-size:15px!important;line-height:1!important}
+#components span:nth-child(5).hfKnownOnly::before{content:'◍'!important}
+#components span:nth-child(6).hfKnownOnly::before{content:'◫'!important}
+#components span:nth-child(7).hfKnownOnly::before{content:'⬡'!important}
+#components span:nth-child(8).hfKnownOnly::before{content:'⚙'!important}
+#components span:nth-child(9).hfKnownOnly::before{content:'ϟ'!important}
