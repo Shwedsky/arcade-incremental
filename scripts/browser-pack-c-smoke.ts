@@ -25,9 +25,10 @@ const packC=(overrides:Record<string,unknown>={})=>({
   materials:{alloyScrap:75,alloyBillet:80},industrial:{industrialController:5,heavyHydraulicCylinder:5},discoveredIndustrial:['industrialController','heavyHydraulicCylinder'],pity:{industrialController:0,heavyHydraulicCylinder:0},modules:{hydraulicPower:3,heavyFrame:3},salvageYardOwned:false,production:null,
   crew3:{hired:false,role:'scavenger',assignment:null,lastTick:Date.now()},...overrides
 });
+const PACK_C_TALENTS=['salvage_1','salvage_2','salvage_3','salvage_4','salvage_5','salvage_6','salvage_7','salvage_8','workshop_1','workshop_2','workshop_3','workshop_4','workshop_8','automation_1','automation_2','automation_3','automation_8'];
 const baseV5=(overrides:Record<string,unknown>={})=>({
   v:5,xp:26000,storage:{metal:3000,copper:80,plastic:80},components:{bearing:12,motor:12,hydraulic:8,electronics:12},processed:{briquette:1000,cleanCopper:300,granulate:40},cash:1_500_000,
-  installed:['workbench','press','wire','plastic'],machineLevels:{workbench:1,press:2,wire:2,plastic:1},talents:['salvage_1','salvage_2','salvage_3','salvage_4','salvage_5','salvage_6','salvage_7','salvage_8'],equipmentLevels:{tool:4,cart:4},jobs:[],contract:{index:0,completed:0},totalDestroyed:5000,lastSeen:Date.now(),midgame:midgame(),packB:packB(),...overrides
+  installed:['workbench','press','wire','plastic'],machineLevels:{workbench:1,press:2,wire:2,plastic:1},talents:PACK_C_TALENTS,equipmentLevels:{tool:4,cart:4},jobs:[],contract:{index:0,completed:0},totalDestroyed:5000,lastSeen:Date.now(),midgame:midgame(),packB:packB(),...overrides
 });
 const baseV6=(overrides:Record<string,unknown>={})=>({...baseV5(),v:6,packC:packC(),...overrides});
 async function withSave(context:BrowserContext,save:any){await context.addInitScript(({key,value})=>{if(sessionStorage.getItem('__arcade_packc_seeded__'))return;localStorage.setItem(key,JSON.stringify(value));sessionStorage.setItem('__arcade_packc_seeded__','1')},{key:SAVE_KEY,value:save})}
@@ -44,15 +45,14 @@ try{
   const c2=await browser.newContext();await withSave(c2,baseV6({packC:packC({discoveredIndustrial:[],industrial:{industrialController:0,heavyHydraulicCylinder:0}})}));const p2=await c2.newPage();await p2.goto(`${ORIGIN}/?seed=packc-zones`);await p2.click('#garage');await p2.waitForSelector('#garageScreen:not([hidden])');
   await p2.click('#zonesGarage');await p2.waitForSelector('#zoneScreen:not([hidden])');assert.equal(await p2.locator('[data-zone="z5"] button').isDisabled(),false);assert.equal(await p2.locator('[data-zone="z6"] button').isDisabled(),true);await c2.close();
 
-  // 3. Full Pack C bridge: Z6 gate -> production cell -> Salvage Yard -> third worker -> Operator -> persistence.
+  // 3. Full Pack C bridge: Z6 -> Yard -> third worker -> Operator -> accelerated production -> persistence.
   const c3=await browser.newContext();const mastered={z1:100,z2:100,z3:100,z4:100,z5:100,z6:100};await withSave(c3,baseV6({midgame:midgame(mastered,'z5'),packC:packC()}));const p3=await c3.newPage();await p3.goto(`${ORIGIN}/?seed=packc-main`);await p3.click('#garage');await p3.waitForSelector('#garageScreen:not([hidden])');
   await p3.click('#zonesGarage');await p3.waitForSelector('#zoneScreen:not([hidden])');const z6=p3.locator('[data-zone="z6"] button');assert.equal(await z6.isDisabled(),false);await z6.click();let s3=await state(p3);assert.equal(s3.midgame.currentZone,'z6');
-  const alloy=p3.locator('#packCAlloy');assert.equal(await alloy.isDisabled(),false);await alloy.click();s3=await state(p3);assert.equal(s3.packC.production.kind,'alloyBillet');
-  // Seeded state already has all Yard recipe inputs; production job does not consume Yard-only materials.
   const yard=p3.locator('#acquireSalvageYard');assert.equal(await yard.isDisabled(),false);await yard.click();s3=await state(p3);assert.equal(s3.packC.salvageYardOwned,true);
   const hire3=p3.locator('#hireWorker3');assert.equal(await hire3.isDisabled(),false);await hire3.click();s3=await state(p3);assert.equal(s3.packC.crew3.hired,true);
-  await p3.click('#assignOperator');s3=await state(p3);assert.equal(s3.packC.crew3.role,'operator');assert.equal(s3.packC.crew3.assignment,null);
-  await p3.reload();await p3.waitForSelector('#garage');s3=await state(p3);assert.equal(s3.saveVersion,6);assert.equal(s3.packC.salvageYardOwned,true);assert.equal(s3.packC.crew3.hired,true);assert.equal(s3.packC.crew3.role,'operator');assert.equal(s3.packC.production.kind,'alloyBillet');await c3.close();
+  const operator=p3.locator('#assignOperator');assert.equal(await operator.isDisabled(),false);await operator.click();s3=await state(p3);assert.equal(s3.packC.crew3.role,'operator');assert.equal(s3.packC.crew3.assignment,null);
+  const alloy=p3.locator('#packCAlloy');assert.equal(await alloy.isDisabled(),false);await alloy.click();s3=await state(p3);assert.equal(s3.packC.production.kind,'alloyBillet');const duration=s3.packC.production.endsAt-s3.packC.production.startedAt;assert.equal(duration,162000,'Workshop ×0.90 and Operator ×0.75 must combine on Pack C cell');
+  await p3.reload();await p3.waitForSelector('#garage');s3=await state(p3);assert.equal(s3.saveVersion,6);assert.equal(s3.packC.salvageYardOwned,true);assert.equal(s3.packC.crew3.hired,true);assert.equal(s3.packC.crew3.role,'operator');assert.equal(s3.packC.production.kind,'alloyBillet');assert.ok(s3.talents.includes('workshop_8'));assert.ok(s3.talents.includes('automation_8'));await c3.close();
 
   console.log('browser Content Pack C proof: PASS');
 }finally{await browser.close();await stopServer()}
