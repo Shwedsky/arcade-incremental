@@ -1,6 +1,8 @@
 import { getTargetClass, type ResourceKind, type SalvageTarget, type Vec2 } from './sim.ts';
 import type { ZoneId } from './midgame.ts';
 import { TARGET_VISUALS, zoneVisual, type DecorVisualKind } from './visual_theme.ts';
+import { targetContent } from './zone_content.ts';
+import { drawContentDetail } from './content_visual.ts';
 
 export interface Pickup extends Vec2 { kind:ResourceKind; amount:number; vx:number; vy:number; age:number }
 export interface FloatText extends Vec2 { text:string; color:string; life:number; big?:boolean }
@@ -94,7 +96,7 @@ export function renderField(args:{
   for(const d of decor){const p=screen(d);if(p.x<-100||p.y<-100||p.x>width+100||p.y>height+100)continue;drawDecor(ctx,d,p,zone)}
   if(args.vanOwned)drawVehicle(ctx,screen,args.vanLoad??0,args.vanCapacity??400,!!args.workerHere);
   for(const t of targets.filter(x=>x.alive).sort((a,b)=>a.y-b.y)){
-    const p=screen(t),d=getTargetClass(t.classId),hp=Math.max(0,t.hp/t.maxHp);ctx.save();ctx.translate(p.x,p.y);ctx.rotate(t.rotation);ctx.shadowColor=selected?.id===t.id?theme.accent+'cc':theme.shadow;ctx.shadowBlur=selected?.id===t.id?22:9;targetBody(ctx,t);
+    const p=screen(t),d=getTargetClass(t.classId),hp=Math.max(0,t.hp/t.maxHp);ctx.save();ctx.translate(p.x,p.y);ctx.rotate(t.rotation);ctx.shadowColor=selected?.id===t.id?theme.accent+'cc':theme.shadow;ctx.shadowBlur=selected?.id===t.id?22:9;targetBody(ctx,t);drawContentDetail(ctx,targetContent(zone,t.classId,t.variant).visual);
     if(hp<.72){ctx.strokeStyle=hp<.35?'#f0b06dcc':'#403b35bb';ctx.lineWidth=2.5;ctx.beginPath();ctx.moveTo(-d.radius*.5,-d.radius*.42);ctx.lineTo(-2,0);ctx.lineTo(d.radius*.18,d.radius*.16);ctx.lineTo(d.radius*.45,d.radius*.38);ctx.stroke();if(hp<.35){ctx.beginPath();ctx.moveTo(d.radius*.2,-d.radius*.38);ctx.lineTo(4,-4);ctx.lineTo(-d.radius*.25,d.radius*.28);ctx.stroke()}}
     ctx.restore();
     if(selected?.id===t.id){ctx.strokeStyle=theme.accent+'aa';ctx.lineWidth=2;ctx.setLineDash([6,5]);ctx.beginPath();ctx.arc(p.x,p.y,d.radius+9,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);const w=Math.max(42,d.radius*1.9),y=p.y-d.radius-21;ctx.fillStyle='#0b1210dd';rr(ctx,p.x-w/2,y,w,8,4);ctx.fill();ctx.fillStyle=hp>.35?'#79e86e':'#ffad58';rr(ctx,p.x-w/2+1,y+1,(w-2)*hp,6,3);ctx.fill()}
