@@ -73,7 +73,8 @@ export function normalizeWorkshopScheduler(value:Partial<WorkshopSchedulerState>
       action.completedCount=Math.max(0,Math.min(action.requestedCount,Math.floor(Number.isFinite(action.completedCount)?action.completedCount:0)));
       if(action.completedCount>=action.requestedCount&&!action.current)action.status='completed';
     }else{
-      action.inputsCommitted=Boolean(action.inputsCommitted);
+      const oneShot=action as WorkshopOneShotAction;
+      oneShot.inputsCommitted=Boolean(oneShot.inputsCommitted);
     }
     actions.push(action);
   }
