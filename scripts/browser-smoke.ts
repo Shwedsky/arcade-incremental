@@ -27,13 +27,13 @@ async function advance(page:Page,ms:number){const base=Math.max(Date.now(),works
 await waitServer();
 const browser=await chromium.launch({headless:true});
 try{
-  // 1. Home is always available; accepted 35 Tier-I nodes remain visible plus three justified Tier-II runtime nodes.
+  // 1. Home is always available; historical progression remains visible plus five coherent Tier-II roots.
   const c1=await browser.newContext();const p1=await c1.newPage();await p1.goto(`${ORIGIN}/?seed=fresh&reset=1`);await p1.waitForSelector('#garage');
   assert.equal(await p1.locator('#garage').isDisabled(),false);const fresh=await state(p1);assert.equal(fresh.cart,0);assert.equal(fresh.capacity,40);assert.deepEqual(fresh.equipmentLevels,{tool:1,cart:1});
   await p1.click('#garage');await p1.waitForSelector('#garageScreen:not([hidden])');
   const pressCard=await p1.locator('[data-machine="press"] .cardGate').textContent();assert.match(pressCard??'',/Металл/);assert.match(pressCard??'',/Подшипник/);assert.match(pressCard??'',/Гидравлический узел/);assert.match(pressCard??'',/2.?500/);
   assert.match((await p1.locator('#equipmentPanel').textContent())??'',/Личное снаряжение/);assert.match((await p1.locator('#contractPanel').textContent())??'',/Пункт приёма: железо/);assert.match((await p1.locator('#queuePanel').textContent())??'',/0 \/ 1/);
-  await p1.click('#talentsGarage');await p1.waitForSelector('#talentScreen:not([hidden])');assert.equal(await p1.locator('.talentBranch').count(),5);assert.equal(await p1.locator('.talentNode').count(),38);assert.equal(await p1.locator('[data-talent="salvage_3"]').isDisabled(),true);assert.equal(await p1.locator('[data-talent="salvage_8"]').isDisabled(),true);assert.equal(await p1.locator('[data-talent="workshop_8"]').isDisabled(),true);assert.equal(await p1.locator('[data-talent="automation_8"]').isDisabled(),true);await c1.close();
+  await p1.click('#talentsGarage');await p1.waitForSelector('#talentScreen:not([hidden])');assert.equal(await p1.locator('.talentBranch').count(),5);assert.equal(await p1.locator('.talentNode').count(),40);assert.equal(await p1.locator('[data-talent="salvage_3"]').isDisabled(),true);assert.equal(await p1.locator('[data-talent="salvage_8"]').isDisabled(),true);assert.equal(await p1.locator('[data-talent="workshop_8"]').isDisabled(),true);assert.equal(await p1.locator('[data-talent="automation_8"]').isDisabled(),true);await c1.close();
 
   // 2. Focused Salvage build unlocks Combo only after prerequisites and persists through reload.
   const c2=await browser.newContext();await withSave(c2,baseSave({xp:1800,talents:['salvage_1','salvage_2']}));const p2=await c2.newPage();await p2.goto(`${ORIGIN}/?seed=combo`);await p2.click('#talentsOpen');await p2.waitForSelector('#talentScreen:not([hidden])');const combo=p2.locator('[data-talent="salvage_3"]');assert.equal(await combo.isDisabled(),false);await combo.click();await p2.waitForFunction(()=>(globalThis as any).__SALVAGE_TEST__?.getState().talents.includes('salvage_3'));await p2.reload();await p2.waitForSelector('#garage');assert.ok((await state(p2)).talents.includes('salvage_3'));await c2.close();

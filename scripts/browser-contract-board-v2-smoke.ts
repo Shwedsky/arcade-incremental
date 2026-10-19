@@ -40,11 +40,11 @@ try{
   const ctx=await browser.newContext({viewport:{width:1440,height:900},storageState:{cookies:[],origins:[{origin:ORIGIN,localStorage:[{name:SAVE_KEY,value:JSON.stringify(late)}]}]}}),page=await ctx.newPage(),errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto(`${ORIGIN}/?seed=contract-v2-late`);await page.waitForFunction(()=>(globalThis as any).__SALVAGE_TEST__?.getState()?.saveVersion===9);await page.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.forceGarage());
   await page.waitForSelector('#garageScreen:not([hidden])');
-  const header=await page.locator('#contractPanel .contractHead small').innerText();const match=header.match(/(\d+) доступно/);assert.ok(match);assert.ok(Number(match![1])>=20,'late board must expose the broad staged pool');
+  const header=await page.locator('#contractPanel > .contractHead small').innerText();const match=header.match(/(\d+) доступно/);assert.ok(match);assert.ok(Number(match![1])>=20,'late board must expose the broad staged pool');
   const titles:string[]=[];
   for(let i=0;i<10;i++){
     const before=(await page.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.getState().contract.completed)) as number;
-    titles.push((await page.locator('#contractPanel h2').innerText()).trim());
+    titles.push((await page.locator('#contractPanel [data-contract-offer] h2').first().innerText()).trim());
     const button=page.locator('#completeContract');assert.equal(await button.isDisabled(),false,`late fixture should afford contract ${i}`);await button.click();
     await page.waitForFunction((n:number)=>(globalThis as any).__SALVAGE_TEST__.getState().contract.completed===n+1,before);
   }

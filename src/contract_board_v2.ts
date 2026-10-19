@@ -103,20 +103,29 @@ export function eligibleBoardContracts(ctx:ContractBoardContext):ContractBoardDe
 
 function boardState(state:ContractState):ContractBoardState{return state as ContractBoardState}
 
-export function activeBoardContract(state:ContractState,ctx:ContractBoardContext):ContractBoardDef{
+export function boardContractOffers(state:ContractState,ctx:ContractBoardContext,count=1):ContractBoardDef[]{
   const eligible=eligibleBoardContracts(ctx);
-  if(!eligible.length)return CONTRACT_BOARD_V2[0];
-  const s=boardState(state),current=s.currentId&&eligible.find(def=>def.id===s.currentId);
-  if(current)return current;
-  const recentIds=(s.recentIds??[]).slice(-4),recentSignatures=(s.recentSignatures??[]).slice(-3);
-  let candidates=eligible.filter(def=>!recentIds.includes(def.id)&&!recentSignatures.includes(contractSignature(def)));
-  if(!candidates.length)candidates=eligible.filter(def=>!recentIds.includes(def.id));
-  if(!candidates.length)candidates=eligible;
-  const pointer=Math.max(0,state.index)+Math.max(0,state.completed)*3;
-  const selected=candidates[pointer%candidates.length];
-  s.currentId=selected.id;
-  return selected;
+  if(!eligible.length)return[CONTRACT_BOARD_V2[0]];
+  const s=boardState(state),recentIds=(s.recentIds??[]).slice(-4),recentSignatures=(s.recentSignatures??[]).slice(-3),pointer=Math.max(0,state.index)+Math.max(0,state.completed)*3;
+  let first=s.currentId&&eligible.find(def=>def.id===s.currentId);
+  if(!first){
+    let candidates=eligible.filter(def=>!recentIds.includes(def.id)&&!recentSignatures.includes(contractSignature(def)));
+    if(!candidates.length)candidates=eligible.filter(def=>!recentIds.includes(def.id));
+    if(!candidates.length)candidates=eligible;
+    first=candidates[pointer%candidates.length];s.currentId=first.id;
+  }
+  const offers=[first];
+  if(count<=1)return offers;
+  const firstSig=contractSignature(first);
+  let extras=eligible.filter(def=>def.id!==first!.id&&!recentIds.includes(def.id)&&!recentSignatures.includes(contractSignature(def))&&contractSignature(def)!==firstSig);
+  if(!extras.length)extras=eligible.filter(def=>def.id!==first!.id&&!recentIds.includes(def.id)&&contractSignature(def)!==firstSig);
+  if(!extras.length)extras=eligible.filter(def=>def.id!==first!.id);
+  let offset=1;
+  while(offers.length<Math.min(Math.max(1,count),eligible.length)&&extras.length){const idx=(pointer+offset)%extras.length;offers.push(extras.splice(idx,1)[0]);offset+=2}
+  return offers;
 }
+
+export function activeBoardContract(state:ContractState,ctx:ContractBoardContext):ContractBoardDef{return boardContractOffers(state,ctx,1)[0]}
 
 export function advanceBoardContract(state:ContractState,completed:ContractBoardDef):void{
   const s=boardState(state);

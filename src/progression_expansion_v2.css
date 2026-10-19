@@ -1,0 +1,12 @@
+.talentNode.tier2{border-color:rgba(80,170,255,.38);background:linear-gradient(135deg,rgba(20,54,78,.76),rgba(13,25,31,.92))}
+.talentNode.tier2.available{box-shadow:0 0 0 1px rgba(86,190,255,.24),0 0 22px rgba(47,154,223,.10)}
+.talentNode.tier2>span{min-width:42px;color:#8bd8ff;font-weight:900;letter-spacing:.04em}
+.talentNode .talentTierTag{display:inline-flex;width:max-content;margin-top:4px;padding:2px 6px;border:1px solid rgba(255,255,255,.12);border-radius:999px;font-size:10px;line-height:1.2;opacity:.75}
+.talentNode.tier2 .talentTierTag{border-color:rgba(91,191,255,.35);color:#8bd8ff;opacity:1}
+.talentNode .talentCost{font-style:normal;opacity:.82}
+.contractOffers{display:grid;gap:10px;margin-top:8px}
+.contractOffer{padding:10px;border:1px solid rgba(255,255,255,.09);border-radius:10px;background:rgba(255,255,255,.025)}
+.contractOffer .contractHead{margin-bottom:5px}
+.contractOffer h2{font-size:15px;margin:2px 0}
+.contractOffer>p{margin:5px 0 8px}
+@media(min-width:1100px){.contractOffers.two{grid-template-columns:1fr 1fr}.contractOffers.two .contractHead{align-items:flex-start;gap:8px}.contractOffers.two .contractHead strong{font-size:11px}}
