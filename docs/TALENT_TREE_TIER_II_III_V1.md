@@ -1,350 +1,422 @@
 # Talent Tree Tier II / III V1
 
-Status: **DESIGN BASELINE FOR REVIEW**
+Status: **DESIGN BASELINE FOR REVIEW — ALIGNED WITH CURRENT 35-NODE TIER I**
 
-The current five branches are permanent. Early-game nodes are **Tier I**, not the final tree.
+The current five branches are permanent. The existing 35 early-game nodes are **Tier I** and remain the source of truth; Tier II/III extend them rather than renaming or duplicating them.
 
-No respec/reset is required when new tiers unlock.
+No respec/reset is required when a new tier unlocks.
 
-## Unlock philosophy
+## Existing Tier I source of truth
 
-Tier unlocks are attached to major progression milestones rather than only player level.
+The current early tree already contains important mechanics that must **not** be repeated later.
 
-Suggested structure:
-- **Tier I** — current Garage-era tree;
-- **Tier II** — Van / first worker / Hangar progression;
-- **Tier III** — Salvage Yard / Industrial Workshop / Processing Plant progression.
-
-Each tier continues the same rule:
-
-**foundation -> mechanic unlock -> mechanic improvement -> meaningful specialization.**
-
-Avoid long stretches of `+5%` nodes.
-
-## Salvage branch
-
-Fantasy: the player personally becomes absurdly efficient at destroying and extracting value from frontier junk.
-
-### Tier I recap
-- dismantle-speed foundations;
+### Salvage Tier I
+- dismantle speed foundations;
 - weak points;
 - Combo;
 - longer Combo;
 - larger Combo cap;
 - momentum;
-- component hunter.
+- component hunting.
+
+### Logistics Tier I
+- cart capacity;
+- movement under load;
+- stronger magnet;
+- additional capacity;
+- component handling;
+- wider cart progression;
+- basic field collection assistance.
+
+### Workshop Tier I
+Already includes concepts such as:
+- cheaper construction;
+- better processing yield;
+- **Parallel Work**;
+- **Calibration**;
+- component/material efficiency;
+- Workshop II;
+- industrial-tooling preparation.
+
+### Automation Tier I
+Already includes concepts such as:
+- offline efficiency;
+- offline cap;
+- **Auto-feed**;
+- night/offline shift improvement;
+- queue buffer;
+- dispatcher foundations;
+- autonomous-workshop preparation.
+
+### Trade Tier I
+Already includes concepts such as:
+- better raw-material buyers;
+- better supplier pricing;
+- **urgent orders**;
+- specialist material buyers;
+- bulk selling;
+- contract improvements;
+- scrap-market preparation.
+
+Tier II below therefore starts **after** these foundations.
+
+## Global tier gates
+
+### Tier II
+Broadly Van / first-worker / Hangar era.
+
+A branch's Tier II requires:
+- its Tier I path sufficiently invested;
+- relevant milestone reached;
+- normal mastery-point cost.
+
+Different branches may open at slightly different milestones.
+
+### Tier III
+Broadly Salvage Yard / Industrial Workshop / Processing Plant era.
+
+Requires:
+- relevant Tier II investment;
+- major base/transport/zone milestone;
+- mastery points.
+
+Grinding Z1 XP alone cannot bypass a missing Van/Hangar/Yard/Workshop milestone.
+
+## Point-cost model V1
+
+Keep points readable.
+
+- Tier I ordinary node: 1 point.
+- Tier II ordinary node: 1 point.
+- Tier II capstone: 2 points.
+- Tier III ordinary node: 1 point.
+- Tier III capstone: 2 points.
+
+With 35 nodes per tier this means:
+- Tier I: 35 points;
+- Tier II: 40 points including five 2-point capstones;
+- Tier III: 40 points including five 2-point capstones;
+- full three-tier tree: **115 mastery points**.
+
+The V0 pacing model reaches ~77 total points around 150 progress hours, so meaningful specialization remains deep into late game. Full broad completion is a long-tail goal rather than an expected mid-game state.
+
+## Salvage branch
+
+Fantasy: the player becomes increasingly absurd at personally dismantling junk while route choice still matters.
 
 ### Tier II — multi-target dismantling
 
-#### 1. Wide Swing
-**New mechanic:** the equipped tool can affect a second valid nearby target.
+#### 1. Wide Swing — 1 point
+**New mechanic.** Tool automatically affects a second valid nearby target.
 
 Baseline intent:
-- primary target: 100% normal power;
-- secondary target: ~55% power;
-- automatic target selection in a small secondary cone/radius;
-- no extra input required.
+- primary: 100% power;
+- secondary: ~55% power;
+- automatic nearby secondary selection;
+- no extra input.
 
-This directly implements the desired feeling of breaking two nearby objects at once.
+Gate intent:
+- Van acquired;
+- Salvage Tier I completed or nearly completed.
 
-#### 2. Split Force
-Secondary target rises to ~75–80% power.
+Focused-Salvage target timing: roughly **15–20 progress hours**.
 
-#### 3. Dual Break
-Secondary reaches full power or very close to it.
+#### 2. Split Force — 1
+Secondary rises to ~75–80% power.
 
-The exact value comes from combat pacing tests.
+#### 3. Dual Break — 1
+Secondary reaches full or near-full power.
 
-#### 4. Heavy Weak Points
-Large/armoured targets lose part of their effective resistance / tool penalty.
+#### 4. Heavy Weak Points — 1
+Reduces penalty/resistance on large industrial targets.
 
-#### 5. Sweep Momentum
-Breaking either parallel target refreshes Combo and gives a brief movement/attack rhythm bonus.
+#### 5. Sweep Momentum — 1
+Either parallel target can maintain Combo rhythm and gives a modest motion/attack feel boost.
 
-#### 6. Salvage Choice
-Premium targets expose a simplified `Preserve core` vs `Smash for bulk` mode more efficiently.
+#### 6. Salvage Choice — 1
+Improves the `Preserve valuable core` vs `Smash for bulk` decision on premium targets.
 
-#### 7. Zone Predator
-On mastered low-tier zones, massively improves clear speed but **not** passive worker income. This is explicitly a player power-fantasy talent.
+#### 7. Zone Predator — **2-point capstone**
+Massively improves personal clear rhythm on mastered low-tier zones without increasing worker income.
+
+This is the deliberate old-zone fireworks talent.
 
 ### Tier III — controlled area destruction
 
-#### 1. Chain Break
-Destroying a target sends a fraction of tool power to the nearest small/medium target.
+#### 1. Chain Break — 1
+A destroyed target transfers partial tool force to a nearby small/medium target.
 
-#### 2. Triple Pressure
-Under high Combo or a late tool requirement, a third low-power target can be affected.
+#### 2. Triple Pressure — 1
+At high Combo / appropriate late tool, a third low-power target can be affected.
 
-#### 3. Industrial Cutter Mastery
-Large industrial targets dismantle materially faster and lose more stages per active cycle.
+#### 3. Industrial Cutter Mastery — 1
+Faster dismantling of large multi-stage targets.
 
-#### 4. Component Preservation
-Focused intact-component mode loses less bulk yield / takes less extra time.
+#### 4. Core Preservation — 1
+Intact-component extraction loses less bulk yield/time.
 
-#### 5. Salvage Storm
-Late capstone: sustained high Combo turns dense old-zone content into a spectacular chain-clear state.
+#### 5. Heavy Core Breaker — 1
+Better performance against premium industrial cores.
 
-Guardrail:
-- do not make this a permanent full-screen auto-clear;
-- route choice and player movement still matter.
+#### 6. Endless Momentum — 1
+Late high-density zones maintain Combo more reliably without making it permanent.
+
+#### 7. Salvage Storm — **2-point capstone**
+High Combo creates a spectacular chain-clear state in dense content.
+
+Guardrail: not a permanent full-screen auto-clear; movement and route choice still matter.
 
 ## Logistics branch
 
-Fantasy: stay in the field longer, move value more efficiently, and turn vehicles into a salvage network.
+Fantasy: stay out longer and turn transport into a real salvage network.
 
-### Tier II — Van / route mechanics
+### Tier II — Van expedition systems
 
-#### 1. Van Packing
-More usable van cargo.
+#### 1. Van Packing — 1
+More usable Van cargo.
 
-#### 2. Quick Unload
-Cart -> van transfer is much faster.
+#### 2. Quick Unload — 1
+Faster Cart -> Van transfer.
 
-#### 3. Component Locker
-Rare components no longer compete strongly with bulk cargo / receive dedicated protected storage.
+#### 3. Component Locker — 1
+Dedicated protected component capacity.
 
-#### 4. Mobile Magnet
-Near the van, cart unloading becomes automatic or near-instant.
+#### 4. Mobile Magnet — 1
+Near Van, unloading becomes automatic/near-instant.
 
-#### 5. Route Knowledge
-Mastered-zone active runs start with better route information / target highlighting for requested resources.
+#### 5. Route Knowledge — 1
+Mastered-zone manual runs better highlight targets relevant to selected material/component needs.
 
-#### 6. Light Winch
-Van can support selected medium-heavy salvage targets.
+#### 6. Light Winch — 1
+Van supports selected medium-heavy salvage.
 
-#### 7. Long Haul
-Late Van-era capstone that makes long frontier runs efficient until Truck unlock.
+#### 7. Expedition Master — **2-point capstone**
+Makes long Van-era frontier expeditions substantially smoother without removing cart cycles.
 
-### Tier III — Truck / fleet mechanics
+### Tier III — fleet logistics
 
-#### 1. Fleet Utilization
+#### 1. Fleet Utilization — 1
 Vehicles assigned to worker routes gain throughput.
 
-#### 2. Heavy Winch
-Truck/recovery rig supports heavier salvage classes.
+#### 2. Heavy Winch — 1
+Truck/Recovery Rig supports heavier target classes.
 
-#### 3. Mobile Workshop Power
-Selected field tool/heavy-salvage actions gain efficiency near the vehicle.
+#### 3. Mobile Tool Power — 1
+Heavy active salvage is more efficient near an appropriate vehicle.
 
-#### 4. Route Buffer
-Remote crews can hold more output before stopping.
+#### 4. Route Buffer — 1
+Remote worker route storage increases.
 
-#### 5. Multi-route Logistics
-A Driver/Foreman can support more than one compatible worker route.
+#### 5. Multi-route Logistics — 1
+Driver/Foreman can support more compatible routes.
 
-#### 6. Rapid Dispatch
-Vehicle reassignment downtime is reduced.
+#### 6. Rapid Dispatch — 1
+Vehicle/crew reassignment downtime drops.
 
-#### 7. Recovery Network
-Late capstone: old vehicles/crews function as a coordinated logistics network instead of isolated assignments.
+#### 7. Recovery Network — **2-point capstone**
+Old vehicles and crews operate as a coordinated fleet rather than isolated assignments.
 
 ## Workshop branch
 
-Fantasy: turn recovered junk into technology the map cannot provide directly.
+Fantasy: convert salvage into technology that maps do not drop ready-made.
+
+Tier I already owns queue/Calibration foundations, so Tier II starts with new fabrication depth.
 
 ### Tier II — Hangar fabrication
 
-#### 1. Parallel Work
-Second workshop slot. Existing prototype direction remains valid.
+#### 1. Module Fabrication — 1
+Unlocks formal Drive / Control / Hydraulic / Structural module recipes.
 
-#### 2. Calibration
-Meaningful fabrication/processing speed increase.
+#### 2. Parts Reconditioning — 1
+Parts/Inspection systems can restore selected damaged premium components more efficiently.
 
-#### 3. Material Recovery
-Improved yield from processed materials, especially advanced metals.
+#### 3. Furnace Metallurgy — 1
+Improves Steel Blank / Aluminium Billet workflows.
 
-#### 4. Module Fabrication
-Unlocks the first formal fabricated modules: Drive / Control / Hydraulic / Structural families.
+#### 4. Linked Production — 1
+Compatible machines can hand off selected intermediate output with less manual queueing.
 
-#### 5. Precision Bench
-Improves damaged-component repair/inspection and premium intact recovery sinks.
+#### 5. Blueprint Standardization — 1
+Reduces repeated fabricated-module material cost modestly.
 
-#### 6. Furnace Tuning
-Improves Steel/Aluminium billet efficiency.
+#### 6. Heavy Fabrication Readiness — 1
+Prepares/unlocks Heavy Fabrication Station recipes.
 
-#### 7. Hangar Cell
-Capstone: one compatible machine group can act as a linked production cell with less manual queueing.
+#### 7. Hangar Engineer — **2-point capstone**
+Meaningful throughput/efficiency bonus to the whole Hangar fabrication layer.
 
 ### Tier III — industrial production
 
-#### 1. Third Production Cell
-Expands simultaneous industrial work without creating dozens of manual queues.
+#### 1. Production Cell III — 1
+Adds/expands an industrial production cell rather than another tiny manual queue.
 
-#### 2. Alloy Processing
-Improves Alloy Billet yield/time.
+#### 2. Alloy Processing — 1
+Improves Alloy Billet time/yield.
 
-#### 3. Heavy Fabrication
-Unlock/boost late structural and recovery modules.
+#### 3. Heavy Fabrication — 1
+Improves structural/recovery modules.
 
-#### 4. Standardized Frames
-Reduces processed-material cost of repeated high-tier construction modules.
+#### 4. Standardized Frames — 1
+Reduces repeated high-tier Structural Frame costs.
 
-#### 5. Industrial Quality
-Selected fabricated modules count as higher-quality outputs for contracts/equipment.
+#### 5. Industrial Quality — 1
+Selected fabricated modules qualify for premium contracts/advanced equipment more efficiently.
 
-#### 6. Continuous Production
-Compatible lines automatically continue configured recipes while stocked.
+#### 6. Continuous Production — 1
+Configured compatible lines repeat while stocked.
 
-#### 7. Plant Engineer
-Capstone: substantial throughput bonus to staffed industrial production cells.
+#### 7. Plant Engineer — **2-point capstone**
+Large bonus to staffed industrial production cells.
 
 ## Automation branch
 
-Fantasy: old work keeps happening while the player pushes new content.
+Fantasy: mastered old work increasingly runs itself while the player stays on the frontier.
 
-### Tier I recap
-- offline efficiency;
-- offline cap;
-- auto-feed and related early queue systems as they become implemented.
+Tier I already owns offline/Auto-feed/queue foundations.
 
-### Tier II — workers and mastered zones
+### Tier II — workers and routes
 
-#### 1. Crew Dispatch
-Unlocks/strengthens formal worker assignment UI after first worker milestone.
+#### 1. Crew Dispatch — 1
+Unlocks advanced route assignment controls after first worker milestone.
 
-#### 2. Better Routes
-Field workers gain bulk yield on mastered zones.
+#### 2. Better Routes — 1
+Field-worker bulk throughput on mastered zones improves.
 
-#### 3. Component Sorting
-Workers have a better chance to return **already-discovered** component families.
+#### 3. Component Sorting — 1
+Workers more often return **already-discovered** component families.
 
-#### 4. Shift Storage
-Remote route buffer increases before a route stops due to capacity.
+#### 4. Remote Buffering — 1
+Route buffer capacity increases before a crew stops.
 
-#### 5. Machine Operator
-Operators reduce processing downtime between batches.
+#### 5. Operator Assignment — 1
+Dedicated Machine Operators reduce cell/batch downtime.
 
-#### 6. Crew Training
-Worker rank gain / training efficiency improves.
+#### 6. Crew Training — 1
+Worker rank progression/training becomes faster or cheaper.
 
-#### 7. Self-running Shift
-One mastered-zone crew + one production cell can operate through the full offline cap with reduced idle losses.
+#### 7. Self-running Shift — **2-point capstone**
+One mature route + one production cell can run through a long offline period with much lower idle loss.
 
-### Tier III — crew/cell coordination
+### Tier III — network coordination
 
-#### 1. Foreman
-Unlocks crew grouping / higher-level management.
+#### 1. Foreman — 1
+Unlocks crew grouping instead of individual micromanagement.
 
-#### 2. Route Balancing
-Workers prefer base resources that are below configured stock targets.
+#### 2. Route Balancing — 1
+Workers can prioritize resources below configured stock targets.
 
-#### 3. Smart Processing
-Production cells choose configured stock targets rather than endlessly overproducing one output.
+#### 3. Smart Processing — 1
+Production cells respect stock targets rather than overproducing one material forever.
 
-#### 4. Expanded Offline Cap
-Later cap progression becomes meaningful once the network is large.
+#### 4. Extended Network Buffer — 1
+Late offline/route buffering improves after infrastructure exists to support it.
 
-#### 5. Maintenance Planning
-Reduces late production downtime / route inefficiency without adding manual repair chores.
+#### 5. Maintenance Planning — 1
+Reduces late route/production downtime without manual repair chores.
 
-#### 6. Network Dispatcher
-One Foreman can coordinate several routes and operators.
+#### 6. Network Dispatcher — 1
+One Foreman can coordinate several routes/operators.
 
-#### 7. Autonomous Old World
-Capstone: mastered low/mid zones and baseline production are highly self-sufficient, leaving the player's attention on frontier/premium content.
+#### 7. Autonomous Old World — **2-point capstone**
+Mastered low/mid zones and baseline processing become highly self-sufficient.
 
-Guardrail:
-- this capstone still cannot discover new zones/components for the player.
+Still cannot:
+- discover a new component family;
+- master a frontier zone;
+- unlock the next frontier without player action.
 
 ## Trade branch
 
-Fantasy: turn the same salvage network into a smarter business, not just a flat sell-price bonus.
+Fantasy: smarter buyer/contract strategy, not an endless flat price multiplier.
 
-### Tier II — specialized buyers / contracts
+Tier I already includes urgent orders, specialty selling and bulk-market foundations.
 
-#### 1. Specialist Buyers
-Unlock buyers that pay premiums for a material/component family.
+### Tier II — business choice
 
-#### 2. Contract Choice
-Offer multiple contracts rather than exactly one forced request.
+#### 1. Contract Choice — 1
+Several offers appear instead of one forced contract.
 
-#### 3. Rush Orders
-Higher-risk/higher-value timed contracts using stock the player chooses to reserve.
+#### 2. Industrial Buyers — 1
+Unlocks higher-volume processed-material buyers.
 
-#### 4. Vehicle Buyer Network
-Better pricing / trade-in economics for transport purchases/upgrades.
+#### 3. Vehicle Trade Network — 1
+Improves purchase/trade-in economics for transport without removing fabricated-module requirements.
 
-#### 5. Industrial Customer
-Unlock higher-volume processed-material orders.
+#### 4. Material Supply Contracts — 1
+Longer contracts for processed material families.
 
-#### 6. Contract Reroll
-Limited reroll/decline without waiting a long period.
+#### 5. Component Contracts — 1
+Special buyers request intact components at meaningful premiums.
 
-#### 7. Preferred Supplier
-Capstone: repeat buyers improve rewards for consistent deliveries without creating a mandatory daily streak.
+#### 6. Buyer Reroll — 1
+Limited decline/reroll without creating a daily chore.
 
-### Tier III — market strategy
+#### 7. Preferred Supplier — **2-point capstone**
+Repeat buyer relationships improve contract quality/reward without streak punishment.
 
-#### 1. Large Contracts
-Plant-scale orders become available.
+### Tier III — industrial market
 
-#### 2. Premium Salvage Orders
-Contracts request signature/intact items from active frontier play.
+#### 1. Plant-scale Contracts — 1
+Large industrial orders become available.
 
-#### 3. Material Futures
-Limited advance visibility into which material families will receive a temporary premium; no gambling mechanics.
+#### 2. Premium Salvage Orders — 1
+Signature/intact frontier salvage gets high-value order sinks.
 
-#### 4. Industrial Procurement
-Lower cash prices for selected ready-made industrial equipment, while fabricated-module gates remain.
+#### 3. Market Forecast — 1
+Limited advance visibility into temporary material premiums; no gambling mechanics.
 
-#### 5. Buyer Specialization
-Choose a preferred market family for a stronger bonus rather than universal inflation.
+#### 4. Industrial Procurement — 1
+Better ready-made industrial equipment pricing, while module gates remain.
 
-#### 6. Logistics Contracts
-Some orders reward delivery capacity/crew network rather than only item value.
+#### 5. Buyer Specialization — 1
+Choose a preferred market family for stronger focused economics.
 
-#### 7. Salvage Empire
-Late capstone: stronger large-contract economics and buyer choice, not a universal infinite cash multiplier.
+#### 6. Logistics Contracts — 1
+Selected orders reward route/fleet capability, not only item value.
+
+#### 7. Salvage Empire — **2-point capstone**
+Improves large-contract choice/reward without creating universal infinite-money scaling.
 
 ## Cross-branch synergies
 
-Branches should interact naturally without hidden combo formulas.
-
 Examples:
-- Salvage multi-target + Logistics long runs = stronger active frontier efficiency;
-- Automation field crew + Logistics spare van = productive old-zone route;
-- Workshop module fabrication + Trade industrial contracts = profitable processing business;
-- Automation operator + Workshop continuous production = low-maintenance old processing;
-- Trade specialist buyer can create a reason to revisit an old mastered zone personally.
+- Salvage Wide Swing + Logistics long expeditions = stronger active frontier throughput;
+- Automation crew + Logistics spare Van = productive old-zone route;
+- Workshop modules + Trade industrial buyers = profitable processing business;
+- Automation Operators + Workshop continuous production = low-maintenance old processing;
+- Trade premium order can make a mastered old zone worth revisiting personally.
 
-## Gating by milestones
+## Pacing proof V0
 
-Suggested Tier II availability requires one or more of:
-- Van acquired;
-- first worker hired;
-- Hangar purchased;
-- player level/mastery threshold.
+Current model target totals:
+- 8h: ~5 mastery points;
+- 15.6h: ~8 points;
+- 20.8h: ~9 points;
+- 28h: ~13 points;
+- 50h: ~25 points;
+- 75h: ~39 points;
+- 100h: ~51 points;
+- 120h: ~62 points;
+- 150h: ~77 points;
+- 220h: ~112 points.
 
-Suggested Tier III requires:
-- Salvage Yard or Industrial Workshop;
-- Truck/recovery tier;
-- multiple zones mastered;
-- higher mastery threshold.
+This supports:
+- focused player reaching Wide Swing around Van/worker era;
+- meaningful specialization at 50–150h;
+- near-full three-tier completion only in the very long tail.
 
-Do not unlock all Tier II/III nodes merely because XP was farmed in Z1.
-
-## Mastery-point economy guardrail
-
-The player should not be able to buy every branch immediately.
-
-Later tiers should force meaningful specialization for long stretches while still allowing eventual broad completion if the total game is very long.
-
-Before implementation, simulate:
-- points earned vs milestone hours;
-- earliest multi-target unlock;
-- earliest worker automation upgrades;
-- time to first Tier II capstone;
-- percentage of tree reasonably owned at 20h / 50h / 100h / 150h.
+Exact mastery-point cadence remains a balance parameter, but the structural relationship is now defined.
 
 ## Visual/UI implication — deferred
 
 Do not design final tree artwork yet.
 
-Mechanically, the UI will eventually need to communicate:
-- Tier I / II / III separation;
+The eventual UI must communicate:
+- Tier I / II / III;
 - milestone gates;
 - prerequisites;
-- new-mechanic nodes versus numeric improvements;
-- current branch investment.
+- 2-point capstones;
+- mechanic unlocks vs numeric upgrades;
+- branch investment.
 
-Final visual layout comes only after the mid/late mechanics and point pacing are modeled.
+Final visual layout waits until the mechanic list and point cadence survive the next simulation pass.
