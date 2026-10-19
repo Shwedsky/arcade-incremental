@@ -50,6 +50,18 @@ try{
   assert.deepEqual(fresh.installed,['workbench']);
   assert.equal(new URL(reviewPage.url()).searchParams.has('reset'),false,'review gameplay URL must not retain destructive reset parameters');
 
+  // Owner P0 regression: the review build must always be able to enter the garage and launch back into an active excursion.
+  await reviewPage.click('#garage');
+  await reviewPage.waitForSelector('#garageScreen:not([hidden])');
+  const launchLabel=await reviewPage.locator('#next').textContent();
+  assert.match(launchLabel??'',/Ехать|Вернуться/,'garage must expose an understandable excursion launch action');
+  await reviewPage.click('#next');
+  await reviewPage.waitForSelector('#garageScreen[hidden]');
+  await reviewPage.waitForFunction(()=>{
+    const timer=document.querySelector('#timer')?.textContent??'0:00';
+    return timer!=='0:00';
+  },undefined,{timeout:5000});
+
   await reviewPage.evaluate(()=>localStorage.setItem('__manual_review_progress_sentinel__','keep-on-reload'));
   await reviewPage.reload();
   await reviewPage.waitForFunction(()=>(globalThis as any).__SALVAGE_TEST__?.getState()?.saveVersion===8);
@@ -59,7 +71,7 @@ try{
   const ordinary=await normalPage.evaluate((key)=>({primary:localStorage.getItem(key),backup:localStorage.getItem(`${key}.backup`)}),SAVE_KEY);
   assert.deepEqual(ordinary,{primary:'ordinary-save-sentinel',backup:'ordinary-backup-sentinel'},'review fresh start must not touch ordinary origin save slots');
 
-  console.log('manual review isolation browser smoke: PASS');
+  console.log('manual review isolation + excursion launch browser smoke: PASS');
   await context.close();
 }finally{
   await browser.close();
