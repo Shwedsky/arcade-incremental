@@ -24,6 +24,8 @@ jobs:
         run: npm run smoke:early
       - name: Workshop scheduler domain smoke
         run: npm run smoke:workshop-scheduler
+      - name: Workshop scheduler V7 migration smoke
+        run: npm run smoke:workshop-migration
       - name: Midgame domain smoke
         run: npm run smoke:midgame
       - name: Visual foundation smoke
