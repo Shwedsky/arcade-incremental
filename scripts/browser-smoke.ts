@@ -30,7 +30,7 @@ try{
   const c1=await browser.newContext();const p1=await c1.newPage();await p1.goto(`${ORIGIN}/?seed=fresh&reset=1`);await p1.waitForSelector('#garage');
   assert.equal(await p1.locator('#garage').isDisabled(),false);const fresh=await state(p1);assert.equal(fresh.cart,0);assert.equal(fresh.capacity,40);assert.deepEqual(fresh.equipmentLevels,{tool:1,cart:1});
   await p1.click('#garage');await p1.waitForSelector('#garageScreen:not([hidden])');
-  const pressCard=await p1.locator('[data-machine="press"] .cardGate').textContent();assert.match(pressCard??'',/Металл/);assert.match(pressCard??'',/Подшипник/);assert.match(pressCard??'',/Гидравлический узел/);assert.match(pressCard??'',/Расходники/);
+  const pressCard=await p1.locator('[data-machine="press"] .cardGate').textContent();assert.match(pressCard??'',/Металл/);assert.match(pressCard??'',/Подшипник/);assert.match(pressCard??'',/Гидравлический узел/);assert.match(pressCard??'',/2.?500/);
   assert.match((await p1.locator('#equipmentPanel').textContent())??'',/Личное снаряжение/);assert.match((await p1.locator('#contractPanel').textContent())??'',/Пункт приёма: железо/);assert.match((await p1.locator('#queuePanel').textContent())??'',/0 \/ 1/);
   await p1.click('#talentsGarage');await p1.waitForSelector('#talentScreen:not([hidden])');assert.equal(await p1.locator('.talentBranch').count(),5);assert.equal(await p1.locator('.talentNode').count(),35);assert.equal(await p1.locator('[data-talent="salvage_3"]').isDisabled(),true);await c1.close();
 
