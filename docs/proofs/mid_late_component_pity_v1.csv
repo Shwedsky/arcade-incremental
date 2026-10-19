@@ -1,0 +1,7 @@
+component,source_zone,guarantee_eligible_targets,broker_unlock_eligible_targets
+pump,Z2,8,5
+compressor,Z3,10,6
+gearbox,Z4,8,5
+generator,Z4/Z5,10,6
+industrial_controller,Z5/Z6,12,8
+heavy_hydraulic_cylinder,Z6/Z7,10,6
