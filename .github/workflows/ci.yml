@@ -26,6 +26,8 @@ jobs:
         run: npm run smoke:midgame
       - name: Visual foundation smoke
         run: npm run smoke:visual
+      - name: Content Pack A smoke
+        run: npm run smoke:content
       - name: Progression pacing proof
         run: python models/progression_sim_v0.py --check
       - name: Mid/Late mechanics structural proof
@@ -37,9 +39,9 @@ jobs:
       - name: Headless browser midgame proof
         run: npm run smoke:browser:midgame
       - name: Package web slice
-        run: zip -r arcade-incremental-visual-foundation-v1.zip dist
+        run: zip -r arcade-incremental-content-pack-a-v1.zip dist
       - uses: actions/upload-artifact@v4
         with:
-          name: arcade-incremental-visual-foundation-v1
-          path: arcade-incremental-visual-foundation-v1.zip
+          name: arcade-incremental-content-pack-a-v1
+          path: arcade-incremental-content-pack-a-v1.zip
           if-no-files-found: error
