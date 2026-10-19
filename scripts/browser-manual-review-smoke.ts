@@ -42,15 +42,30 @@ try{
   await normalPage.close();
 
   const reviewPage=await context.newPage();
+  const pageErrors:string[]=[];
+  reviewPage.on('pageerror',error=>pageErrors.push(error.message));
   await reviewPage.goto(`${REVIEW_ORIGIN}/review-start.html`);
   await reviewPage.waitForURL(`${REVIEW_ORIGIN}/?seed=owner-review-v1`);
   await reviewPage.waitForFunction(()=>(globalThis as any).__SALVAGE_TEST__?.getState()?.saveVersion===8);
+  await reviewPage.waitForTimeout(500);
+  assert.deepEqual(pageErrors,[],`manual review boot must not throw runtime errors: ${pageErrors.join(' | ')}`);
   const fresh=await reviewPage.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.getState());
   assert.equal(fresh.xp,0,'manual review must begin from fresh progression');
   assert.equal(fresh.cash,3000,'manual review must begin from canonical starting cash');
   assert.deepEqual(fresh.storage,{metal:0,copper:0,plastic:0});
   assert.deepEqual(fresh.installed,['workbench']);
   assert.equal(new URL(reviewPage.url()).searchParams.has('reset'),false,'review gameplay URL must not retain destructive reset parameters');
+
+  const canvasProof=await reviewPage.evaluate(()=>{
+    const canvas=document.querySelector<HTMLCanvasElement>('#game');
+    if(!canvas)return {width:0,height:0,nonBlack:0,samples:[] as number[][]};
+    const ctx=canvas.getContext('2d');if(!ctx)return {width:canvas.width,height:canvas.height,nonBlack:0,samples:[] as number[][]};
+    const pts=[[.18,.2],[.5,.2],[.82,.2],[.18,.5],[.5,.5],[.82,.5],[.18,.78],[.5,.78],[.82,.78]];
+    const samples=pts.map(([px,py])=>Array.from(ctx.getImageData(Math.min(canvas.width-1,Math.max(0,Math.floor(canvas.width*px))),Math.min(canvas.height-1,Math.max(0,Math.floor(canvas.height*py))),1,1).data));
+    return {width:canvas.width,height:canvas.height,nonBlack:samples.filter(([r,g,b])=>r+g+b>12).length,samples};
+  });
+  assert.ok(canvasProof.width>0&&canvasProof.height>0,`field canvas must have real dimensions: ${JSON.stringify(canvasProof)}`);
+  assert.ok(canvasProof.nonBlack>=3,`fresh manual review must visibly render the salvage field, not a black canvas: ${JSON.stringify(canvasProof)}`);
 
   // Owner P1: field HUD cards must not stack on each other and should stay passive until explicitly focused.
   const zoneBox=await reviewPage.locator('.zone').boundingBox(),goalBox=await reviewPage.locator('.goal').boundingBox();
@@ -60,6 +75,9 @@ try{
   assert.ok(passiveOpacity<.9,'idle field HUD should be semi-transparent');
   await reviewPage.locator('.zone').hover();
   await reviewPage.waitForFunction(()=>Number(getComputedStyle(document.querySelector('.zone')!).opacity)>.9);
+  assert.equal(await reviewPage.locator('#seed').evaluate(el=>getComputedStyle(el).display),'none','technical seed must not leak into player-facing Russian HUD');
+  const lateFieldSlot=reviewPage.locator('#components span').nth(4);
+  assert.equal(await lateFieldSlot.evaluate(el=>getComputedStyle(el).fontSize),'0px','late field discoveries must not expose P/C/Al/GB/GEN abbreviations');
 
   // Garage discovery UX: known basics are readable; future materials/components are mystery slots until found.
   await reviewPage.click('#garage');
@@ -89,6 +107,8 @@ try{
   assert.equal(launchState.garageHidden,true,'garage must stay hidden after excursion launch');
   assert.equal(launchState.platform?.gameplayActive,true,`platform gameplay must be active after launch; state=${JSON.stringify(launchState)}`);
   assert.equal(launchState.platform?.platformPaused,false,`platform pause must be cleared after launch; state=${JSON.stringify(launchState)}`);
+  await reviewPage.waitForTimeout(250);
+  assert.deepEqual(pageErrors,[],`excursion launch must not throw runtime errors: ${pageErrors.join(' | ')}`);
 
   await reviewPage.evaluate(()=>localStorage.setItem('__manual_review_progress_sentinel__','keep-on-reload'));
   await reviewPage.reload();
@@ -104,7 +124,7 @@ try{
   };
   assert.deepEqual(ordinary,{primary:'ordinary-save-sentinel',backup:'ordinary-backup-sentinel'},'review fresh start must not touch ordinary origin save slots');
 
-  console.log('manual review launch + HUD/readability/discovery browser smoke: PASS');
+  console.log('manual review live-field + launch + HUD/readability/discovery browser smoke: PASS');
   await context.close();
 }finally{
   await browser.close();
