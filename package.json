@@ -1,0 +1,19 @@
+{
+  "name": "arcade-incremental",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "build": "tsc --noEmit && vite build",
+    "smoke": "tsx scripts/smoke.ts",
+    "smoke:early": "tsx scripts/early-game-smoke.ts",
+    "smoke:browser": "tsx scripts/browser-smoke.ts"
+  },
+  "devDependencies": {
+    "playwright": "^1.51.1",
+    "tsx": "^4.19.2",
+    "typescript": "^5.8.3",
+    "vite": "^6.1.0"
+  }
+}
