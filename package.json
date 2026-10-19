@@ -10,7 +10,7 @@
     "smoke:early": "tsx scripts/early-game-smoke.ts",
     "smoke:browser": "tsx scripts/browser-smoke.ts",
     "smoke:midgame": "tsx scripts/midgame-smoke.ts",
-    "smoke:browser:midgame": "tsx scripts/browser-midgame-smoke.ts",
+    "smoke:browser:midgame": "tsx scripts/browser-midgame-v5-smoke.ts",
     "smoke:visual": "tsx scripts/visual-smoke.ts",
     "smoke:content": "tsx scripts/content-pack-a-smoke.ts",
     "smoke:packb": "tsx scripts/content-pack-b-smoke.ts",
