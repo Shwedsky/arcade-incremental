@@ -1,6 +1,7 @@
 import './style.css';
 import './completion.css';
 import './midgame.css';
+import './visual_foundation.css';
 import {
   BASE_DPS, FIELD_NODE_COUNT, START_POS, WORLD,
   generateField, getTargetClass, hashSeed, mulberry32, rollDrops,
@@ -161,7 +162,7 @@ function applyOffline(){
   saveGame()
 }
 
-function refreshField(){trip++;rng=mulberry32(hashSeed(`${baseSeed}:${midgame.currentZone}:${trip}`));targets=generateField(`${baseSeed}:field:${midgame.currentZone}:${trip}`,FIELD_NODE_COUNT);applyZoneProfile(targets,midgame.currentZone,rng);fieldZone=midgame.currentZone;drops=[];texts=[];sparks=[];decor=makeDecor(mulberry32(hashSeed(`${baseSeed}:decor:${midgame.currentZone}:${trip}`)),WORLD.width,WORLD.height);player.x=START_POS.x;player.y=START_POS.y;player.fx=1;player.fy=0;seedEl.textContent=`seed ${baseSeed} · поле ${trip}`}
+function refreshField(){trip++;rng=mulberry32(hashSeed(`${baseSeed}:${midgame.currentZone}:${trip}`));targets=generateField(`${baseSeed}:field:${midgame.currentZone}:${trip}`,FIELD_NODE_COUNT);applyZoneProfile(targets,midgame.currentZone,rng);fieldZone=midgame.currentZone;drops=[];texts=[];sparks=[];decor=makeDecor(mulberry32(hashSeed(`${baseSeed}:decor:${midgame.currentZone}:${trip}`)),WORLD.width,WORLD.height,midgame.currentZone);player.x=START_POS.x;player.y=START_POS.y;player.fx=1;player.fy=0;seedEl.textContent=`seed ${baseSeed} · поле ${trip}`}
 function resetExcursionMetrics(){telemetry={start:performance.now(),destroyed:0,pickupVisuals:0,components:0};comboCount=0;comboTimer=0}
 function resize(){const r=canvas.getBoundingClientRect(),d=Math.min(devicePixelRatio||1,2);canvas.width=Math.floor(r.width*d);canvas.height=Math.floor(r.height*d);ctx.setTransform(d,0,0,d,0,0)}
 new ResizeObserver(resize).observe(canvas);resize();
@@ -261,6 +262,6 @@ $('talentsOpen').onclick=openTalents;$('talentsGarage').onclick=openTalents;$('t
 
 setInterval(()=>{const completed=advanceWorkshop(Date.now(),mode==='garage');if(mode==='garage'&&(completed.length||performance.now()-lastGarageRender>1000))renderGarage()},1000);
 setInterval(()=>{const gain=simulateWorkerGain(midgame,Date.now(),8);if(gain.weight>.001){(Object.keys(gain.resources) as ResourceKind[]).forEach(k=>storage[k]+=gain.resources[k]);(Object.keys(gain.components) as ComponentKind[]).forEach(k=>storedComps[k]+=gain.components[k]);saveGame();if(mode==='garage')renderGarage()}},5000);
-function frame(now:number){const dt=Math.min(.033,Math.max(.001,(now-last)/1000));last=now;if(mode==='field'&&talentScreen.hidden&&offlineScreen.hidden){move(dt);combat(dt);updateDrops(dt);updateEffects(dt);cam();hud();const r=canvas.getBoundingClientRect();renderField({ctx,width:r.width,height:r.height,camera,player,targets,selected,drops,sparks,texts,decor})}else updateEffects(dt);requestAnimationFrame(frame)}
+function frame(now:number){const dt=Math.min(.033,Math.max(.001,(now-last)/1000));last=now;if(mode==='field'&&talentScreen.hidden&&offlineScreen.hidden){move(dt);combat(dt);updateDrops(dt);updateEffects(dt);cam();hud();const r=canvas.getBoundingClientRect();renderField({ctx,width:r.width,height:r.height,camera,player,targets,selected,drops,sparks,texts,decor,zone:fieldZone,vanOwned:midgame.van.owned,vanLoad:vanWeight(midgame.van),vanCapacity:VAN_CAPACITY_KG,workerHere:midgame.worker.assignment===fieldZone})}else updateEffects(dt);requestAnimationFrame(frame)}
 refreshField();resetExcursionMetrics();applyOffline();hud();requestAnimationFrame(frame);
 Object.assign(globalThis,{__SALVAGE_TEST__:{getState:()=>({saveVersion:4,xp,level:level(),mastery:masteryAvailable(),talents:[...talents],trip,cart,capacity:capacity(),alive:targets.filter(t=>t.alive).length,haul:{...haul},storage:{...storage},components:{...storedComps},processed:{...processed},cash,installed:[...installed],machineLevels:{...machineLevels},equipmentLevels:{...equipmentLevels},jobs:jobs.map(j=>({...j})),contract:{...contractState},comboCount,midgame:normalizeMidgame(midgame)}),forceGarage:garage,openTalents,openZones:openZoneScreen,selectMachine:(id:MachineId)=>{selectedMachine=id;if(mode==='garage')renderGarage()},selectZone:(id:ZoneId)=>{if(zoneUnlock(midgame,id,zoneContext()).ok){midgame.currentZone=id;saveGame()}},advanceWorkshopTo:(now:number)=>{const done=advanceWorkshop(now,false);if(mode==='garage')renderGarage();return done},startProcess:(id:MachineId)=>enqueueProcess(id),completeContract,buyVan,hireWorker,assignWorker,unloadCartToVan}});
