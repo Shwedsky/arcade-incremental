@@ -1,0 +1,47 @@
+name: apply-worker-v2-runtime-once
+
+on:
+  push:
+    branches:
+      - feature/worker-progression-economy-v2-runtime
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/worker-progression-economy-v2-runtime
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Apply deterministic source transform
+        run: python scripts/apply_worker_progression_v2_runtime.py
+      - name: Remove one-shot transformer
+        run: rm scripts/apply_worker_progression_v2_runtime.py .github/workflows/apply-worker-v2-runtime.yml
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Typecheck and build
+        run: npm run build
+      - name: Worker Economy V2 domain proof
+        run: npm run smoke:worker-economy-v2
+      - name: Existing domain regressions
+        run: |
+          npm run smoke:midgame
+          npm run smoke:packb
+          npm run smoke:packc
+          npm run smoke:packd
+      - name: Commit transformed runtime
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git diff --cached --stat
+          git commit -m "feat: implement Worker and Progression Economy V2 runtime"
+          git push origin HEAD:feature/worker-progression-economy-v2-runtime
