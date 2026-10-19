@@ -1,0 +1,44 @@
+name: pack-c-one-shot-integration
+
+on:
+  push:
+    branches: [content/pack-c-z5-z6-yard-v1]
+
+permissions:
+  contents: write
+
+jobs:
+  integrate:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: content/pack-c-z5-z6-yard-v1
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Apply Pack C runtime integration
+        run: python scripts/apply_pack_c_integration.py
+      - name: Typecheck and build
+        run: npm run build
+      - name: Existing domain regressions
+        run: npm run smoke && npm run smoke:early && npm run smoke:midgame && npm run smoke:visual && npm run smoke:content && npm run smoke:packb && npm run smoke:packc && npm run smoke:save && npm run smoke:platform
+      - name: Structural model regression
+        run: python models/progression_sim_v0.py --check && python models/mid_late_mechanics_sim_v1.py --check
+      - name: Commit integrated runtime only
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/main.ts
+          git diff --cached --check
+          if git diff --cached --quiet; then
+            echo "No runtime changes to commit"
+            exit 0
+          fi
+          git commit -m "pack-c: integrate Z5 Z6 Yard and Operator runtime"
+          git push origin HEAD:content/pack-c-z5-z6-yard-v1
