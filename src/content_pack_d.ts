@@ -23,6 +23,7 @@ export const PACK_D_ZONE_PROFILE:PackDZoneProfile={
 export interface RecoveryRigState{
   owned:boolean;
   resources:Record<ResourceKind,number>;
+  aluminiumScrap:number;
   alloyScrap:number;
 }
 
@@ -86,7 +87,7 @@ const emptyResources=():Record<ResourceKind,number>=>({metal:0,copper:0,plastic:
 export function createDefaultPackD(now=Date.now()):PackDState{
   return{
     recoveryAssemblies:0,recoveryPity:0,
-    recoveryRig:{owned:false,resources:emptyResources(),alloyScrap:0},
+    recoveryRig:{owned:false,resources:emptyResources(),aluminiumScrap:0,alloyScrap:0},
     industrialWorkshopOwned:false,productionCells:1,
     crew4:{hired:false,role:'scavenger',assignment:null,operatorCell:null,lastTick:now}
   };
@@ -125,24 +126,25 @@ export function z7AlloyYield(classId:TargetClassId,rng:()=>number):number{
 }
 
 export function recoveryRigWeight(state:PackDState):number{
-  const r=state.recoveryRig.resources;return r.metal+r.copper+r.plastic+state.recoveryRig.alloyScrap;
+  const r=state.recoveryRig.resources;return r.metal+r.copper+r.plastic+state.recoveryRig.aluminiumScrap+state.recoveryRig.alloyScrap;
 }
 export function recoveryRigRemaining(state:PackDState):number{return Math.max(0,RECOVERY_RIG_CAPACITY_KG-recoveryRigWeight(state))}
 
-export function transferToRecoveryRig(state:PackDState,haul:Record<ResourceKind,number>,alloy:{value:number}):number{
+export function transferToRecoveryRig(state:PackDState,haul:Record<ResourceKind,number>,aluminium:{value:number},alloy:{value:number}):number{
   if(!state.recoveryRig.owned)return 0;
-  const remaining=recoveryRigRemaining(state),bulk=haul.metal+haul.copper+haul.plastic+Math.max(0,alloy.value);
+  const remaining=recoveryRigRemaining(state),bulk=haul.metal+haul.copper+haul.plastic+Math.max(0,aluminium.value)+Math.max(0,alloy.value);
   if(remaining<=0||bulk<=0)return 0;
   const factor=Math.min(1,remaining/bulk);let moved=0;
   (Object.keys(haul) as ResourceKind[]).forEach(k=>{const amount=haul[k]*factor;haul[k]-=amount;state.recoveryRig.resources[k]+=amount;moved+=amount});
+  const aluminiumMoved=aluminium.value*factor;aluminium.value-=aluminiumMoved;state.recoveryRig.aluminiumScrap+=aluminiumMoved;moved+=aluminiumMoved;
   const alloyMoved=alloy.value*factor;alloy.value-=alloyMoved;state.recoveryRig.alloyScrap+=alloyMoved;moved+=alloyMoved;
   return moved;
 }
 
-export function unloadRecoveryRig(state:PackDState,storage:Record<ResourceKind,number>):{weight:number;alloyScrap:number}{
-  const weight=recoveryRigWeight(state),alloyScrap=state.recoveryRig.alloyScrap;
+export function unloadRecoveryRig(state:PackDState,storage:Record<ResourceKind,number>):{weight:number;aluminiumScrap:number;alloyScrap:number}{
+  const weight=recoveryRigWeight(state),aluminiumScrap=state.recoveryRig.aluminiumScrap,alloyScrap=state.recoveryRig.alloyScrap;
   (Object.keys(state.recoveryRig.resources) as ResourceKind[]).forEach(k=>{storage[k]+=state.recoveryRig.resources[k];state.recoveryRig.resources[k]=0});
-  state.recoveryRig.alloyScrap=0;return{weight,alloyScrap};
+  state.recoveryRig.aluminiumScrap=0;state.recoveryRig.alloyScrap=0;return{weight,aluminiumScrap,alloyScrap};
 }
 
 export function canAcquireRecoveryRig(state:PackDState,inv:PackDInventory,z7Unlocked:boolean):boolean{

@@ -39,8 +39,8 @@ assert.ok(inv.cash<2_000_000-1);
 assert.equal(truckWorkerRouteEligible(state),true,'Truck gains its second-life route role only after player upgrades to Rig');
 
 const haul={metal:900,copper:100,plastic:100},alloy={value:800};
-const moved=transferToRecoveryRig(state,haul,alloy);
-assert.ok(moved>0&&recoveryRigWeight(state)<=RECOVERY_RIG_CAPACITY_KG+1e-9);
+const aluminium={value:40};const moved=transferToRecoveryRig(state,haul,aluminium,alloy);
+assert.ok(moved>0&&recoveryRigWeight(state)<=RECOVERY_RIG_CAPACITY_KG+1e-9);assert.ok(state.recoveryRig.aluminiumScrap>0);
 assert.equal(Math.round(moved),RECOVERY_RIG_CAPACITY_KG);
 assert.equal(Math.round(recoveryRigWeight(state)),RECOVERY_RIG_CAPACITY_KG);
 assert.equal(Math.round(recoveryRigRemaining(state)),0);

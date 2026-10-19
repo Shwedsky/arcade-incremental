@@ -56,6 +56,14 @@ export const ZONE_CONTENT:Record<ZoneId,ZoneContentMatrix>={
     bike_fan:[v('Подшипниковая опора','frame','bearing'),v('Цеховой вентилятор','fan','bearing','motor'),v('Роликовая каретка','cart','bearing'),v('Муфта привода','frame','bearing')],
     medium_appliance:[v('Гидравлический агрегат','pump','hydraulic','heavy_hydraulic'),v('Станочный привод','generator','motor','alloy'),v('Шкаф ЧПУ','generator','controller','electronics'),v('Промышленный компрессор','compressor','compressor','alloy')],
     large_appliance:[v('Секция гидропресса','frame','heavy_hydraulic','alloy'),v('Токарный станок','generator','controller','alloy'),v('Фрезерный станок','generator','controller','alloy'),v('Гидростанция линии','pump','heavy_hydraulic','pump','alloy')]
+  },
+  z7:{
+    small_scrap:[v('Листы стрелы погрузчика','sheet','metal','alloy'),v('Крепёж тяжёлой рамы','cans','metal'),v('Секции противовеса','frame','metal','alloy'),v('Гидролинии спецтехники','pipes','metal')],
+    cable:[v('Коса силового блока','loom','copper','controller'),v('Кабель тягового привода','coil','copper'),v('Жгут погрузчика','loom','copper','controller'),v('Силовая шина генератора','coil','copper','generator')],
+    small_appliance:[v('Контроллер погрузчика','tool','controller'),v('Насос рулевого контура','pump','pump','hydraulic'),v('Привод навесного','small_motor','motor'),v('Блок силовой автоматики','generator','electronics','controller')],
+    bike_fan:[v('Ступичный узел погрузчика','frame','bearing'),v('Вентилятор силового блока','fan','bearing','motor'),v('Каретка мачты','cart','bearing'),v('Приводной кардан','frame','gearbox','bearing')],
+    medium_appliance:[v('Гидроблок погрузчика','pump','heavy_hydraulic','recovery'),v('Тяговый привод','generator','gearbox','alloy'),v('Генераторная установка','generator','generator','controller'),v('Редуктор мачты','frame','gearbox','recovery')],
+    large_appliance:[v('Мачта вилочного погрузчика','frame','heavy_hydraulic','recovery','alloy'),v('Силовой модуль экскаватора','generator','gearbox','generator','recovery'),v('Гидростанция спецтехники','pump','heavy_hydraulic','controller','recovery'),v('Тяжёлый приводной мост','frame','gearbox','heavy_hydraulic','recovery')]
   }
 };
 
@@ -73,7 +81,7 @@ export const GARAGE_GROWTH_LABEL:Record<GarageGrowthStage,string>={starter:'Пу
 
 export function validateContentPack():string[]{
   const errors:string[]=[],classes:TargetClassId[]=['small_scrap','cable','small_appliance','bike_fan','medium_appliance','large_appliance'];
-  for(const zone of ['z1','z2','z3','z4','z5','z6'] as ZoneId[]){for(const classId of classes){const list=ZONE_CONTENT[zone][classId];if(!list||list.length<4)errors.push(`${zone}:${classId}:variants`);if(list?.some(x=>!x.label||!x.visual))errors.push(`${zone}:${classId}:invalid`)}}
+  for(const zone of ['z1','z2','z3','z4','z5','z6','z7'] as ZoneId[]){for(const classId of classes){const list=ZONE_CONTENT[zone][classId];if(!list||list.length<4)errors.push(`${zone}:${classId}:variants`);if(list?.some(x=>!x.label||!x.visual))errors.push(`${zone}:${classId}:invalid`)}}
   if(sourceObjects('z2','pump').length<3)errors.push('z2:pump-sources');
   if(sourceObjects('z3','compressor').length<2)errors.push('z3:compressor-sources');
   if(sourceObjects('z4','gearbox').length<3)errors.push('z4:gearbox-sources');
@@ -83,5 +91,7 @@ export function validateContentPack():string[]{
   if(sourceObjects('z5','alloy').length<3)errors.push('z5:alloy-sources');
   if(sourceObjects('z6','heavy_hydraulic').length<2)errors.push('z6:heavy-hydraulic-sources');
   if(sourceObjects('z6','alloy').length<3)errors.push('z6:alloy-sources');
+  if(sourceObjects('z7','recovery').length<4)errors.push('z7:recovery-sources');
+  if(sourceObjects('z7','alloy').length<2)errors.push('z7:alloy-sources');
   return errors;
 }
