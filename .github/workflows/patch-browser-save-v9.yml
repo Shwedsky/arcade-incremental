@@ -1,0 +1,46 @@
+name: patch-browser-save-v9
+
+on:
+  push:
+    branches:
+      - feature/worker-progression-economy-v2-runtime
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/worker-progression-economy-v2-runtime
+          fetch-depth: 0
+      - name: Patch stale loaded-save expectations only
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          changed=[]
+          for p in Path('scripts').glob('browser-*-smoke.ts'):
+              text=p.read_text(encoding='utf-8')
+              updated=re.sub(r'(saveVersion\s*,\s*)8\b', r'\g<1>9', text)
+              updated=updated.replace('saveVersion===8','saveVersion===9')
+              if updated!=text:
+                  p.write_text(updated,encoding='utf-8')
+                  changed.append(str(p))
+          print('patched:', ', '.join(changed) if changed else 'none')
+          PY
+      - name: Persist patch and remove one-shot workflow
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/patch-browser-save-v9.yml
+          git add scripts/browser-*-smoke.ts
+          if git diff --cached --quiet; then
+            echo "No patch needed"
+            exit 0
+          fi
+          git commit -m "test: expect Save V9 across browser regressions"
+          git push origin HEAD:feature/worker-progression-economy-v2-runtime
