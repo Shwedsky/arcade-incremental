@@ -1,0 +1,39 @@
+name: temp-pack-e-gameplay
+
+on:
+  push:
+    branches: [content/pack-e-z8-processing-plant-v1]
+    paths:
+      - .github/workflows/tmp-pack-e-gameplay.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: content/pack-e-z8-processing-plant-v1
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Apply Pack E gameplay closure patch
+        run: python scripts/tmp_pack_e_gameplay_patch.py
+      - name: Verify gameplay closure
+        run: |
+          npm install --no-audit --no-fund
+          npm run build
+          npm run smoke:packe
+          npm run smoke:contract-board-v2
+          python models/content_pack_e_v1.py
+      - name: Commit gameplay closure and remove temporary patch files
+        run: |
+          rm scripts/tmp_pack_e_gameplay_patch.py .github/workflows/tmp-pack-e-gameplay.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "feat: integrate Pack E Z8 gameplay and Processing Plant"
+          git push origin HEAD:content/pack-e-z8-processing-plant-v1
