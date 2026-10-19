@@ -14,9 +14,23 @@ async function stop(proc:ChildProcess){if(proc.exitCode!==null)return;proc.kill(
 
 const proc=server();await waitServer();const browser=await chromium.launch({headless:true});
 try{
-  const context=await browser.newContext({viewport:{width:1440,height:900}}),page=await context.newPage();
-  await page.goto(`${ORIGIN}/?seed=hf-v2-smoke`);await page.waitForFunction(()=>(globalThis as any).__SALVAGE_TEST__?.getState()?.saveVersion===8);await page.evaluate(()=>(globalThis as any).__SALVAGE_PLATFORM__.forceSave());
-  await page.evaluate((key)=>{const raw=localStorage.getItem(key);if(!raw)throw new Error('missing fresh save');const s=JSON.parse(raw);s.xp=3200;s.cash=10_000;s.storage={metal:90,copper:20,plastic:20};s.components={bearing:5,motor:2,hydraulic:2,electronics:2};s.installed=['workbench','press'];s.machineLevels={workbench:1,press:1,wire:1,plastic:1};s.equipmentLevels={tool:1,cart:1};s.contract={index:0,completed:0};s.scheduler={actions:[],lastAdvancedAt:Date.now()};s.lastSeen=Date.now();localStorage.setItem(key,JSON.stringify(s));localStorage.removeItem(`${key}.backup`);},SAVE_KEY);await page.reload();await page.waitForFunction(()=>(globalThis as any).__SALVAGE_TEST__?.getState()?.xp===3200);
+  // Build a valid canonical Save V8 once, then start the actual acceptance in a
+  // separate context. This avoids beforeunload/saveGame overwriting a fixture
+  // during reload of an already-running page.
+  const seedContext=await browser.newContext({viewport:{width:1000,height:700}}),seedPage=await seedContext.newPage();
+  await seedPage.goto(`${ORIGIN}/?seed=hf-v2-fixture`);
+  await seedPage.waitForFunction(()=>(globalThis as any).__SALVAGE_TEST__?.getState()?.saveVersion===8);
+  await seedPage.evaluate(()=>(globalThis as any).__SALVAGE_PLATFORM__.forceSave());
+  const raw=await seedPage.evaluate((key)=>localStorage.getItem(key),SAVE_KEY);
+  assert.ok(raw,'canonical fixture save must exist');
+  const fixture=JSON.parse(raw!);
+  fixture.xp=3200;fixture.cash=10_000;fixture.storage={metal:90,copper:20,plastic:20};fixture.components={bearing:5,motor:2,hydraulic:2,electronics:2};
+  fixture.installed=['workbench','press'];fixture.machineLevels={workbench:1,press:1,wire:1,plastic:1};fixture.equipmentLevels={tool:1,cart:1};fixture.contract={index:0,completed:0};fixture.scheduler={actions:[],lastAdvancedAt:Date.now()};fixture.lastSeen=Date.now();
+  await seedContext.close();
+
+  const context=await browser.newContext({viewport:{width:1440,height:900},storageState:{cookies:[],origins:[{origin:ORIGIN,localStorage:[{name:SAVE_KEY,value:JSON.stringify(fixture)}]}]}}),page=await context.newPage();
+  await page.goto(`${ORIGIN}/?seed=hf-v2-smoke`);
+  await page.waitForFunction(()=>(globalThis as any).__SALVAGE_TEST__?.getState()?.xp===3200);
 
   assert.match((await page.locator('#garage').innerText()).trim(),/^На базу/,'field return button must be renamed to На базу');
   assert.equal(await page.locator('#hfDevToggle').count(),1,'local manual review must expose DEV panel');
