@@ -55,6 +55,10 @@ const SLOTS:WorkerSlotId[]=['w1','w2','w3','w4'];
 const emptyResources=():Record<ResourceKind,number>=>({metal:0,copper:0,plastic:0});
 const emptyComponents=():Record<ComponentKind,number>=>({bearing:0,motor:0,hydraulic:0,electronics:0});
 const createShift=(now:number):WorkerShiftState=>({remainingOfflineMs:WORKER_SHIFT_MS,lastAccountedAt:now,componentRemainder:emptyComponents()});
+const normalizeShiftBudget=(value:unknown):number=>{
+  const parsed=Number(value);
+  return Number.isFinite(parsed)?Math.max(0,Math.min(WORKER_SHIFT_MS,parsed)):WORKER_SHIFT_MS;
+};
 
 export function createDefaultWorkerEconomy(now=Date.now()):WorkerEconomyV2State{
   return{
@@ -85,7 +89,7 @@ export function normalizeWorkerEconomy(value:Partial<WorkerEconomyV2State>|undef
   for(const slot of SLOTS){
     const raw=value.shifts?.[slot];
     shifts[slot]={
-      remainingOfflineMs:Math.max(0,Math.min(WORKER_SHIFT_MS,Number(raw?.remainingOfflineMs)??WORKER_SHIFT_MS)),
+      remainingOfflineMs:normalizeShiftBudget(raw?.remainingOfflineMs),
       lastAccountedAt:Number(raw?.lastAccountedAt)||now,
       componentRemainder:{...emptyComponents(),...raw?.componentRemainder}
     };
