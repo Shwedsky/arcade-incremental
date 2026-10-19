@@ -38,6 +38,14 @@ export const ZONE_CONTENT:Record<ZoneId,ZoneContentMatrix>={
     bike_fan:[v('Напольный вентилятор','fan','bearing','motor'),v('Барабан сушилки','dryer','bearing'),v('Тележка для техники','cart','bearing'),v('Вентилятор холодильника','fan','bearing','motor')],
     medium_appliance:[v('Стиральная машина','washer','motor','hydraulic'),v('Посудомоечная машина','dishwasher','pump','electronics'),v('Сушильная машина','dryer','motor','bearing'),v('Духовой шкаф','oven','electronics')],
     large_appliance:[v('Холодильник','fridge','compressor','motor'),v('Морозильный ларь','freezer','compressor'),v('Большая стиральная машина','washer','motor','hydraulic'),v('Двухсекционная печь','oven','electronics')]
+  },
+  z4:{
+    small_scrap:[v('Кузовные панели','sheet','metal','aluminium'),v('Тормозные диски и крепёж','cans','metal'),v('Выхлопные трубы','pipes','metal'),v('Кронштейны подвески','frame','metal')],
+    cable:[v('Автомобильный жгут проводки','loom','copper'),v('Проводка моторного отсека','loom','copper'),v('Силовой кабель стартера','coil','copper'),v('Жгут блока предохранителей','loom','copper','electronics')],
+    small_appliance:[v('Стартер','small_motor','motor'),v('Мотор стеклоподъёмника','small_motor','motor'),v('Блок управления','tool','electronics'),v('Насос омывателя','pump','pump')],
+    bike_fan:[v('Ступица колеса','frame','bearing'),v('Вентилятор радиатора','fan','bearing','motor'),v('Полуось','frame','bearing'),v('Рулевая колонка','frame','bearing')],
+    medium_appliance:[v('Генератор автомобиля','generator','generator','electronics'),v('Радиатор с вентилятором','fan','motor','aluminium'),v('Малая коробка передач','frame','gearbox'),v('Компрессор кондиционера','compressor','compressor','motor')],
+    large_appliance:[v('Коробка передач','frame','gearbox'),v('Силовой агрегат','generator','gearbox','generator','motor'),v('Кузовной модуль','frame','metal','aluminium'),v('Задний мост','frame','gearbox','bearing')]
   }
 };
 
@@ -75,10 +83,13 @@ export const GARAGE_GROWTH_LABEL:Record<GarageGrowthStage,string>={
 export function validateContentPack():string[]{
   const errors:string[]=[];
   const classes:TargetClassId[]=['small_scrap','cable','small_appliance','bike_fan','medium_appliance','large_appliance'];
-  for(const zone of ['z1','z2','z3'] as ZoneId[]){
+  for(const zone of ['z1','z2','z3','z4'] as ZoneId[]){
     for(const classId of classes){const list=ZONE_CONTENT[zone][classId];if(!list||list.length<4)errors.push(`${zone}:${classId}:variants`);if(list?.some(x=>!x.label||!x.visual))errors.push(`${zone}:${classId}:invalid`)}
   }
   if(sourceObjects('z2','pump').length<3)errors.push('z2:pump-sources');
   if(sourceObjects('z3','compressor').length<2)errors.push('z3:compressor-sources');
+  if(sourceObjects('z4','gearbox').length<3)errors.push('z4:gearbox-sources');
+  if(sourceObjects('z4','generator').length<2)errors.push('z4:generator-sources');
+  if(sourceObjects('z4','aluminium').length<2)errors.push('z4:aluminium-sources');
   return errors;
 }
