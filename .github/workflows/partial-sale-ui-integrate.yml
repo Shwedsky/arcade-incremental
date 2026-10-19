@@ -1,0 +1,47 @@
+name: partial-sale-ui-one-shot
+
+on:
+  push:
+    branches: [ux/workshop-queue-v1]
+
+permissions:
+  contents: write
+
+jobs:
+  integrate:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ux/workshop-queue-v1
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Apply partial-sale UX integration
+        run: python scripts/apply_partial_sale_ui.py
+      - name: Guarded build and domain regressions
+        run: |
+          npm run build
+          npm run smoke:early
+          npm run smoke:workshop-scheduler
+          npm run smoke:workshop-migration
+          npm run smoke:midgame
+          npm run smoke:packb
+          npm run smoke:packc
+          npm run smoke:packd
+      - name: Commit integrated sale UX
+        run: |
+          if git diff --quiet; then
+            echo "No sale UX changes to commit"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/main.ts
+          git commit -m "feat: add partial sale quantity controls"
+          git push origin HEAD:ux/workshop-queue-v1
