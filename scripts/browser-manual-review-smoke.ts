@@ -72,11 +72,14 @@ try{
   assert.doesNotMatch(garageText,/PACK [BCD]|Salvage Yard|Recovery Rig|Industrial Workshop|\bOperator\b|\bScavenger\b|Gearbox|Drive Module|Control Module/,'normal garage UI must not expose raw English production labels');
 
   // Owner P0 regression: launch action must be explicit and actually resume active field time.
+  await reviewPage.bringToFront();
+  await reviewPage.waitForFunction(()=>document.visibilityState==='visible');
   await reviewPage.waitForFunction(()=>document.querySelector('#next')?.textContent?.includes('Начать вылазку'));
   const launchLabel=await reviewPage.locator('#next').textContent();
   assert.match(launchLabel??'',/Начать вылазку/,'garage must expose an explicit excursion launch action');
   await reviewPage.click('#next');
   await reviewPage.waitForSelector('#garageScreen',{state:'hidden'});
+  await reviewPage.waitForFunction(()=>(globalThis as any).__SALVAGE_PLATFORM__?.getState?.().gameplayActive===true,undefined,{timeout:5000});
   await reviewPage.waitForFunction(()=>{
     const timer=document.querySelector('#timer')?.textContent??'0:00';
     return timer!=='0:00';
