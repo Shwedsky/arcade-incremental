@@ -10,5 +10,18 @@
 
 .milestoneCard .packBTag,.milestoneCard .packCTag,.milestoneCard .packDTag{letter-spacing:.06em}
 
+/* Owner feedback: player-facing field HUD must not expose technical seed text or cryptic P/C/Al/GB/GEN labels. */
+#seed{display:none!important}
+#components span:nth-child(n+5){font-size:0}
+#components span:nth-child(n+5)::before{font-size:15px;line-height:1}
+#components span:nth-child(n+5)>b{font-size:9px}
+#components span:nth-child(n+5):not(.has)>b{display:none}
+#components span:nth-child(n+5):not(.has)::before{content:'?';color:#829087}
+#components span:nth-child(5).has::before{content:'◍'}
+#components span:nth-child(6).has::before{content:'◫'}
+#components span:nth-child(7).has::before{content:'⬡'}
+#components span:nth-child(8).has::before{content:'⚙'}
+#components span:nth-child(9).has::before{content:'ϟ'}
+
 @media(max-width:1180px){.shell>.goal{top:142px}.shell>.playerProgress{top:10px}.shell>.stats{display:none}.shell>.zone,.shell>.goal,.shell>.playerProgress,.shell>.bottom,.shell>.vanHud{opacity:.7}}
 @media(max-width:720px){.shell>.zone{top:8px}.shell>.playerProgress{top:132px}.shell>.goal{display:none}.shell>.vanHud{bottom:150px}.shell>.bottom{bottom:8px;opacity:.74}.hfExcursionLaunch{width:100%;min-width:0!important}#storage.hfMaterialGrid,#storageComponents.hfDiscoveryGrid{grid-template-columns:1fr}.shell>.zone:hover,.shell>.zone:focus-within,.shell>.playerProgress:hover,.shell>.playerProgress:focus-within,.shell>.bottom:hover,.shell>.bottom:focus-within,.shell>.vanHud:hover,.shell>.vanHud:focus-within{opacity:.98}}
