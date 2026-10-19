@@ -24,11 +24,15 @@ import {
   type BranchId, type TalentId
 } from './progression.ts';
 import {
-  EQUIPMENT_DEFS, activeContract, buildDurationSec, cartBaseCapacity, contractScale,
+  EQUIPMENT_DEFS, buildDurationSec, cartBaseCapacity, contractScale,
   jobProgress, jobRemainingSec, nextEquipmentUpgrade, processSpec, toolPowerMultiplier,
   upgradeDurationSec,
-  type ContractNeed, type ContractState, type EquipmentId, type ProcessKind, type WorkshopJob
+  type ContractState, type EquipmentId, type ProcessKind, type WorkshopJob
 } from './early_game.ts';
+import {
+  activeBoardContract,advanceBoardContract,contractBoardPoolStats,contractFamilyLabel,isDiscreteContractNeed,
+  type ContractBoardContext,type ContractBoardNeed
+} from './contract_board_v2.ts';
 import { makeDecor, renderField, type Decor, type FloatText, type Pickup, type Spark } from './field_view.ts';
 import { GARAGE_GROWTH_LABEL, garageGrowthStage, targetContent } from './zone_content.ts';
 import { diagnostics, installGlobalDiagnostics } from './diagnostics.ts';
@@ -197,6 +201,22 @@ platform.onPauseChange(paused=>{platformPaused=paused});
 const level=()=>levelForXp(xp),effects=()=>deriveEffects(talents),capacity=()=>cartBaseCapacity(equipmentLevels.cart)+effects().capacityBonus,masteryAvailable=()=>earnedMasteryPoints(level())-talents.size;
 const context=():ProgressContext=>({level:level(),talents,installed}),inventory=():GarageInventory=>({resources:{...storage},components:{...storedComps},cash});
 const zoneContext=()=>({level:level(),installed,mastery:midgame.mastery});
+function contractContext():ContractBoardContext{
+  const capabilities=new Set<string>();
+  if(installed.has('press'))capabilities.add('processed:briquette');
+  if(installed.has('wire'))capabilities.add('processed:cleanCopper');
+  if(installed.has('plastic'))capabilities.add('processed:granulate');
+  midgame.discoveredComponents.forEach(k=>capabilities.add(`component:${k}`));
+  midgame.discoveredMidComponents.forEach(k=>capabilities.add(`mid:${k}`));
+  if(zoneMastered(midgame,'z3')&&installed.has('press'))capabilities.add('materialB:steelBlank');
+  if(zoneMastered(midgame,'z4')){capabilities.add('materialB:aluminiumBillet');capabilities.add('moduleB:drive');capabilities.add('moduleB:control');capabilities.add('moduleB:structural')}
+  packB.discoveredIndustrial.forEach(k=>capabilities.add(`industrialB:${k}`));
+  if(zoneMastered(midgame,'z5'))capabilities.add('materialC:alloyBillet');
+  if(packC.discoveredIndustrial.includes('industrialController'))capabilities.add('moduleC:hydraulicPower');
+  if(packC.discoveredIndustrial.includes('heavyHydraulicCylinder'))capabilities.add('moduleC:heavyFrame');
+  packC.discoveredIndustrial.forEach(k=>capabilities.add(`industrialC:${k}`));
+  return{level:level(),capabilities};
+}
 const hiredWorkerSlots=():WorkerSlotId[]=>{const slots:WorkerSlotId[]=[];if(midgame.worker.hired)slots.push('w1');if(packB.secondWorker.hired)slots.push('w2');if(packC.crew3.hired)slots.push('w3');if(packD.crew4.hired)slots.push('w4');return slots};
 const playerVanAvailable=()=>midgame.van.owned&&!vanAssignedToWorker(midgame.economyV2);
 function dispatchWorkers(){const slots=hiredWorkerSlots();if(!slots.length)return;dispatchWorkerShifts(midgame.economyV2,slots,Date.now());showToast(`Смена подготовлена: ${slots.length} раб. · до 2 ч offline`);saveGame();renderGarage()}
@@ -379,9 +399,32 @@ function renderQueue(){
   const activeRows=active.map(action=>queueActionRow(action,now)).join(''),waitingRows=waiting.map((action,index)=>queueActionRow(action,now,index,waiting.length)).join('');
   queuePanelEl.innerHTML=`<h2>Очередь мастерской</h2><p class="managementLead">Одновременно выполняется до ${slots}. Batch держит свою ячейку до завершения, блокировки или отмены.</p><div class="queueSection"><div class="queueSectionTitle"><span>Выполняется</span><b>${active.length} / ${slots}</b></div>${activeRows||'<div class="emptyState">Сейчас ничего не выполняется.</div>'}</div><div class="queueSection"><div class="queueSectionTitle"><span>В очереди</span><b>${waiting.length}</b></div>${waitingRows||'<div class="emptyState">Ожидающих действий нет.</div>'}</div>${workshopSlots()>1?'<small>Разные станки могут занимать разные ячейки параллельно; один станок не выполняет две операции одновременно.</small>':''}`
 }
-function contractOwned(need:ContractNeed){if(need.kind==='resource')return storage[need.key as ResourceKind];if(need.kind==='component')return storedComps[need.key as ComponentKind];return processed[need.key as ProcessKind]}
+function contractOwned(need:ContractBoardNeed){
+  if(need.kind==='resource')return storage[need.key as ResourceKind]??0;
+  if(need.kind==='component')return storedComps[need.key as ComponentKind]??0;
+  if(need.kind==='processed')return processed[need.key as ProcessKind]??0;
+  if(need.kind==='midComponent')return midgame.midComponents[need.key as keyof typeof midgame.midComponents]??0;
+  if(need.kind==='materialB')return packB.materials[need.key as keyof typeof packB.materials]??0;
+  if(need.kind==='moduleB')return packB.modules[need.key as keyof typeof packB.modules]??0;
+  if(need.kind==='industrialB')return packB.industrial[need.key as keyof typeof packB.industrial]??0;
+  if(need.kind==='materialC')return packC.materials[need.key as keyof typeof packC.materials]??0;
+  if(need.kind==='moduleC')return packC.modules[need.key as keyof typeof packC.modules]??0;
+  return packC.industrial[need.key as keyof typeof packC.industrial]??0;
+}
+function consumeContractNeed(need:ContractBoardNeed,amount:number){
+  if(need.kind==='resource')storage[need.key as ResourceKind]-=amount;
+  else if(need.kind==='component')storedComps[need.key as ComponentKind]-=amount;
+  else if(need.kind==='processed')processed[need.key as ProcessKind]-=amount;
+  else if(need.kind==='midComponent')midgame.midComponents[need.key as keyof typeof midgame.midComponents]-=amount;
+  else if(need.kind==='materialB')packB.materials[need.key as keyof typeof packB.materials]-=amount;
+  else if(need.kind==='moduleB')packB.modules[need.key as keyof typeof packB.modules]-=amount;
+  else if(need.kind==='industrialB')packB.industrial[need.key as keyof typeof packB.industrial]-=amount;
+  else if(need.kind==='materialC')packC.materials[need.key as keyof typeof packC.materials]-=amount;
+  else if(need.kind==='moduleC')packC.modules[need.key as keyof typeof packC.modules]-=amount;
+  else packC.industrial[need.key as keyof typeof packC.industrial]-=amount;
+}
 function contractNeedMultiplier(){return 1+Math.min(.25,contractState.completed*.025)+(effects().urgentContracts?.08:0)}
-function renderContract(){const def=activeContract(contractState),needMult=contractNeedMultiplier(),rewardMult=contractScale(contractState,effects().urgentContracts),needs=def.needs.map(n=>({...n,amount:n.amount*needMult})),ready=needs.every(n=>contractOwned(n)+1e-9>=n.amount),cashReward=def.cashReward*rewardMult,xpReward=Math.round(def.xpReward*rewardMult);$('contractPanel').innerHTML=`<div class="contractHead"><div><small>${effects().urgentContracts?'СРОЧНЫЙ КОНТРАКТ':'КОНТРАКТ'}</small><h2>${def.name}</h2></div><strong>${money(cashReward)} · ${xpReward} XP</strong></div><p>${def.description}</p><div class="contractNeeds">${needs.map(n=>{const own=contractOwned(n),ok=own+1e-9>=n.amount;return`<span class="${ok?'ok':'missing'}">${ok?'✓':'●'} ${n.label}: <b>${own.toFixed(n.kind==='component'?0:1)} / ${n.amount.toFixed(n.kind==='component'?0:1)}</b></span>`}).join('')}</div><button id="completeContract" ${ready?'':'disabled'}>${ready?'Сдать заказ':'Собери заказ'}</button><small>Не продавай всё автоматически: иногда выгоднее придержать ресурс под заказ.</small>`}
+function renderContract(){const ctx=contractContext(),def=activeBoardContract(contractState,ctx),pool=contractBoardPoolStats(ctx),needMult=contractNeedMultiplier(),rewardMult=contractScale(contractState,effects().urgentContracts),needs=def.needs.map(n=>({...n,amount:isDiscreteContractNeed(n)?n.amount:n.amount*needMult})),ready=needs.every(n=>contractOwned(n)+1e-9>=n.amount),cashReward=def.cashReward*rewardMult,xpReward=Math.round(def.xpReward*rewardMult);$('contractPanel').innerHTML=`<div class="contractHead"><div><small>${effects().urgentContracts?'СРОЧНЫЙ · ':''}${contractFamilyLabel(def.family)} · ${pool.eligible} доступно</small><h2>${def.name}</h2></div><strong>${money(cashReward)} · ${xpReward} XP</strong></div><p>${def.description}</p><div class="contractNeeds">${needs.map(n=>{const own=contractOwned(n),ok=own+1e-9>=n.amount;return`<span class="${ok?'ok':'missing'}">${ok?'✓':'●'} ${n.label}: <b>${own.toFixed(isDiscreteContractNeed(n)?0:1)} / ${n.amount.toFixed(isDiscreteContractNeed(n)?0:1)}</b></span>`}).join('')}</div><button id="completeContract" ${ready?'':'disabled'}>${ready?'Сдать заказ':'Собери заказ'}</button><small>Доска учитывает открытые технологии и не повторяет недавние типы заказов. Контракты — бонус к экономике, а не замена обычной продаже.</small>`}
 function renderZoneScreen(){zoneGridEl.innerHTML=(Object.keys(ZONE_DEFS) as ZoneId[]).map(id=>{const def=ZONE_DEFS[id],gate=zoneGate(id),mastered=zoneMastered(midgame,id),current=midgame.currentZone===id;return`<article class="zoneCard ${current?'current':''} ${mastered?'mastered':''} ${gate.ok?'':'locked'}" data-zone="${id}"><span class="zoneNumber">${def.subtitle}</span><h3>${def.name}</h3><p>${def.description}</p><div class="masteryLine"><span>${mastered?(hasClearMedal(midgame.economyV2,id)?'🏅 Освоена · полный сбор':'✓ Освоена'):`Освоение ${midgame.mastery[id].toFixed(0)}%`}</span><i><em style="width:${midgame.mastery[id]}%"></em></i></div><span class="gateText">${gate.ok?(mastered?'Можно добывать самому или назначить рабочего':'Фронтир · осваивается только лично'):gate.reason}</span><button ${gate.ok?'':'disabled'}>${current?'Выбрана':'Выбрать зону'}</button></article>`}).join('')}
 function openZoneScreen(){renderZoneScreen();zoneScreen.hidden=false;platform.setGameplayActive(false,'zone_map')}
 function closeZoneScreen(){zoneScreen.hidden=true;if(mode==='field'&&talentScreen.hidden&&offlineScreen.hidden)platform.setGameplayActive(true,'zone_map_close')}
@@ -464,7 +507,7 @@ function queueInputFor(kind:'range'|'number',encoded:string){return Array.from(q
 function syncWaitingBatchPicker(source:HTMLInputElement,encoded:string){const range=queueInputFor('range',encoded),number=queueInputFor('number',encoded);if(!range||!number)return;const min=Number(number.min)||1,count=Math.max(min,clampBatchCount(Number(source.value)));range.value=String(Math.min(Number(range.max)||100,count));number.value=String(count);const id=decodeURIComponent(encoded),action=workshop.actions.find(item=>item.id===id);if(action&&isQueueBatch(action)){const label=queuePanelEl.querySelector<HTMLElement>(`[data-queue-count="${encoded}"]`);if(label)label.textContent=`${action.completedCount} / ${count} стаков · осталось ${Math.max(0,count-action.completedCount)}`}}
 function commitWaitingBatchPicker(source:HTMLInputElement,encoded:string){const id=decodeURIComponent(encoded),min=Number(source.min)||1,count=Math.max(min,clampBatchCount(Number(source.value)));if(setWaitingBatchCount(workshop,id,count))settleQueueMutation()}
 
-function completeContract(){const def=activeContract(contractState),needMult=contractNeedMultiplier(),needs=def.needs.map(n=>({...n,amount:n.amount*needMult}));if(!needs.every(n=>contractOwned(n)+1e-9>=n.amount))return;for(const n of needs){if(n.kind==='resource')storage[n.key as ResourceKind]-=n.amount;else if(n.kind==='component')storedComps[n.key as ComponentKind]-=Math.ceil(n.amount);else processed[n.key as ProcessKind]-=n.amount}const rewardMult=contractScale(contractState,effects().urgentContracts),reward=def.cashReward*rewardMult,xpReward=Math.round(def.xpReward*rewardMult);cash+=reward;contractState.completed++;contractState.index=(contractState.index+1)%3;gainXp(xpReward);showToast(`Контракт закрыт: +${money(reward)}, +${xpReward} XP`);saveGame();renderGarage()}
+function completeContract(){const ctx=contractContext(),def=activeBoardContract(contractState,ctx),needMult=contractNeedMultiplier(),needs=def.needs.map(n=>({...n,amount:isDiscreteContractNeed(n)?n.amount:n.amount*needMult}));if(!needs.every(n=>contractOwned(n)+1e-9>=n.amount))return;for(const n of needs)consumeContractNeed(n,n.amount);const rewardMult=contractScale(contractState,effects().urgentContracts),reward=def.cashReward*rewardMult,xpReward=Math.round(def.xpReward*rewardMult);cash+=reward;advanceBoardContract(contractState,def);gainXp(xpReward);showToast(`Контракт закрыт: +${money(reward)}, +${xpReward} XP`);saveGame();renderGarage()}
 
 function garage(){if(mode!=='field')return;const benchmark=recordActiveBenchmark(midgame.economyV2,fieldZone,{durationMs:performance.now()-telemetry.start,destroyed:telemetry.destroyed,resources:{metal:haul.metal+midgame.van.resources.metal+packB.truck.resources.metal+packD.recoveryRig.resources.metal,copper:haul.copper+midgame.van.resources.copper+packB.truck.resources.copper+packD.recoveryRig.resources.copper,plastic:haul.plastic+midgame.van.resources.plastic+packB.truck.resources.plastic+packD.recoveryRig.resources.plastic},components:{bearing:comps.bearing+midgame.van.components.bearing,motor:comps.motor+midgame.van.components.motor,hydraulic:comps.hydraulic+midgame.van.components.hydraulic,electronics:comps.electronics+midgame.van.components.electronics},devGranted:sessionStorage.getItem('__salvage_dev_grant__')==='1'},Date.now());if(benchmark.newBest)showToast(`Новый benchmark: ${ZONE_DEFS[fieldZone].name}`);mode='garage';platform.setGameplayActive(false,'garage');for(const k of ['metal','copper','plastic'] as ResourceKind[]){storage[k]+=haul[k];haul[k]=0}for(const k of Object.keys(comps) as ComponentKind[]){storedComps[k]+=comps[k];comps[k]=0}for(const k of Object.keys(midHaul) as MidComponentKind[]){midgame.midComponents[k]+=midHaul[k];midHaul[k]=0}packB.materials.aluminiumScrap+=aluminiumHaul;aluminiumHaul=0;(Object.keys(industrialHaul) as IndustrialComponentKind[]).forEach(k=>{packB.industrial[k]+=industrialHaul[k];industrialHaul[k]=0});packC.materials.alloyScrap+=alloyHaul;alloyHaul=0;(Object.keys(packCIndustrialHaul) as HeavyIndustrialComponentKind[]).forEach(k=>{packC.industrial[k]+=packCIndustrialHaul[k];packCIndustrialHaul[k]=0});const vanKg=unloadVanToStorage(midgame.van,storage,storedComps,midgame.midComponents),truck=unloadTruck(packB,storage);packC.materials.alloyScrap+=unloadPackCTruckAlloy(packC);const rig=unloadRecoveryRig(packD,storage);packB.materials.aluminiumScrap+=rig.aluminiumScrap;packC.materials.alloyScrap+=rig.alloyScrap;cart=0;$('tripSummary').textContent=`Последняя вылазка: ${telemetry.destroyed} целей · ${fmt((performance.now()-telemetry.start)/1000)}${rig.weight?` · Rig ${rig.weight.toFixed(0)} кг`:truck.weight?` · truck ${truck.weight.toFixed(0)} кг`:vanKg?` · фургон ${vanKg.toFixed(0)} кг`:''}`;garageScreen.hidden=false;renderGarage();saveGame()}
 function leaveGarage(){garageScreen.hidden=true;mode='field';if(fieldZone!==midgame.currentZone||targets.filter(t=>t.alive).length<12)refreshField();resetExcursionMetrics();hud();platform.setGameplayActive(true,'leave_garage')}
