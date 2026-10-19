@@ -22,6 +22,7 @@
     "smoke:browser:packc": "tsx scripts/browser-pack-c-smoke.ts",
     "smoke:browser:packd": "tsx scripts/browser-pack-d-smoke.ts",
     "smoke:browser:workshop-queue": "tsx scripts/browser-workshop-queue-smoke.ts",
+    "smoke:browser:manual-review": "tsx scripts/browser-manual-review-smoke.ts",
     "smoke:save": "tsx scripts/save-safety-smoke.ts",
     "smoke:platform": "tsx scripts/platform-smoke.ts",
     "smoke:browser:platform": "tsx scripts/browser-platform-smoke.ts",
