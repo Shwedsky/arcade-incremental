@@ -1,14 +1,11 @@
 # Human Review — Playable Salvage V0
 
-Status: **TWO OWNER REVIEWS COMPLETED / INTERNAL COMPLETION PASS IN PROGRESS**
+Status: **TWO OWNER REVIEWS COMPLETED / REQUESTED EARLY-GAME COMPLETION IMPLEMENTED**
 
 ## Review #1 — first 3–4 cart runs
 
 ### Accepted
-- basic gameplay loop is understandable:
-  - dismantle junk;
-  - collect drops;
-  - haul to garage;
+- basic gameplay loop is understandable: dismantle -> collect -> haul home;
 - active mechanic is accepted as the foundation.
 
 ### Problems found
@@ -22,93 +19,97 @@ Status: **TWO OWNER REVIEWS COMPLETED / INTERNAL COMPLETION PASS IN PROGRESS**
 - stronger impact/drop presentation;
 - clickable machines;
 - first press goal card;
-- machine inspector with recipe, owned/missing quantities, source hints and ready-made price;
-- first Build/Install action.
+- machine inspector with recipe, owned/missing quantities, source hints and ready-made price.
 
-## Review #2 — after visual/garage pass
+## Review #2 — progression completion request
 
-Owner verdict:
-
-### Active loop
-- mechanic is acceptable for now;
-- production visual polish should **not** consume more iteration time yet;
-- final visuals will later follow the separately approved concept baseline.
+### Active loop / visuals
+Owner accepted the mechanic for now and explicitly deferred further visual work. Production visuals will later return to the separately approved concept baseline.
 
 ### Garage/home rule
-Current behavior was wrong if garage access depends on cart fill.
-
 Owner requirement:
 
 > The garage is the player's base/home. The player must be able to return whenever they want.
 
-This is now a hard product rule:
+Hard rule now implemented:
 - no minimum cart fill;
-- explicit Home/Garage action is always available;
+- Home/Garage action always available;
 - returning unloads collected cargo;
-- returning home does not force a fresh salvage field;
-- player can go back to the same field route.
+- returning does not force a fresh salvage field;
+- player resumes the same field route.
 
 ### Machine progression clarity
-Owner specifically reported that the station still did not clearly state **what is required to get its upgrade/progression**.
+Owner reported that a station did not clearly state what is required for its progression.
 
-The next runtime must therefore show, separately and explicitly:
-1. conditions to unlock the machine;
-2. exact recipe to build it;
+Runtime now shows before an upgrade is available:
+1. machine unlock conditions;
+2. build recipe;
 3. current machine level;
-4. conditions for the next machine level;
-5. exact resources/components/cash for that next upgrade;
-6. where missing items come from.
-
-This information is required **before** the upgrade is available.
+4. next-level gates;
+5. exact resources/components/cash for the next level;
+6. sources of missing items;
+7. queued status / remaining time once work starts.
 
 ### Progression scope
-Owner does not want another narrow test build.
+Owner explicitly requested that the next package already contain development branches, XP and related progression rather than another narrow prototype.
 
-Before the next owner package, the playable must include:
-- XP;
-- player levels;
-- mastery points;
-- five progression branches;
-- prerequisites between nodes;
-- actual early talent effects;
-- Combo deeper in Salvage rather than at the tree root;
+Implemented before the next package:
+- XP / levels / mastery;
+- five branches / 35 visible nodes;
+- prerequisites and real early talent effects;
+- Combo deeper in Salvage;
 - persistence;
-- coherent garage economy/progression.
+- coherent garage economy;
+- physical tool progression separate from talents;
+- physical cart progression separate from talents;
+- timed machine/equipment fabrication;
+- timed processing;
+- offline completion of workshop jobs;
+- first rotating contract loop.
 
-## Internal completion pass now implemented/in progress
+## Completion pass after review #2
 
-See `docs/PROGRESSION_RUNTIME_V0.md`.
+See:
+- `docs/PROGRESSION_RUNTIME_V0.md`;
+- `docs/EARLY_GAME_SYSTEMS_V0.md`;
+- `docs/PLAYABLE_SLICE_V0.md`.
 
-Current runtime direction includes:
-- persistent XP / level / mastery;
-- 35 visible talent nodes across five branches;
-- Combo at Salvage tier 3;
-- functional early Salvage/Logistics/Workshop/Automation/Trade effects;
-- anytime garage access;
-- explicit machine unlock/build/upgrade requirements;
-- machine levels;
-- simple first machine processing;
-- raw/processed sale loop;
-- local persistence;
-- baseline offline progress/report.
+### Equipment
+Tool and cart now have their own levels, requirements, effects and fabrication timers. Talents improve play style on top of physical gear rather than substituting for it.
+
+### Workshop
+Machine builds, machine upgrades, equipment fabrication and processing batches now share a persisted workshop queue. Base queue has one slot; progression can unlock a second. Work continues while the player scavenges or is offline.
+
+### First contract layer
+The garage exposes an actual order with requested stock, cash reward and XP reward. After completion the next order rotates in. This gives resources an immediate keep-vs-sell-vs-build decision.
+
+### Offline
+Offline return resolves completed workshop jobs and reports them separately from passive salvage income.
+
+## Internal automated verification
+
+The integrated test suite now checks not just definitions but browser interactions:
+- entering home with an empty cart;
+- talent tree visibility and Combo gates;
+- talent persistence after reload;
+- machine build/upgrade requirement visibility;
+- physical tool fabrication through the queue;
+- first press fabrication through the queue;
+- timed press processing;
+- contract completion with stock consumption + cash/XP;
+- offline workshop completion;
+- two-slot workshop progression.
+
+Separate deterministic tests cover equipment scaling, job timing, contract scaling and whole-item component requirements.
 
 ## Visual policy
+Current browser art remains scaffolding. Do not use another systems iteration to polish it. Production visuals return to the approved concept only after the early-game systems feel is accepted.
 
-Do not treat the current browser art as final art.
+## Next owner package gate
+The next package is allowed after the **latest documentation/runtime head** passes the full CI/browser/package run.
 
-Current visuals are functional scaffolding. Production visual work should return to the approved concept after the systems loop is coherent enough to justify a broader visual pass.
+The owner test should then focus on one continuous early-game session:
 
-## Next owner test gate
+`свалка -> уровень -> ветка -> физический апгрейд -> гараж -> контракт/продажа -> постройка пресса -> таймер/offline -> переработка -> следующий виток`.
 
-**Do not send another package yet.**
-
-The next human package is allowed only after internal checks confirm:
-- typecheck/build/smoke green;
-- garage available at any moment;
-- progression tree usable and understandable;
-- XP and level cadence wired to active play;
-- Combo cannot be reached without its prerequisite nodes/level;
-- machine cards/inspector expose upgrade requirements;
-- press and early sale loop are functional;
-- save/offline state is sane;
-- docs match runtime.
+Expected feedback is primarily about pacing, clarity and whether each next goal is motivating. Visual verdict comes later.
