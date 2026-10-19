@@ -1,0 +1,5 @@
+route,worker_active_ratio,buffer_kg,worker_bulk_kg_h,driver_expected_throughput_bonus_pct
+basic_z1,0.2,150,105.0,14.0
+spare_van_z3,0.3,400,209.4,8.0
+truck_z5,0.38,1000,414.2,5.0
+recovery_z7,0.45,1800,699.8,6.0
