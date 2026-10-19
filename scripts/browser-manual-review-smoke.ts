@@ -20,6 +20,7 @@ function server(port:number,outDir:string):ChildProcess{
 }
 async function waitServer(origin:string){for(let i=0;i<80;i++){try{const r=await fetch(origin);if(r.ok)return}catch{}await new Promise(r=>setTimeout(r,125))}throw new Error(`server did not start: ${origin}`)}
 async function stop(proc:ChildProcess){if(proc.exitCode!==null)return;proc.kill('SIGTERM');await Promise.race([once(proc,'exit'),new Promise(r=>setTimeout(r,1500))]);if(proc.exitCode===null)proc.kill('SIGKILL')}
+function overlaps(a:{x:number;y:number;width:number;height:number},b:{x:number;y:number;width:number;height:number}){return a.x<b.x+b.width&&a.x+a.width>b.x&&a.y<b.y+b.height&&a.y+a.height>b.y}
 
 await rm(reviewDist,{recursive:true,force:true});
 await cp(dist,reviewDist,{recursive:true});
@@ -29,7 +30,7 @@ const normal=server(NORMAL_PORT,dist),review=server(REVIEW_PORT,reviewDist);
 await Promise.all([waitServer(NORMAL_ORIGIN),waitServer(REVIEW_ORIGIN)]);
 const browser=await chromium.launch({headless:true});
 try{
-  const context=await browser.newContext();
+  const context=await browser.newContext({viewport:{width:1440,height:900}});
 
   const normalPage=await context.newPage();
   await normalPage.goto(`${NORMAL_ORIGIN}/?seed=normal-sentinel`);
@@ -50,9 +51,27 @@ try{
   assert.deepEqual(fresh.installed,['workbench']);
   assert.equal(new URL(reviewPage.url()).searchParams.has('reset'),false,'review gameplay URL must not retain destructive reset parameters');
 
-  // Owner P0 regression: the review build must always be able to enter the garage and launch back into an active excursion.
+  // Owner P1: field HUD cards must not stack on each other and should stay passive until explicitly focused.
+  const zoneBox=await reviewPage.locator('.zone').boundingBox(),goalBox=await reviewPage.locator('.goal').boundingBox();
+  assert.ok(zoneBox&&goalBox,'field HUD zone and goal cards must exist');
+  assert.equal(overlaps(zoneBox!,goalBox!),false,'zone and goal HUD cards must not overlap');
+  const passiveOpacity=Number(await reviewPage.locator('.zone').evaluate(el=>getComputedStyle(el).opacity));
+  assert.ok(passiveOpacity<.9,'idle field HUD should be semi-transparent');
+  await reviewPage.locator('.zone').hover();
+  await reviewPage.waitForFunction(()=>Number(getComputedStyle(document.querySelector('.zone')!).opacity)>.9);
+
+  // Garage discovery UX: known basics are readable; future materials/components are mystery slots until found.
   await reviewPage.click('#garage');
   await reviewPage.waitForSelector('#garageScreen:not([hidden])');
+  await reviewPage.waitForSelector('#storage [data-hf-slot="metal"]');
+  assert.match(await reviewPage.locator('#storage [data-hf-slot="metal"]').innerText(),/Металл/);
+  assert.match(await reviewPage.locator('#storage [data-hf-slot="alScrap"]').innerText(),/Неизвестный материал/);
+  assert.match(await reviewPage.locator('#storageComponents [data-hf-slot="bearing"]').innerText(),/Неизвестный компонент/);
+  assert.equal(await reviewPage.locator('#storageComponents [data-hf-slot="controller"]').evaluate(el=>el.classList.contains('hfLegendary')),true,'late component rarity must have a strong rarity frame');
+  const garageText=await reviewPage.locator('#garageScreen').innerText();
+  assert.doesNotMatch(garageText,/PACK [BCD]|Salvage Yard|Recovery Rig|Industrial Workshop|\bOperator\b|\bScavenger\b|Gearbox|Drive Module|Control Module/,'normal garage UI must not expose raw English production labels');
+
+  // Owner P0 regression: the review build must always be able to launch back into an active excursion.
   const launchLabel=await reviewPage.locator('#next').textContent();
   assert.match(launchLabel??'',/Ехать|Вернуться/,'garage must expose an understandable excursion launch action');
   await reviewPage.click('#next');
@@ -71,7 +90,7 @@ try{
   const ordinary=await normalPage.evaluate((key)=>({primary:localStorage.getItem(key),backup:localStorage.getItem(`${key}.backup`)}),SAVE_KEY);
   assert.deepEqual(ordinary,{primary:'ordinary-save-sentinel',backup:'ordinary-backup-sentinel'},'review fresh start must not touch ordinary origin save slots');
 
-  console.log('manual review isolation + excursion launch browser smoke: PASS');
+  console.log('manual review launch + HUD/readability/discovery browser smoke: PASS');
   await context.close();
 }finally{
   await browser.close();
