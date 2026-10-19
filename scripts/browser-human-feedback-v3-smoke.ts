@@ -44,7 +44,7 @@ try{
   assert.equal(await page.locator('#components > span').nth(5).evaluate(el=>el.classList.contains('hfKnownOnly')),false,'undiscovered Compressor must remain unknown');
 
   // Re-entering the field through base must not erase player knowledge.
-  await page.click('#garage');await page.waitForSelector('#garageScreen:not([hidden])');await page.click('#next');await page.waitForSelector('#garageScreen[hidden]');
+  await page.click('#garage');await page.waitForSelector('#garageScreen:not([hidden])');await page.click('#next');await page.waitForSelector('#garageScreen',{state:'hidden'});
   await page.waitForFunction(()=>document.querySelector('#components > span:nth-child(5) .hfFieldKnowledgeIcon')?.textContent==='◍');
   assert.equal(await knowledgeIcon(page,4),'◍','Pump must remain revealed after base round-trip');
 
