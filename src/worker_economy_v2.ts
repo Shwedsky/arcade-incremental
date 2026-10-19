@@ -1,6 +1,6 @@
 import type { ComponentKind, ResourceKind } from './sim.ts';
 
-export type EconomyZoneId='z1'|'z2'|'z3'|'z4'|'z5'|'z6'|'z7';
+export type EconomyZoneId='z1'|'z2'|'z3'|'z4'|'z5'|'z6'|'z7'|'z8';
 export type WorkerSlotId='w1'|'w2'|'w3'|'w4';
 
 export interface WorkerBenchmark{
@@ -49,7 +49,7 @@ export const WORKER_PARCEL_MINUTES=10;
 export const WORKER_COMPONENT_FACTOR=.35;
 export const VAN_PARCEL_MULTIPLIER=1.35;
 const RAW_VALUE:Record<ResourceKind,number>={metal:8,copper:60,plastic:5};
-const ZONES:EconomyZoneId[]=['z1','z2','z3','z4','z5','z6','z7'];
+const ZONES:EconomyZoneId[]=['z1','z2','z3','z4','z5','z6','z7','z8'];
 const SLOTS:WorkerSlotId[]=['w1','w2','w3','w4'];
 
 const emptyResources=():Record<ResourceKind,number>=>({metal:0,copper:0,plastic:0});
@@ -63,7 +63,7 @@ const normalizeShiftBudget=(value:unknown):number=>{
 export function createDefaultWorkerEconomy(now=Date.now()):WorkerEconomyV2State{
   return{
     benchmarks:{},
-    medals:{z1:false,z2:false,z3:false,z4:false,z5:false,z6:false,z7:false},
+    medals:{z1:false,z2:false,z3:false,z4:false,z5:false,z6:false,z7:false,z8:false},
     shifts:{w1:createShift(now),w2:createShift(now),w3:createShift(now),w4:createShift(now)},
     vanWorker:null
   };
