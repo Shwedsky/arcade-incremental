@@ -8,7 +8,7 @@ on:
 jobs:
   build-and-smoke:
     runs-on: ubuntu-latest
-    timeout-minutes: 18
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -28,6 +28,8 @@ jobs:
         run: npm run smoke:visual
       - name: Content Pack A smoke
         run: npm run smoke:content
+      - name: Content Pack B smoke
+        run: npm run smoke:packb
       - name: Save safety smoke
         run: npm run smoke:save
       - name: Platform adapter smoke
@@ -40,16 +42,18 @@ jobs:
         run: npx playwright install --with-deps chromium
       - name: Headless browser progression smoke
         run: npm run smoke:browser
-      - name: Headless browser midgame proof
+      - name: Headless browser midgame regression
         run: npm run smoke:browser:midgame
+      - name: Headless browser Content Pack B proof
+        run: npm run smoke:browser:packb
       - name: Platform and responsive browser proof
         run: npm run smoke:browser:platform
       - name: Build release manifest
         run: npm run release:manifest
       - name: Package release candidate
-        run: zip -r arcade-incremental-release-candidate-v1.zip dist
+        run: zip -r arcade-incremental-release-candidate-v2.zip dist
       - uses: actions/upload-artifact@v4
         with:
-          name: arcade-incremental-release-candidate-v1
-          path: arcade-incremental-release-candidate-v1.zip
+          name: arcade-incremental-release-candidate-v2
+          path: arcade-incremental-release-candidate-v2.zip
           if-no-files-found: error
