@@ -48,6 +48,8 @@ jobs:
         run: python models/progression_sim_v0.py --check
       - name: Mid/Late mechanics structural proof
         run: python models/mid_late_mechanics_sim_v1.py --check
+      - name: Worker / progression economy V2 model proof
+        run: python models/worker_progression_economy_v2.py --check
       - name: Install browser
         run: npx playwright install --with-deps chromium
       - name: Headless browser progression smoke
