@@ -1,43 +1,95 @@
-# Content Pack B V1 — Delivery Checkpoint
+# Content Pack B V1 — Delivery Proof
 
-Status: **IMPLEMENTATION STARTED / NO OWNER MANUAL GATE**
+Status: **COMPLETE / INTERNALLY GREEN / READY TO MERGE**
 
 Tracked by Issue #13.
 
-## Base
+## Proven progression
 
-Starts from `main` after merged Platform / Release Foundation V1.
+`Z3 mastered -> Z4 Auto Salvage -> active Gearbox/Generator discovery -> Hangar -> Truck -> former Van remains useful infrastructure -> second crew slot -> Wide Swing active`
 
-## Proof target
+## Delivered
 
-`Z3 mastered -> Z4 Auto Salvage -> active Gearbox/Generator discovery -> Hangar -> Truck -> former Van becomes worker-route infrastructure -> second crew slot -> Wide Swing active`
+- Z4 Auto Salvage with its own target mix, difficulty/yield profile, visual theme and automotive source catalog.
+- Aluminium scrap as a Z4 active resource.
+- Gearbox and Generator/Alternator as active-discovery industrial components with pity counters.
+- Save V5 with migration from accepted V4/V3/V2 saves.
+- Steel Blank and Aluminium Billet processing bridge.
+- Drive / Control / Structural module fabrication.
+- Hangar milestone consuming cash + processed materials + fabricated modules.
+- Truck milestone consuming industrial materials/modules/components; 1,000 kg mobile field buffer.
+- Second worker slot after Hangar.
+- Existing worker rules preserved: no mastery and no first component discovery.
+- First Tier-II Salvage mechanic `Широкий замах`: secondary nearby target receives 55% dismantling power.
+- Existing Early/Mid/Platform functionality remains regression-covered.
 
-## Locked implementation boundaries
+## Key milestone recipes
 
-- Z4 is a new active frontier, not merely higher prices.
-- Hand Cart remains local collection in every zone.
-- Truck becomes the player's larger mobile depot; it does not replace cart movement.
-- After Truck, the old Van becomes assignable infrastructure for worker routes.
-- Workers remain support: no zone mastery and no first discovery of component families.
-- Gearbox and Generator/Alternator require active first discovery with pity/fallback-compatible counters.
-- Hangar and Truck must consume workshop-produced materials/modules so cash cannot skip the production network.
-- Existing Z1-Z3 gameplay/save/platform boundaries must remain compatible.
-- No Z5+ production content in this pack.
-- No Yandex Console access is required.
+Hangar baseline:
+- 220,000 cash;
+- 400 kg metal;
+- 18 clean copper;
+- 8 Steel Blank;
+- 4 Aluminium Billet;
+- 2 Structural Frame;
+- 1 Control Module.
 
-## Planned runtime additions
+Truck baseline:
+- 220,000 cash;
+- 12 clean copper;
+- 10 Steel Blank;
+- 6 Aluminium Billet;
+- 1 Drive Module;
+- 1 Control Module;
+- 1 Gearbox;
+- 1 Generator/Alternator.
 
-1. Extend zone model with Z4 Auto Salvage.
-2. Extend component model with Gearbox + Generator/Alternator.
-3. Add Hangar state / acquisition gate.
-4. Add Truck state / cargo buffer / purchase-conversion gate.
-5. Promote Van to worker-route infrastructure after Truck acquisition.
-6. Add second worker/crew capacity baseline.
-7. Add processed/module inventory required by Hangar and Truck milestones.
-8. Activate first Tier-II Salvage mechanic: Wide Swing / two-target dismantling.
-9. Add domain smoke and headless browser proof.
-10. Persist final proof/results in this document before merge.
+## Automated acceptance
 
-## Delivery rule
+Validated head: `2c9260d00bfc75e28be7d9f1ed859871defdb43c`.
 
-Keep the PR Draft until build, all regressions, Pack B smoke and Pack B browser proof are green. No manual owner package is produced during implementation.
+GitHub Actions run `39240814867` passed:
+- TypeScript build;
+- deterministic gameplay smoke;
+- Early-game systems smoke;
+- Midgame domain smoke;
+- Visual foundation smoke;
+- Content Pack A smoke;
+- Content Pack B domain smoke;
+- save safety smoke;
+- platform adapter smoke;
+- progression pacing proof;
+- Mid/Late mechanics structural proof;
+- Early-game Chromium regression;
+- Midgame Save V5 Chromium regression;
+- Content Pack B Chromium proof;
+- platform/responsive browser proof;
+- release manifest;
+- RC v2 packaging + artifact upload.
+
+Content Pack B Chromium proof verifies:
+- V4 save migrates to V5 with safe Pack B defaults;
+- Z4 exists and is selectable when its gates are met;
+- Hangar acquisition works through its production recipe;
+- Truck acquisition works and exposes the 1,000 kg field transport state;
+- second worker can be hired and assigned to a mastered old zone;
+- Wide Swing is unlockable only after the accepted Salvage chain and persists after reload;
+- Hangar/Truck/worker/talent state survives normal reload.
+
+Artifact:
+- `arcade-incremental-release-candidate-v2`;
+- artifact id `12180987915`;
+- digest `sha256:a3eefcff5a06e4bc607e1e1c7a7259e1d938296f7682f9f67404132601fe7646`.
+
+## Guardrails preserved
+
+- Hand Cart remains the active local collector.
+- Truck is a mobile depot, not an auto-play replacement.
+- Workers cannot earn zone mastery or discover component families first.
+- No Z5+ content is implemented here.
+- No ads/IAP/leaderboards.
+- No Yandex Console dependency; the known external РСЯ/Console blocker remains outside this development gate.
+
+## Next pipeline
+
+Content Pack C: Z5 Industrial Zone + Z6 Abandoned Factory + Salvage Yard + fuller Tier-II industry/automation, still without an owner manual gate until internal proof is green.
