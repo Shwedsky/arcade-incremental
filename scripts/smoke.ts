@@ -33,8 +33,8 @@ assert.ok(totals.metal > totals.copper * 3, 'metal should dominate early raw mas
 assert.ok(totals.plastic > totals.copper, 'plastic should be more common than copper by mass');
 assert.ok(Object.values(components).reduce((sum, value) => sum + value, 0) > 10, 'component drops should exist');
 
-assert.equal(TALENTS.length, 36, 'Tier I remains 35 nodes plus first Tier-II Salvage unlock');
-assert.equal(new Set(TALENTS.map((t) => t.id)).size, 36, 'talent ids must be unique');
+assert.equal(TALENTS.length, 38, 'Tier I remains 35 nodes plus three justified Tier-II runtime unlocks');
+assert.equal(new Set(TALENTS.map((t) => t.id)).size, 38, 'talent ids must be unique');
 assert.equal(levelForXp(0), 1);
 assert.equal(levelForXp(120), 2);
 assert.equal(levelForXp(420), 3);
@@ -52,7 +52,13 @@ assert.equal(wideSwing.name,'Широкий замах');
 assert.equal(wideSwing.requires,'salvage_7');
 assert.equal(canUnlockTalent(wideSwing,9,new Set<TalentId>(['salvage_7'])).ok,false);
 assert.equal(canUnlockTalent(wideSwing,10,new Set<TalentId>(['salvage_7'])).ok,true);
-const effectSet = new Set<TalentId>(['salvage_1','salvage_2','salvage_3','salvage_7','salvage_8','logistics_1','automation_1','trade_1']);
+const heavyFab=TALENTS.find((t)=>t.id==='workshop_8')!;
+const operator=TALENTS.find((t)=>t.id==='automation_8')!;
+assert.equal(heavyFab.name,'Тяжёлая фабрикация');
+assert.equal(operator.name,'Оператор ячейки');
+assert.equal(canUnlockTalent(heavyFab,10,new Set<TalentId>(['workshop_4'])).ok,true);
+assert.equal(canUnlockTalent(operator,10,new Set<TalentId>(['automation_3'])).ok,true);
+const effectSet = new Set<TalentId>(['salvage_1','salvage_2','salvage_3','salvage_7','salvage_8','logistics_1','workshop_8','automation_1','automation_8','trade_1']);
 const fx = deriveEffects(effectSet);
 assert.equal(fx.dpsMultiplier.toFixed(2), '1.20');
 assert.equal(fx.capacityBonus, 10);
@@ -60,6 +66,8 @@ assert.equal(fx.comboUnlocked, true);
 assert.equal(fx.wideSwingUnlocked,true);
 assert.equal(fx.offlineEfficiency, .25);
 assert.equal(fx.saleMultiplier, 1.05);
+assert.equal(fx.industrialProductionMultiplier,.90);
+assert.equal(fx.operatorUnlocked,true);
 
 const press = MACHINE_DEFS.press;
 assert.equal(press.name, 'Малый гидропресс');
@@ -85,5 +93,5 @@ assert.equal(machineUnlocked(MACHINE_DEFS.wire, baseContext), false, 'wire strip
 const wireContext: ProgressContext = { level: 3, talents: new Set<TalentId>(), installed: new Set(['workbench','press']) };
 assert.equal(machineUnlocked(MACHINE_DEFS.wire, wireContext), true, 'wire stripper unlocks after level and press gate');
 
-console.log(JSON.stringify({ fieldNodes: a.length, rolls, totals, components, talents:TALENTS.length, combo, wideSwing, pressUpgrade:nextUpgrade(press,1) }, null, 2));
+console.log(JSON.stringify({ fieldNodes: a.length, rolls, totals, components, talents:TALENTS.length, combo, wideSwing, heavyFab, operator, pressUpgrade:nextUpgrade(press,1) }, null, 2));
 console.log('salvage slice smoke: PASS');

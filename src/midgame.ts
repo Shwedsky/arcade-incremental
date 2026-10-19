@@ -1,7 +1,8 @@
 import { BASE_DPS, getTargetClass, type ComponentKind, type ResourceKind, type SalvageTarget, type TargetClassId } from './sim.ts';
 import type { MachineId } from './garage.ts';
+import { PACK_C_ZONE_PROFILES } from './content_pack_c.ts';
 
-export type ZoneId = 'z1' | 'z2' | 'z3' | 'z4';
+export type ZoneId = 'z1' | 'z2' | 'z3' | 'z4' | 'z5' | 'z6';
 export type MidComponentKind = 'pump' | 'compressor';
 
 export interface ZoneDef {
@@ -40,6 +41,14 @@ export const ZONE_DEFS: Record<ZoneId, ZoneDef> = {
     id:'z4',order:4,name:'Авторазборка',subtitle:'Зона 4',description:'Кузовщина, агрегаты и силовая электрика. Первый источник коробок передач и генераторов для тяжёлой логистики.',
     nodeWeights:{small_scrap:.10,cable:.11,small_appliance:.11,bike_fan:.14,medium_appliance:.30,large_appliance:.24},
     hpMultiplier:1.85,yieldMultiplier:1.58,masteryTarget:6200,recommendedTool:4
+  },
+  z5:{
+    id:'z5',order:5,name:PACK_C_ZONE_PROFILES.z5.name,subtitle:'Зона 5',description:PACK_C_ZONE_PROFILES.z5.description,
+    nodeWeights:PACK_C_ZONE_PROFILES.z5.nodeWeights,hpMultiplier:PACK_C_ZONE_PROFILES.z5.hpMultiplier,yieldMultiplier:PACK_C_ZONE_PROFILES.z5.yieldMultiplier,masteryTarget:PACK_C_ZONE_PROFILES.z5.masteryTarget,recommendedTool:5
+  },
+  z6:{
+    id:'z6',order:6,name:PACK_C_ZONE_PROFILES.z6.name,subtitle:'Зона 6',description:PACK_C_ZONE_PROFILES.z6.description,
+    nodeWeights:PACK_C_ZONE_PROFILES.z6.nodeWeights,hpMultiplier:PACK_C_ZONE_PROFILES.z6.hpMultiplier,yieldMultiplier:PACK_C_ZONE_PROFILES.z6.yieldMultiplier,masteryTarget:PACK_C_ZONE_PROFILES.z6.masteryTarget,recommendedTool:6
   }
 };
 
@@ -92,7 +101,7 @@ export function emptyMidComponentRecord():Record<MidComponentKind,number>{return
 
 export function createDefaultMidgame(now=Date.now()):MidgameState{
   return{
-    currentZone:'z1',mastery:{z1:0,z2:0,z3:0,z4:0},discoveredComponents:[],discoveredMidComponents:[],midComponents:emptyMidComponentRecord(),
+    currentZone:'z1',mastery:{z1:0,z2:0,z3:0,z4:0,z5:0,z6:0},discoveredComponents:[],discoveredMidComponents:[],midComponents:emptyMidComponentRecord(),
     pity:{pump:0,compressor:0},
     van:{owned:false,resources:emptyResourceRecord(),components:emptyComponentRecord(),midComponents:emptyMidComponentRecord()},
     worker:{hired:false,assignment:null,lastTick:now}
@@ -137,9 +146,20 @@ export function zoneUnlock(state:MidgameState,id:ZoneId,ctx:ZoneUnlockContext):{
     if(!zoneMastered(state,'z2'))return{ok:false,reason:'Освой Зону 2 на 100%'};
     return{ok:true};
   }
-  if(ctx.level<8)return{ok:false,reason:'Нужен уровень 8'};
-  if(!zoneMastered(state,'z3'))return{ok:false,reason:'Освой Зону 3 на 100%'};
-  if(!state.van.owned)return{ok:false,reason:'Нужен фургон для дальнего маршрута'};
+  if(id==='z4'){
+    if(ctx.level<8)return{ok:false,reason:'Нужен уровень 8'};
+    if(!zoneMastered(state,'z3'))return{ok:false,reason:'Освой Зону 3 на 100%'};
+    if(!state.van.owned)return{ok:false,reason:'Нужен фургон для дальнего маршрута'};
+    return{ok:true};
+  }
+  if(id==='z5'){
+    if(ctx.level<10)return{ok:false,reason:'Нужен уровень 10'};
+    if(!zoneMastered(state,'z4'))return{ok:false,reason:'Освой Авторазборку на 100%'};
+    if(!state.van.owned)return{ok:false,reason:'Нужна тяжёлая логистика'};
+    return{ok:true};
+  }
+  if(ctx.level<12)return{ok:false,reason:'Нужен уровень 12'};
+  if(!zoneMastered(state,'z5'))return{ok:false,reason:'Освой Промышленную зону на 100%'};
   return{ok:true};
 }
 
@@ -233,7 +253,9 @@ const WORKER_RATES:Record<ZoneId,Record<ResourceKind,number>>={
   z1:{metal:84,copper:5.4,plastic:15},
   z2:{metal:72,copper:9,plastic:12},
   z3:{metal:104,copper:9.6,plastic:15},
-  z4:{metal:118,copper:10.5,plastic:10}
+  z4:{metal:118,copper:10.5,plastic:10},
+  z5:{metal:148,copper:12,plastic:8},
+  z6:{metal:164,copper:13,plastic:6}
 };
 
 export function simulateWorkerGain(state:MidgameState,now=Date.now(),maxHours=8):WorkerGain{
