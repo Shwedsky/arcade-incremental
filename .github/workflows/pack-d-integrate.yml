@@ -5,6 +5,7 @@ on:
     branches: [content/pack-d-z7-rig-workshop-v1]
     paths:
       - 'scripts/apply_pack_d_runtime.py'
+      - 'scripts/repair_pack_d_runtime.py'
       - '.github/workflows/pack-d-integrate.yml'
   workflow_dispatch:
 
@@ -23,7 +24,9 @@ jobs:
       - name: Install dependencies
         run: npm install --no-audit --no-fund
       - name: Apply Pack D runtime integration
-        run: python scripts/apply_pack_d_runtime.py
+        run: |
+          python scripts/apply_pack_d_runtime.py
+          python scripts/repair_pack_d_runtime.py
       - name: Typecheck and build
         run: npm run build
       - name: Domain regressions
@@ -46,9 +49,7 @@ jobs:
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add src/main.ts src/midgame.ts src/zone_content.ts src/content_pack_d.ts src/content_pack_d.css scripts/content-pack-d-smoke.ts
+          git add src/main.ts src/midgame.ts src/zone_content.ts src/visual_theme.ts src/content_pack_d.ts src/content_pack_d.css scripts/content-pack-d-smoke.ts
           git diff --cached --quiet && { echo 'No integration diff produced'; exit 1; }
           git commit -m 'feat: integrate Pack D runtime and Save V7'
           git push
-
-# Guarded retry after synchronizing the domain-smoke anchor.
