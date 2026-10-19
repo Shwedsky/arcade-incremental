@@ -160,7 +160,7 @@ export function activeContract(state:ContractState):ContractDef {
 
 export function contractScale(state:ContractState,urgentUnlocked:boolean):number {
   const experience=Math.min(.40,state.completed*.04);
-  return 1+experience+(urgentUnlocked?.18:0);
+  return 1+experience+(urgentUnlocked ? .18 : 0);
 }
 
 export function buildDurationSec(machineId:MachineId):number {
