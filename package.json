@@ -9,6 +9,7 @@
     "smoke": "tsx scripts/smoke.ts",
     "smoke:early": "tsx scripts/early-game-smoke.ts",
     "smoke:workshop-scheduler": "tsx scripts/workshop-scheduler-smoke.ts",
+    "smoke:workshop-migration": "tsx scripts/workshop-scheduler-migration-smoke.ts",
     "smoke:browser": "tsx scripts/browser-smoke.ts",
     "smoke:midgame": "tsx scripts/midgame-smoke.ts",
     "smoke:browser:midgame": "tsx scripts/browser-midgame-v5-smoke.ts",
