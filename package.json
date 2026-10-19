@@ -11,7 +11,8 @@
     "smoke:browser": "tsx scripts/browser-smoke.ts",
     "smoke:midgame": "tsx scripts/midgame-smoke.ts",
     "smoke:browser:midgame": "tsx scripts/browser-midgame-smoke.ts",
-    "smoke:visual": "tsx scripts/visual-smoke.ts"
+    "smoke:visual": "tsx scripts/visual-smoke.ts",
+    "smoke:content": "tsx scripts/content-pack-a-smoke.ts"
   },
   "devDependencies": {
     "playwright": "^1.51.1",
