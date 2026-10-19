@@ -82,13 +82,8 @@ export function earnedMasteryPoints(level: number): number {
   return Math.max(0, level - 1);
 }
 
-let targetXpMultiplier=1;
-export function setTargetXpMultiplier(multiplier:number):void{targetXpMultiplier=Math.max(.1,Math.min(4,Number(multiplier)||1))}
-export function currentTargetXpMultiplier():number{return targetXpMultiplier}
-
 export function xpForTarget(classId: TargetClassId): number {
-  const base=({ small_scrap:1, cable:1, small_appliance:2, bike_fan:2, medium_appliance:3, large_appliance:5 } as const)[classId];
-  return base*targetXpMultiplier;
+  return ({ small_scrap:1, cable:1, small_appliance:2, bike_fan:2, medium_appliance:3, large_appliance:5 } as const)[classId];
 }
 
 export function xpForComponent(): number { return 3; }

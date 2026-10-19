@@ -19,14 +19,11 @@ export interface TargetClassDef {
 export interface SalvageTarget extends Vec2 {
   id: number;
   classId: TargetClassId;
-  x:number;
-  y:number;
   hp: number;
   maxHp: number;
   rotation: number;
   variant: number;
   alive: boolean;
-  respawnAt?:number;
 }
 
 export interface DropResult {
@@ -71,8 +68,6 @@ export const TARGET_CLASSES: TargetClassDef[] = [
 ];
 
 const CLASS_BY_ID = new Map(TARGET_CLASSES.map((d) => [d.id, d]));
-let latestField:SalvageTarget[]|null=null;
-let lastRolledDrop:{classId:TargetClassId;drop:DropResult}|null=null;
 
 export function getTargetClass(id: TargetClassId): TargetClassDef {
   const found = CLASS_BY_ID.get(id);
@@ -144,7 +139,6 @@ export function generateField(seed: string | number, count = FIELD_NODE_COUNT): 
   }
 
   if (targets.length !== count) throw new Error(`Could not place ${count} salvage nodes, placed ${targets.length}`);
-  latestField=targets;
   return targets;
 }
 
@@ -169,27 +163,7 @@ export function rollDrops(classId: TargetClassId, rng: () => number): DropResult
     plastic: def.yields.plastic * vary()
   };
   const component = rng() < def.componentChance ? chooseWeightedComponent(def.componentWeights, rng) : undefined;
-  const result={resources,component};
-  lastRolledDrop={classId,drop:result};
-  return result;
-}
-
-export function takeLastRolledDrop():{classId:TargetClassId;drop:DropResult}|null{
-  const value=lastRolledDrop;lastRolledDrop=null;return value;
-}
-
-export function latestFieldAliveCount():number{return latestField?.filter(t=>t.alive).length??0}
-
-export function respawnLatestField(enabled:boolean,paused:boolean,now=Date.now(),delayMs=3_500):number{
-  if(!enabled||paused||!latestField)return 0;
-  let revived=0;
-  for(const target of latestField){
-    if(target.alive){target.respawnAt=undefined;continue}
-    if(target.respawnAt===undefined){target.respawnAt=now+delayMs;continue}
-    if(target.respawnAt>now)continue;
-    target.alive=true;target.hp=target.maxHp;target.respawnAt=undefined;revived++;
-  }
-  return revived;
+  return { resources, component };
 }
 
 export function expectedRawWeight(def: TargetClassDef): number {
