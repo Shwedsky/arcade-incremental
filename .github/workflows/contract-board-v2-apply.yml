@@ -1,0 +1,29 @@
+name: contract-board-v2-apply
+
+on:
+  push:
+    branches: [feature/contract-board-v2]
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/contract-board-v2
+          fetch-depth: 0
+      - name: Apply runtime patch
+        run: node scripts/apply-contract-board-v2-runtime.mjs
+      - name: Remove one-shot tooling and persist runtime
+        run: |
+          rm scripts/apply-contract-board-v2-runtime.mjs
+          rm .github/workflows/contract-board-v2-apply.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/main.ts scripts/apply-contract-board-v2-runtime.mjs .github/workflows/contract-board-v2-apply.yml
+          git commit -m "feat: integrate Contract Board V2 runtime"
+          git push origin HEAD:feature/contract-board-v2
