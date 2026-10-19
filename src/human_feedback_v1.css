@@ -1,0 +1,27 @@
+.shell>.zone,.shell>.goal,.shell>.playerProgress,.shell>.stats,.shell>.bottom,.shell>.vanHud{opacity:.64;transition:opacity .16s ease,transform .16s ease,background .16s ease}.shell>.zone:hover,.shell>.zone:focus-within,.shell>.goal:hover,.shell>.goal:focus-within,.shell>.playerProgress:hover,.shell>.playerProgress:focus-within,.shell>.stats:hover,.shell>.stats:focus-within,.shell>.bottom:hover,.shell>.bottom:focus-within,.shell>.vanHud:hover,.shell>.vanHud:focus-within{opacity:.98}.shell>.zone{top:14px}.shell>.goal{top:150px}.shell>.playerProgress{top:14px}.shell>.stats{top:128px}.shell>.vanHud{bottom:116px}.shell>.bottom{bottom:14px}
+
+.hfExcursionLaunch{min-width:230px!important;background:linear-gradient(180deg,#69c95f,#3d993e)!important;box-shadow:0 0 0 2px #9be88a22,0 8px 22px #1f6e2f66!important;font-size:14px!important}.hfExcursionLaunch:before{content:'▶';margin-right:7px;font-size:11px}
+
+#storage.hfMaterialGrid,#storageComponents.hfDiscoveryGrid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:7px}#storage.hfMaterialGrid>span,#storageComponents.hfDiscoveryGrid>span{display:grid;grid-template-columns:28px 1fr auto;align-items:center;gap:7px;min-height:44px;padding:7px 8px;border:2px solid #646e68;border-radius:10px;background:#111a16cc;color:#c7d0cb}#storage.hfMaterialGrid>span .hfIcon,#storageComponents.hfDiscoveryGrid>span .hfIcon{width:26px;height:26px;display:grid;place-items:center;border-radius:8px;background:#ffffff0b;font-size:15px}#storage.hfMaterialGrid>span .hfMeta,#storageComponents.hfDiscoveryGrid>span .hfMeta{min-width:0}#storage.hfMaterialGrid>span .hfMeta b,#storageComponents.hfDiscoveryGrid>span .hfMeta b{display:block;float:none;font-size:11px;color:#eef3f0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#storage.hfMaterialGrid>span .hfMeta small,#storageComponents.hfDiscoveryGrid>span .hfMeta small{display:block;margin-top:2px;color:#839188;font-size:9px}#storage.hfMaterialGrid>span>strong,#storageComponents.hfDiscoveryGrid>span>strong{font-size:11px;color:#fff}#storage.hfMaterialGrid>span.hfUnknown,#storageComponents.hfDiscoveryGrid>span.hfUnknown{border-style:dashed;opacity:.58}#storage.hfMaterialGrid>span.hfUnknown .hfIcon,#storageComponents.hfDiscoveryGrid>span.hfUnknown .hfIcon{font-size:18px;color:#829087}
+
+.hfCommon{border-color:#68736d!important}.hfUncommon{border-color:#4aa96c!important;box-shadow:inset 0 0 0 1px #4aa96c22}.hfRare{border-color:#438fd4!important;box-shadow:inset 0 0 0 1px #438fd422}.hfEpic{border-color:#9a62d5!important;box-shadow:inset 0 0 0 1px #9a62d522}.hfLegendary{border-color:#dc8a34!important;box-shadow:inset 0 0 0 1px #dc8a3428}
+
+.hfLegend{display:flex;flex-wrap:wrap;gap:5px;margin:8px 0 0}.hfLegend span{display:inline-flex!important;align-items:center;gap:4px!important;border:0!important;padding:2px 5px!important;background:transparent!important;font-size:8px!important}.hfLegend i{width:8px;height:8px;border-radius:50%;display:inline-block}.hfLegend .common i{background:#68736d}.hfLegend .uncommon i{background:#4aa96c}.hfLegend .rare i{background:#438fd4}.hfLegend .epic i{background:#9a62d5}.hfLegend .legendary i{background:#dc8a34}
+
+.milestoneCard .packBTag,.milestoneCard .packCTag,.milestoneCard .packDTag{letter-spacing:.06em}
+
+/* Owner feedback: player-facing field HUD must not expose technical seed text or cryptic P/C/Al/GB/GEN labels. */
+#seed{display:none!important}
+#components span:nth-child(n+5){font-size:0}
+#components span:nth-child(n+5)::before{font-size:15px;line-height:1}
+#components span:nth-child(n+5)>b{font-size:9px}
+#components span:nth-child(n+5):not(.has)>b{display:none}
+#components span:nth-child(n+5):not(.has)::before{content:'?';color:#829087}
+#components span:nth-child(5).has::before{content:'◍'}
+#components span:nth-child(6).has::before{content:'◫'}
+#components span:nth-child(7).has::before{content:'⬡'}
+#components span:nth-child(8).has::before{content:'⚙'}
+#components span:nth-child(9).has::before{content:'ϟ'}
+
+@media(max-width:1180px){.shell>.goal{top:142px}.shell>.playerProgress{top:10px}.shell>.stats{display:none}.shell>.zone,.shell>.goal,.shell>.playerProgress,.shell>.bottom,.shell>.vanHud{opacity:.7}}
+@media(max-width:720px){.shell>.zone{top:8px}.shell>.playerProgress{top:132px}.shell>.goal{display:none}.shell>.vanHud{bottom:150px}.shell>.bottom{bottom:8px;opacity:.74}.hfExcursionLaunch{width:100%;min-width:0!important}#storage.hfMaterialGrid,#storageComponents.hfDiscoveryGrid{grid-template-columns:1fr}.shell>.zone:hover,.shell>.zone:focus-within,.shell>.playerProgress:hover,.shell>.playerProgress:focus-within,.shell>.bottom:hover,.shell>.bottom:focus-within,.shell>.vanHud:hover,.shell>.vanHud:focus-within{opacity:.98}}

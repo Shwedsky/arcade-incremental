@@ -30,7 +30,7 @@ function drawGround(ctx:CanvasRenderingContext2D,width:number,height:number,came
   const theme=zoneVisual(zone),g=ctx.createLinearGradient(0,0,0,height);g.addColorStop(0,theme.groundTop);g.addColorStop(1,theme.groundBottom);ctx.fillStyle=g;ctx.fillRect(0,0,width,height);
   ctx.save();ctx.globalAlpha=.12;ctx.fillStyle=theme.groundDust;
   const step=56,ox=(-camera.x*.15)%step,oy=(-camera.y*.15)%step;
-  for(let y=oy-20;y<height+20;y+=step)for(let x=ox-20;x<width+20;x+=step){ctx.beginPath();ctx.arc(x,y,1.2+((x+y)%3),0,Math.PI*2);ctx.fill()}
+  for(let y=oy-20;y<height+20;y+=step)for(let x=ox-20;x<width+20;x+=step){const dustRadius=1.2+((((x+y)%3)+3)%3);ctx.beginPath();ctx.arc(x,y,dustRadius,0,Math.PI*2);ctx.fill()}
   ctx.restore();
   const roadY=720-camera.y+camera.shakeY;
   if(zone==='z1'){

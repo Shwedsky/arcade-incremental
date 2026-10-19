@@ -60,32 +60,32 @@ jobs:
         run: npm run smoke:browser:packd
       - name: Workshop Queue desktop/mobile browser proof
         run: npm run smoke:browser:workshop-queue
-      - name: Manual review fresh-start isolation proof
+      - name: Manual review launch + feedback UX proof
         run: npm run smoke:browser:manual-review
       - name: Platform and responsive browser proof
         run: npm run smoke:browser:platform
       - name: Build release manifest
         run: npm run release:manifest
       - name: Package release candidate
-        run: zip -r arcade-incremental-release-candidate-v6.zip dist
-      - name: Package manual review candidate
+        run: zip -r arcade-incremental-release-candidate-v7.zip dist
+      - name: Package manual review feedback candidate
         run: |
-          rm -rf manual-review-v1
-          mkdir -p manual-review-v1/dist
-          cp -r dist/. manual-review-v1/dist/
-          cp review/review-start.html manual-review-v1/dist/review-start.html
-          cp review/START_REVIEW.bat manual-review-v1/START_REVIEW.bat
-          cp review/README_REVIEW.txt manual-review-v1/README_REVIEW.txt
-          cp docs/MANUAL_TARGET_RUN_V1.md manual-review-v1/MANUAL_TARGET_RUN_V1.md
-          printf 'Manual Review V1\ncommit=%s\nrun=%s\nseed=owner-review-v1\norigin=http://127.0.0.1:41971\n' "$GITHUB_SHA" "$GITHUB_RUN_ID" > manual-review-v1/BUILD_INFO.txt
-          zip -r arcade-incremental-manual-review-v1.zip manual-review-v1
+          rm -rf manual-review-v1-feedback-fix1
+          mkdir -p manual-review-v1-feedback-fix1/dist
+          cp -r dist/. manual-review-v1-feedback-fix1/dist/
+          cp review/review-start.html manual-review-v1-feedback-fix1/dist/review-start.html
+          cp review/START_REVIEW.bat manual-review-v1-feedback-fix1/START_REVIEW.bat
+          cp review/README_REVIEW.txt manual-review-v1-feedback-fix1/README_REVIEW.txt
+          cp docs/MANUAL_TARGET_RUN_V1.md manual-review-v1-feedback-fix1/MANUAL_TARGET_RUN_V1.md
+          printf 'Manual Review V1 - Feedback Fix 1\ncommit=%s\nrun=%s\nseed=owner-review-v1\norigin=http://127.0.0.1:41971\n' "$GITHUB_SHA" "$GITHUB_RUN_ID" > manual-review-v1-feedback-fix1/BUILD_INFO.txt
+          zip -r arcade-incremental-manual-review-v1-feedback-fix1.zip manual-review-v1-feedback-fix1
       - uses: actions/upload-artifact@v4
         with:
-          name: arcade-incremental-release-candidate-v6
-          path: arcade-incremental-release-candidate-v6.zip
+          name: arcade-incremental-release-candidate-v7
+          path: arcade-incremental-release-candidate-v7.zip
           if-no-files-found: error
       - uses: actions/upload-artifact@v4
         with:
-          name: arcade-incremental-manual-review-v1
-          path: arcade-incremental-manual-review-v1.zip
+          name: arcade-incremental-manual-review-v1-feedback-fix1
+          path: arcade-incremental-manual-review-v1-feedback-fix1.zip
           if-no-files-found: error
