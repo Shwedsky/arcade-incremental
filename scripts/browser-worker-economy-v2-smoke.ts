@@ -20,6 +20,8 @@ async function contextWithSave(save:any):Promise<{context:BrowserContext;page:Pa
   const context=await browser.newContext({viewport:{width:1440,height:900},storageState:{cookies:[],origins:[{origin:ORIGIN,localStorage:[{name:SAVE_KEY,value:JSON.stringify(save)}]}]}});
   const page=await context.newPage(),errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto(`${ORIGIN}/?seed=worker-v2-browser`);await page.waitForFunction(()=>(globalThis as any).__SALVAGE_TEST__?.getState()?.saveVersion===9);
+  const offline=page.locator('#offlineScreen');
+  if(await offline.isVisible())await page.click('#offlineClose');
   return{context,page,errors};
 }
 
@@ -97,6 +99,7 @@ try{
   await page.evaluate(()=>(globalThis as any).__SALVAGE_PLATFORM__.forceSave());
   await page.reload();await page.waitForFunction(()=>(globalThis as any).__SALVAGE_TEST__?.getState()?.saveVersion===9);
   s=await state(page);assert.equal(s.midgame.economyV2.medals.z1,true,'full-clear medal must survive Save V9 reload');
+  const offlineAfterReload=page.locator('#offlineScreen');if(await offlineAfterReload.isVisible())await page.click('#offlineClose');
   await page.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.openZones());
   await page.waitForSelector('#zoneScreen:not([hidden])');
   assert.match(await page.locator('[data-zone="z1"]').innerText(),/полный сбор/i);
