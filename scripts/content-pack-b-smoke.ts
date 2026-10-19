@@ -24,7 +24,7 @@ assert.equal(state.discoveredIndustrial.includes('generator'),true);
 assert.ok(z4AluminiumYield('large_appliance',()=>.5)>1);
 
 const components:Record<ComponentKind,number>={bearing:10,motor:4,hydraulic:2,electronics:8};
-const inv={cash:1_000_000,metal:2000,cleanCopper:200,briquette:800,components};
+const inv={cash:1_000_000,metal:2000,cleanCopper:200,briquette:1000,components};
 state.materials.aluminiumScrap=240;
 assert.equal(refineSteel(state,inv,32),32);
 assert.equal(refineAluminium(state,20),20);
