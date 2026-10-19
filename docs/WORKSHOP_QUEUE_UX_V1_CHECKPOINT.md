@@ -1,160 +1,169 @@
 # Workshop Queue UX V1 — Delivery Checkpoint
 
-Status: **IMPLEMENTATION STARTED / NO OWNER MANUAL GATE**
+Status: **IMPLEMENTED / INTERNALLY GREEN — FINAL CLEAN-HEAD GATE PENDING**
 
 Tracked by Issue #19.
 
 Base: `main` @ `cea86509c98ebe22ba86f7ab034ca825383dec2e` after merged Content Pack D V1.
 
-## Owner-driven goal
+## Delivered owner UX
 
-Replace single-fire workshop interaction with a deterministic user-controlled production scheduler while preserving all accepted recipes, Pack A-D progression and offline behavior.
+The workshop is now a deterministic user-controlled production scheduler instead of a single-fire action list.
 
-Primary UX additions requested by the owner:
+Delivered:
+- raw and processed sale quantity selection with synchronized slider + numeric input;
+- live payout preview, per-resource `MAX`, and retained `Продать всё` shortcut;
+- processing batch count selection with synchronized slider + numeric input (`1..100` stacks);
+- one logical queue action per batch instead of one card per stack;
+- explicit `Выполняется` and `В очереди` sections;
+- waiting batch count editing;
+- waiting action removal;
+- drag-and-drop reorder plus `↑ / ↓` fallback for touch/mobile;
+- active action locked from reorder;
+- explicit active cancellation modal: `Да, прервать` / `Нет, оставить`;
+- completed batch outputs survive partial cancellation;
+- current unfinished batch stack and future unstarted stacks are discarded on confirmed active cancellation;
+- current build/upgrade cancellation discards progress and does not refund committed inputs;
+- next eligible queued action starts immediately after cancellation;
+- Save V8 persistence and migration from accepted Save V7 and older supported saves;
+- identical online/offline scheduler advancement;
+- Pack D Industrial Workshop continues to provide the extra workshop execution slot;
+- one physical machine cannot execute two actions simultaneously even when multiple workshop slots are unlocked.
 
-1. choose how much raw/processed material to sell;
-2. choose how many processing stacks to enqueue;
-3. keep multiple logical actions in an explicit ordered queue;
-4. execute only as many logical actions concurrently as unlocked workshop slots allow;
-5. continue the exact same queue offline;
-6. remove/edit/reorder waiting actions;
-7. protect the currently running action from accidental reorder/delete;
-8. require explicit confirmation before cancelling a current destructive action;
-9. preserve already completed stacks when cancelling the rest of a processing batch.
-
-## Canonical example
+## Canonical owner scenario — proven
 
 With one available workshop slot:
 
 `equipment upgrade -> press metal ×10 -> clean copper ×10`
 
-Expected behavior:
+The dedicated Chromium acceptance proves:
+- the upgrade runs first;
+- press ×10 and copper ×10 wait in explicit user order;
+- a batch keeps its slot between stacks;
+- waiting batches can be reordered with drag-and-drop and `↑ / ↓`;
+- waiting batch count can be edited and survives reload;
+- after four press stacks finish, cancelling the active press batch preserves the four completed outputs;
+- the next copper batch starts immediately;
+- active upgrade cancellation requires confirmation and a requeued upgrade restarts from zero;
+- offline catch-up can cross multiple queued logical actions without real-time waits.
 
-- the upgrade starts first;
-- metal does not start until the upgrade finishes;
-- the metal logical action performs stack 1..10 sequentially;
-- once metal finishes, copper starts;
-- if the player leaves the game, the same sequence advances offline;
-- cancelling copper after 4 completed stacks keeps those four outputs and deletes only the unfinished remainder;
-- waiting metal/copper actions may be reordered, but the running upgrade cannot be dragged beneath them.
+## Scheduler semantics
 
-## Locked scheduler semantics
+### Logical actions and slots
 
-### Logical action vs active execution
-
-The queue stores **logical actions**, not one card per physical processing stack.
-
-A processing batch action owns:
-- stable action ID;
-- recipe/machine identity;
-- requested stack count;
-- completed stack count;
-- remaining stack count derived from requested/completed/current state;
-- status;
-- stable order/priority;
-- current stack start/end timestamps only while active;
-- block reason when the next stack cannot start.
-
-Build/upgrade/equipment actions remain one-shot logical actions but use the same scheduler envelope.
-
-### Slot semantics
-
-- `N` workshop slots means at most `N` logical actions may be active simultaneously;
-- one processing batch occupies one slot while its current stack is active;
-- after a stack completes, that logical batch continues its next stack before yielding the slot, unless it becomes blocked/cancelled/completed;
-- waiting actions remain in user-defined order;
-- if an active action completes and a slot becomes free, the earliest eligible waiting action starts;
-- a blocked action does not destroy progress; scheduler may advance another eligible waiting action into a free slot.
+- `N` workshop slots means at most `N` logical actions may execute concurrently.
+- A processing batch occupies one slot until completed, blocked or cancelled.
+- A blocked batch preserves completed output and its requested count.
+- A blocked action does not monopolize a free slot when a later eligible action can run.
+- Waiting order is explicit and persisted.
+- The same physical machine cannot occupy two active slots at once; a different machine may use the other slot.
 
 ### Resource commitment
 
-- processing inputs are committed per stack when that stack actually starts;
-- completed outputs are permanent;
-- enqueueing `×10` does not reserve all ten stacks up front;
-- if the next stack lacks input, the action becomes `blocked` with its completed count preserved;
-- when resources later become available, blocked work may become startable again according to queue order.
+- Processing input is committed per stack when that stack starts.
+- Enqueueing ×10 does not reserve ten stacks up front.
+- If the next stack lacks material, the batch becomes blocked rather than losing completed work.
+- One-shot build/upgrade/equipment inputs are committed when the action actually starts.
+- Confirmed cancellation of an already-started one-shot action does not refund committed inputs.
 
-### Waiting edits
+### Cancellation
 
-A waiting or blocked action may:
-- be removed;
-- have requested batch count changed, but never below already completed stacks;
-- move up/down in waiting order;
-- be drag-reordered in UI;
-- use `↑` / `↓` as a touch/keyboard-safe fallback.
+Waiting actions may be removed directly.
 
-Every edit persists immediately.
+Active actions require the confirmation modal:
+- `Нет, оставить` leaves the action untouched;
+- `Да, прервать` cancels the active execution.
 
-### Active action safety
+For an active batch:
+- all previously completed stacks remain;
+- the current unfinished stack is cancelled;
+- unstarted remainder is removed;
+- scheduler advances to the next eligible action.
 
-An active action:
-- cannot be reordered;
-- cannot silently change its current stack;
-- requires explicit confirmation for destructive cancellation;
-- uses owner copy: `Да, прервать` / `Нет, оставить`;
-- cancelling active build/upgrade means current progress is discarded and no completion is granted;
-- already completed batch stacks remain permanent;
-- if a batch currently has a stack in progress, cancelling the active batch cancels that current stack plus all future unstarted stacks, but never rolls back prior completed stacks.
+## Partial sale UX
 
-## Sale quantity UX
+The raw and processed sale dialogs now support independent per-resource quantities.
 
-Raw and processed selling must support:
-- synchronized range slider + numeric input;
-- owned-stock clamp;
-- sensible numeric precision;
-- live payout preview;
-- `MAX / Всё` shortcut;
-- explicit sale action for the selected quantity.
+Each row shows:
+- owned amount;
+- current effective ₽/kg;
+- synchronized slider + numeric input;
+- live payout for the selected quantity;
+- `MAX` for that resource.
 
-No backend/server is introduced.
+The footer shows total selected payout and provides:
+- `Продать выбранное`;
+- `Продать всё`.
 
-## Save / offline requirements
+This lets the player keep material for planned upgrades while selling only surplus.
 
-- scheduler becomes persisted deterministic local state;
-- migration starts from accepted Save V7;
-- online tick and offline catch-up must call the same scheduler advancement semantics;
-- a long absence may finish multiple stacks and multiple logical actions;
-- reload preserves active timestamps, completed batch counts, waiting order, edited counts and blocked state;
-- slot-count changes must never duplicate/skip work.
+## Save V8 / migration
 
-## Dedicated acceptance target
+Save V8 persists `WorkshopSchedulerState` instead of using `WorkshopJob[]` as the execution engine.
 
-Chromium proof must demonstrate:
+Legacy V7 running workshop jobs migrate without double-consuming already committed inputs. Existing V2-V7 supported save paths remain covered by the current migration chain.
 
-1. enqueue `upgrade -> press ×10 -> copper ×10`;
-2. exact one-slot sequential order;
-3. partial batch completion;
-4. cancelling remaining batch preserves completed output;
-5. edit waiting batch count;
-6. reorder two waiting actions;
-7. active action cannot be reordered;
-8. active upgrade cancellation requires confirmation and grants no completion;
-9. reload preserves queue/order/counts;
-10. offline catch-up crosses multiple logical actions;
-11. two-slot workshop runs exactly two logical actions concurrently;
-12. sale slider/input synchronization and partial sale;
-13. mobile/touch-safe queue controls.
+A legacy `jobs` projection remains only as compatibility/test presentation while the scheduler is the source of truth.
 
-## Delivery pipeline
+## Automated proof
 
-1. scheduler domain contract + deterministic tests;
-2. Save V8 migration;
-3. runtime replacement of legacy `WorkshopJob[]` orchestration;
-4. batch processing controls;
-5. queue edit/remove/reorder/cancel UI;
-6. partial-sale controls;
-7. shared online/offline advancement proof;
-8. Chromium desktop/mobile acceptance;
-9. RC artifact + clean-head internal-green merge.
+Internally green implementation head before this documentation finalization:
+`efbd283862564d734369c6ef309b627eb1bd536f`
 
-## Guardrails
+GitHub Actions run `39259495762` passed the complete code/browser gate:
+- TypeScript + Vite build;
+- deterministic gameplay / Early / Midgame / Visual regressions;
+- Workshop scheduler domain smoke;
+- Workshop V7 migration smoke;
+- Pack A / B / C / D domain tests;
+- save/platform safety;
+- progression + Mid/Late structural models;
+- existing Early browser progression regression;
+- Midgame browser regression;
+- Pack B / C / D browser proofs;
+- dedicated Workshop Queue desktop/mobile browser proof;
+- platform/responsive browser proof;
+- release manifest;
+- RC v5 packaging and upload.
 
-- no recipe/economy rebalance unless scheduler correctness strictly requires it;
+### Dedicated Workshop Queue browser proof
+
+It validates:
+1. exact partial raw sale and retained unsold stock;
+2. `upgrade -> press ×10 -> copper ×10`;
+3. desktop drag-and-drop reorder;
+4. `↑ / ↓` reorder fallback;
+5. waiting batch count edits;
+6. Save V8 reload persistence;
+7. four completed press stacks retained after active batch cancellation;
+8. immediate transition to next queued batch;
+9. `Нет, оставить` preserves active upgrade;
+10. `Да, прервать` cancels upgrade without refund or completion;
+11. requeued upgrade restarts with full duration;
+12. offline completion across multiple queue actions;
+13. exactly two concurrent actions with two slots;
+14. same-machine parallel execution is blocked while another machine may use the second slot;
+15. mobile/touch partial sale and arrow reorder.
+
+## RC v5 from internally green implementation head
+
+Artifact: `arcade-incremental-release-candidate-v5`
+
+- artifact id: `12190205612`
+- size: `61,986 bytes`
+- digest: `sha256:c366ab085c4f95ed5bfab1211f1ed161da4b8cbeaafbe9146016556807e6ebc7`
+- source head: `efbd283862564d734369c6ef309b627eb1bd536f`
+
+A final ordinary CI run is required on the exact documentation-finalized clean head before merge. No product code changes are planned after that gate.
+
+## Guardrails preserved
+
+- no recipe/economy rebalance;
 - no worker auto-crafting;
 - no server requirement;
 - no fuel/logistics changes;
-- Pack A-D progression stays regression-covered;
+- Pack A-D progression remains regression-covered;
 - Pack D Industrial Workshop remains the source of its extra workshop capacity;
-- no new content frontier in this package;
+- no new content frontier;
 - no owner manual gate during implementation;
-- no work counts as delivered until committed/pushed and the ordinary CI is green.
+- temporary one-shot integration scripts/workflows were removed before final validation.
