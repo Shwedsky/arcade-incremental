@@ -228,15 +228,15 @@ export function rollMidComponent(state:MidgameState,zoneId:ZoneId,classId:Target
 }
 
 export function vanWeight(van:VanState):number{return van.resources.metal+van.resources.copper+van.resources.plastic}
-export function vanRemaining(van:VanState):number{return Math.max(0,VAN_CAPACITY_KG-vanWeight(van))}
+export function vanRemaining(van:VanState,capacityKg=VAN_CAPACITY_KG):number{return Math.max(0,capacityKg-vanWeight(van))}
 export function canBuyVan(state:MidgameState,ctx:ZoneUnlockContext,inv:VanInventory):boolean{
   return !state.van.owned&&ctx.level>=7&&zoneUnlock(state,'z3',ctx).ok&&inv.cash>=VAN_RECIPE.cash&&inv.metal>=VAN_RECIPE.metal&&inv.cleanCopper>=VAN_RECIPE.cleanCopper&&inv.motor>=1&&inv.electronics>=1;
 }
 
 export interface CartTransferResult { movedKg:number; remainingKg:number }
-export function transferCartToVan(van:VanState,haul:Record<ResourceKind,number>,components:Record<ComponentKind,number>,midComponents:Record<MidComponentKind,number>):CartTransferResult{
+export function transferCartToVan(van:VanState,haul:Record<ResourceKind,number>,components:Record<ComponentKind,number>,midComponents:Record<MidComponentKind,number>,capacityKg=VAN_CAPACITY_KG):CartTransferResult{
   if(!van.owned)return{movedKg:0,remainingKg:haul.metal+haul.copper+haul.plastic};
-  const weight=haul.metal+haul.copper+haul.plastic,remaining=vanRemaining(van),factor=weight<=0?0:Math.min(1,remaining/weight);
+  const weight=haul.metal+haul.copper+haul.plastic,remaining=vanRemaining(van,capacityKg),factor=weight<=0?0:Math.min(1,remaining/weight);
   let moved=0;
   (Object.keys(haul) as ResourceKind[]).forEach(k=>{const amount=haul[k]*factor;haul[k]-=amount;van.resources[k]+=amount;moved+=amount});
   (Object.keys(components) as ComponentKind[]).forEach(k=>{van.components[k]+=components[k];components[k]=0});
