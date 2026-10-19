@@ -7,7 +7,7 @@ import {
 import type { ContractState } from '../src/early_game.ts';
 
 const caps=(...values:string[])=>new Set(values);
-assert.ok(CONTRACT_BOARD_V2.every(x=>x.minLevel<=10),'all contract level gates must be reachable under the current level cap');
+assert.ok(CONTRACT_BOARD_V2.every(x=>x.minLevel<=30),'all contract level gates must be reachable under Progression V2 level cap');
 const early:ContractBoardContext={level:1,capabilities:caps()};
 const e=eligibleBoardContracts(early);
 assert.ok(e.length>=2,'early board must have more than one readable contract');
@@ -32,6 +32,12 @@ const late:ContractBoardContext={level:10,capabilities:caps(
 )};
 assert.ok(contractBoardPoolStats(late).eligible>=20,'late board should expose a large staged pool at reachable level cap');
 assert.equal(contractBoardPoolStats(late).families,4);
+const plant:ContractBoardContext={level:16,capabilities:caps(...late.capabilities,'base:processingPlant')};
+const plantEligible=eligibleBoardContracts(plant);
+assert.ok(plantEligible.some(x=>x.id==='plant_alloy_shipment'));
+assert.ok(plantEligible.some(x=>x.id==='plant_module_bundle'));
+assert.ok(plantEligible.some(x=>x.id==='plant_controls_lot'));
+assert.ok(!eligibleBoardContracts({...plant,capabilities:caps(...late.capabilities)}).some(x=>x.id.startsWith('plant_')),'Plant-scale offers must require actual Processing Plant ownership');
 
 const legacy:ContractState={index:0,completed:0};
 const seen:string[]=[];

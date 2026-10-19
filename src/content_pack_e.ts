@@ -140,6 +140,11 @@ export function rollPortPowerAssembly(state:PackEState,classId:TargetClassId,rng
   return false;
 }
 
+export function capZ8MasteryUntilSignature(value:number,portPowerDiscovered:boolean):number{
+  const normalized=Math.max(0,Math.min(100,value));
+  return portPowerDiscovered?normalized:Math.min(99.9,normalized);
+}
+
 export function z8AdvancedMetalYield(classId:TargetClassId,rng:()=>number):{aluminiumScrap:number;alloyScrap:number}{
   const aluminium=({small_scrap:.04,cable:.02,small_appliance:.16,bike_fan:.22,medium_appliance:.95,large_appliance:2.20} as const)[classId];
   const alloy=({small_scrap:.10,cable:.05,small_appliance:.24,bike_fan:.34,medium_appliance:1.45,large_appliance:3.15} as const)[classId];

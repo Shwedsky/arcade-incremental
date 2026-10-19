@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {
   PACK_E_ZONE_PROFILE,PORT_POWER_ASSEMBLY_PITY,PROCESSING_PLANT_CASH,PROCESSING_PLANT_LINES,PROCESSING_PLANT_RECIPE,PROCESSING_PLANT_STORAGE_KG,
   PLANT_ALLOY_INPUT,PLANT_ALLOY_OUTPUT,PLANT_ALLOY_SECONDS,Z8_MIN_LEVEL,
-  acquireProcessingPlant,advancePlantProduction,canAcquireProcessingPlant,canStartPlantAlloy,canUnlockZ8,createDefaultPackE,normalizePackE,
+  acquireProcessingPlant,advancePlantProduction,canAcquireProcessingPlant,canStartPlantAlloy,canUnlockZ8,capZ8MasteryUntilSignature,createDefaultPackE,normalizePackE,
   rollPortPowerAssembly,startPlantAlloy,z8AdvancedMetalYield,
   type PackEInventory, type ProcessingPlantContext
 } from '../src/content_pack_e.ts';
@@ -31,7 +31,9 @@ for(let i=1;i<PORT_POWER_ASSEMBLY_PITY;i++){
   assert.equal(pity.portPowerPity,i);
 }
 assert.equal(rollPortPowerAssembly(pity,'large_appliance',()=>1),true,'8th eligible large target must guarantee Port Power Assembly');
-assert.equal(pity.portPowerAssemblies,1);assert.equal(pity.portPowerPity,0);
+assert.equal(pity.portPowerAssemblies,1);assert.equal(pity.portPowerPity,0);assert.equal(pity.portPowerDiscovered,true);
+assert.equal(capZ8MasteryUntilSignature(100,false),99.9,'Z8 must not complete before first active signature discovery');
+assert.equal(capZ8MasteryUntilSignature(100,true),100,'signature discovery releases the final mastery fraction');
 
 const advanced=z8AdvancedMetalYield('large_appliance',()=>.5);
 assert.ok(advanced.aluminiumScrap>0&&advanced.alloyScrap>advanced.aluminiumScrap,'large port salvage must strongly favor advanced metal value');
@@ -76,7 +78,7 @@ assert.equal(advancePlantProduction(plant,output,1_000+PLANT_ALLOY_SECONDS*1000)
 assert.equal(output.value,PLANT_ALLOY_OUTPUT*2);assert.equal(plant.production.length,0);
 
 const normalized=normalizePackE({processingPlantOwned:true,plantLines:99,portPowerAssemblies:-5,portPowerPity:999,production:[]});
-assert.equal(normalized.plantLines,PROCESSING_PLANT_LINES);assert.equal(normalized.portPowerAssemblies,0);assert.equal(normalized.portPowerPity,PORT_POWER_ASSEMBLY_PITY-1);
+assert.equal(normalized.plantLines,PROCESSING_PLANT_LINES);assert.equal(normalized.portPowerAssemblies,0);assert.equal(normalized.portPowerPity,PORT_POWER_ASSEMBLY_PITY-1);assert.equal(normalized.portPowerDiscovered,true,'an owned Plant proves historical signature discovery');
 const legacyDefault=normalizePackE(undefined);assert.deepEqual(legacyDefault,createDefaultPackE(),'missing Pack E state must safely migrate to defaults');
 
 console.log(JSON.stringify({
