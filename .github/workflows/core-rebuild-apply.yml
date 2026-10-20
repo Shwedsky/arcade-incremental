@@ -20,19 +20,20 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Apply guarded main runtime integration
+      - name: Apply guarded core integration
         run: |
           node scripts/apply-core-runtime-v3.mjs
           node scripts/apply-core-runtime-v3-stage2.mjs
           node scripts/apply-core-runtime-v3-stage3.mjs
-      - name: Commit generated runtime patch when needed
+          node scripts/apply-core-dev-v4.mjs
+      - name: Commit generated patches when needed
         run: |
-          if git diff --quiet -- src/main.ts; then
-            echo "Runtime integration already current"
+          if git diff --quiet -- src/main.ts src/manual_review_dev_v2.ts; then
+            echo "Core integration already current"
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+Shwedsky@users.noreply.github.com"
-          git add src/main.ts
-          git commit -m "fix: make workforce v3 runtime type-safe"
+          git add src/main.ts src/manual_review_dev_v2.ts
+          git commit -m "fix: sync core rebuild runtime and dev presets"
           git push origin HEAD:feature/p0-p1-business-stage-base-shell-v1
