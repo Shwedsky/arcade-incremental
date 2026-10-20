@@ -1,0 +1,172 @@
+import {clearResilientSave,writeResilientSave} from './save_store.ts';
+
+const SAVE_KEY='arcade-incremental-playable-v0-save-v2';
+const platformApi=()=>((globalThis as any).__SALVAGE_PLATFORM__??null);
+const gameApi=()=>((globalThis as any).__SALVAGE_TEST__??null);
+const now=()=>Date.now();
+
+const XP_FOR_LEVEL:Record<number,number>={5:3200,8:11000,10:20000,16:41000,30:125000};
+const RUNTIME_TALENTS=[
+  'salvage_1','salvage_2','salvage_3','salvage_4','salvage_5','salvage_6','salvage_7','salvage_8',
+  'logistics_1','logistics_2','logistics_3','logistics_4','logistics_8',
+  'workshop_1','workshop_2','workshop_3','workshop_4','workshop_8',
+  'automation_1','automation_2','automation_3','automation_4','automation_8',
+  'trade_1','trade_2','trade_3','trade_4','trade_8'
+];
+
+function ensureObject(root:any,key:string){if(!root[key]||typeof root[key]!=='object')root[key]={};return root[key]}
+function add(root:any,key:string,amount:number){root[key]=Number(root[key]??0)+amount}
+
+function currentSave(){
+  platformApi()?.forceSave?.();
+  const raw=localStorage.getItem(SAVE_KEY);
+  if(!raw)return null;
+  try{return JSON.parse(raw)}catch{return null}
+}
+
+function blockUnloadOverwrite(){
+  const original=Storage.prototype.setItem;
+  Storage.prototype.setItem=function(key:string,value:string){
+    if(this===localStorage&&(key===SAVE_KEY||key===`${SAVE_KEY}.backup`||key===`${SAVE_KEY}.tmp`))return;
+    return original.call(this,key,value);
+  };
+}
+
+function mutateSave(mutator:(save:any)=>void){
+  const save=currentSave();
+  if(!save)return;
+  mutator(save);
+  save.v=10;
+  save.lastSeen=now();
+  const result=writeResilientSave(localStorage,SAVE_KEY,JSON.stringify(save));
+  if(!result.ok){console.error('DEV save mutation failed',result);return}
+  blockUnloadOverwrite();
+  location.reload();
+}
+
+function resetReviewSave(){
+  clearResilientSave(localStorage,SAVE_KEY);
+  blockUnloadOverwrite();
+  location.reload();
+}
+
+function grantAllResources(save:any){
+  save.cash=Number(save.cash??0)+100_000;
+  const storage=ensureObject(save,'storage');add(storage,'metal',5000);add(storage,'copper',1200);add(storage,'plastic',1800);
+  const components=ensureObject(save,'components');for(const key of ['bearing','motor','hydraulic','electronics'])add(components,key,25);
+  const processed=ensureObject(save,'processed');add(processed,'briquette',1200);add(processed,'cleanCopper',600);add(processed,'granulate',800);
+
+  const mid=ensureObject(save,'midgame');
+  mid.discoveredComponents=Array.from(new Set([...(mid.discoveredComponents??[]),'bearing','motor','hydraulic','electronics']));
+  mid.discoveredMidComponents=Array.from(new Set([...(mid.discoveredMidComponents??[]),'pump','compressor']));
+  const midComponents=ensureObject(mid,'midComponents');add(midComponents,'pump',20);add(midComponents,'compressor',20);
+
+  const packB=ensureObject(save,'packB');
+  const bMaterials=ensureObject(packB,'materials');add(bMaterials,'aluminiumScrap',1200);add(bMaterials,'steelBlank',500);add(bMaterials,'aluminiumBillet',500);
+  const bIndustrial=ensureObject(packB,'industrial');add(bIndustrial,'gearbox',20);add(bIndustrial,'generator',20);
+  packB.discoveredIndustrial=Array.from(new Set([...(packB.discoveredIndustrial??[]),'gearbox','generator']));
+  const bModules=ensureObject(packB,'modules');add(bModules,'drive',30);add(bModules,'control',30);add(bModules,'structural',30);
+
+  const packC=ensureObject(save,'packC');
+  const cMaterials=ensureObject(packC,'materials');add(cMaterials,'alloyScrap',1200);add(cMaterials,'alloyBillet',800);
+  const cIndustrial=ensureObject(packC,'industrial');add(cIndustrial,'industrialController',20);add(cIndustrial,'heavyHydraulicCylinder',20);
+  packC.discoveredIndustrial=Array.from(new Set([...(packC.discoveredIndustrial??[]),'industrialController','heavyHydraulicCylinder']));
+  const cModules=ensureObject(packC,'modules');add(cModules,'hydraulicPower',30);add(cModules,'heavyFrame',30);
+
+  const packD=ensureObject(save,'packD');add(packD,'recoveryAssemblies',8);
+  const packE=ensureObject(save,'packE');add(packE,'portPowerAssemblies',3);packE.portPowerDiscovered=true;
+}
+
+function ensureWorkersAndInfrastructure(save:any){
+  const mid=ensureObject(save,'midgame');
+  mid.van={...(mid.van??{}),owned:true};
+  mid.worker={...(mid.worker??{}),hired:true,assignment:mid.worker?.assignment??'z1',lastTick:now()};
+
+  const packB=ensureObject(save,'packB');
+  packB.hangarOwned=true;packB.truck={...(packB.truck??{}),owned:true};
+  packB.secondWorker={...(packB.secondWorker??{}),hired:true,assignment:packB.secondWorker?.assignment??'z3',lastTick:now()};
+
+  const packC=ensureObject(save,'packC');
+  packC.salvageYardOwned=true;
+  packC.crew3={...(packC.crew3??{}),hired:true,role:'scavenger',assignment:packC.crew3?.assignment??'z6',lastTick:now()};
+
+  const packD=ensureObject(save,'packD');
+  packD.recoveryRig={...(packD.recoveryRig??{}),owned:true};
+  packD.industrialWorkshopOwned=true;packD.productionCells=Math.max(Number(packD.productionCells??0),2);
+  packD.crew4={...(packD.crew4??{}),hired:true,role:'scavenger',assignment:packD.crew4?.assignment??'z7',operatorCell:null,lastTick:now()};
+}
+
+function setMasteryThrough(save:any,zone:string){
+  const order=['z1','z2','z3','z4','z5','z6','z7','z8'];
+  const idx=Math.max(0,order.indexOf(zone));
+  const mid=ensureObject(save,'midgame');const mastery=ensureObject(mid,'mastery');
+  for(const id of order)if(typeof mastery[id]!=='number')mastery[id]=0;
+  for(let i=0;i<idx;i++)mastery[order[i]]=100;
+  mastery[zone]=0;mid.currentZone=zone;
+}
+
+function zonePreset(save:any,zone:string){
+  grantAllResources(save);
+  save.installed=Array.from(new Set([...(save.installed??[]),'workbench','press','wire','plastic']));
+  save.machineLevels={...(save.machineLevels??{}),workbench:3,press:3,wire:2,plastic:2};
+  save.equipmentLevels={...(save.equipmentLevels??{}),tool:4,cart:4};
+  if(zone==='z3'){save.xp=Math.max(Number(save.xp??0),XP_FOR_LEVEL[8]);setMasteryThrough(save,'z3');return}
+  ensureWorkersAndInfrastructure(save);
+  if(zone==='z5'){save.xp=Math.max(Number(save.xp??0),XP_FOR_LEVEL[10]);setMasteryThrough(save,'z5');return}
+  if(zone==='z7'){save.xp=Math.max(Number(save.xp??0),XP_FOR_LEVEL[16]);setMasteryThrough(save,'z7');return}
+  save.xp=Math.max(Number(save.xp??0),XP_FOR_LEVEL[16]);setMasteryThrough(save,'z8');
+  const packE=ensureObject(save,'packE');packE.portPowerAssemblies=0;packE.portPowerPity=0;packE.portPowerDiscovered=false;packE.processingPlantOwned=false;packE.plantLines=0;packE.production=[];
+}
+
+function plantReady(save:any){
+  grantAllResources(save);ensureWorkersAndInfrastructure(save);
+  save.cash=Math.max(Number(save.cash??0),6_000_000);save.xp=Math.max(Number(save.xp??0),XP_FOR_LEVEL[30]);
+  save.installed=['workbench','press','wire','plastic'];save.machineLevels={workbench:3,press:3,wire:2,plastic:2};save.equipmentLevels={tool:4,cart:4};
+  const mid=ensureObject(save,'midgame');mid.currentZone='z8';mid.mastery={...(mid.mastery??{}),z1:100,z2:100,z3:100,z4:100,z5:100,z6:100,z7:100,z8:100};
+  const packE=ensureObject(save,'packE');packE.portPowerAssemblies=Math.max(Number(packE.portPowerAssemblies??0),1);packE.portPowerDiscovered=true;packE.processingPlantOwned=false;packE.plantLines=0;packE.production=[];
+}
+
+function unlockAll(save:any){
+  plantReady(save);save.cash=Math.max(Number(save.cash??0),10_000_000);save.talents=Array.from(new Set([...(save.talents??[]),...RUNTIME_TALENTS]));
+  const packE=ensureObject(save,'packE');packE.processingPlantOwned=true;packE.plantLines=2;packE.production=[];
+}
+
+function resetCounters(save:any){
+  save.totalDestroyed=0;save.contract={index:0,completed:0};
+  if(save.midgame?.pity)save.midgame.pity={pump:0,compressor:0};
+  if(save.packB?.pity)save.packB.pity={gearbox:0,generator:0};
+  if(save.packC?.pity)save.packC.pity={industrialController:0,heavyHydraulicCylinder:0};
+  if(save.packD)save.packD.recoveryPity=0;if(save.packE)save.packE.portPowerPity=0;
+}
+
+function augmentPanel(){
+  const panel=document.querySelector<HTMLElement>('#hfDevPanel');if(!panel||panel.dataset.devV2==='1')return;
+  const grids=panel.querySelectorAll<HTMLElement>('.hfDevGrid');
+  grids[0]?.insertAdjacentHTML('beforeend','<button data-dev="level16">Уровень 16</button><button data-dev="level30">Уровень 30</button>');
+  grids[1]?.insertAdjacentHTML('beforeend','<button data-zone-dev="z8">К старту Z8</button><button data-dev="plantReady">Plant ready</button>');
+  const resourceButton=panel.querySelector<HTMLElement>('[data-dev="resources"]');if(resourceButton)resourceButton.textContent='+100k ₽ + все ресурсы';
+  panel.dataset.devV2='1';
+}
+
+function handleDevClick(event:MouseEvent){
+  const target=event.target as HTMLElement;const control=target.closest<HTMLElement>('#hfDevPanel [data-dev],#hfDevPanel [data-zone-dev]');if(!control)return;
+  const action=control.dataset.dev,zone=control.dataset.zoneDev;
+  if(action==='snapshot'||action==='queue24')return;
+  event.preventDefault();event.stopImmediatePropagation();
+  if(zone){mutateSave(save=>zonePreset(save,zone));return}
+  if(action==='resources'){mutateSave(grantAllResources);return}
+  if(action==='level5'||action==='level8'||action==='level10'||action==='level16'||action==='level30'){
+    const level=Number(action.slice(5));mutateSave(save=>save.xp=Math.max(Number(save.xp??0),XP_FOR_LEVEL[level]??0));return;
+  }
+  if(action==='unlockAll'){mutateSave(unlockAll);return}
+  if(action==='plantReady'){mutateSave(plantReady);return}
+  if(action==='queueReset'){mutateSave(save=>{save.scheduler=save.scheduler??{};save.scheduler.actions=[];save.scheduler.lastAdvancedAt=now()});return}
+  if(action==='counters'){mutateSave(resetCounters);return}
+  if(action==='reset'&&confirm('Сбросить только локальный review-save?')){resetReviewSave();return}
+}
+
+document.addEventListener('click',handleDevClick,true);
+new MutationObserver(augmentPanel).observe(document.documentElement,{subtree:true,childList:true});
+augmentPanel();
+
+Object.assign(globalThis,{__SALVAGE_DEV_V2__:{grantAllResources,zonePreset,plantReady,unlockAll,getState:()=>gameApi()?.getState?.()}});
