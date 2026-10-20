@@ -86,54 +86,32 @@ jobs:
         run: npm run smoke:browser:packe
       - name: Workshop Queue desktop/mobile browser proof
         run: npm run smoke:browser:workshop-queue
-      - name: Manual review launch + feedback UX proof
+      - name: Manual review launch + feedback UX compatibility proof
         run: npm run smoke:browser:manual-review
-      - name: Manual Review DEV V2 durable preset proof
+      - name: Manual Review DEV durable preset proof
         run: npm run smoke:browser:manual-review-dev-v2
-      - name: Base Shell V1 stage-aware browser proof
+      - name: Base Shell stage-aware browser proof
         run: npm run smoke:browser:base-shell-v1
-      - name: Human Feedback V2 reservations + sticky batch + local DEV proof
+      - name: Human Feedback V2 compatibility proof
         run: npm run smoke:browser:human-feedback-v2
-      - name: Human Feedback V3 persistent discovery + Z2 world-space proof
+      - name: Human Feedback V3 compatibility proof
         run: npm run smoke:browser:human-feedback-v3
-      - name: Worker Economy V2 Save V10 + worker route browser proof
+      - name: Worker Economy V2 compatibility proof
         run: npm run smoke:browser:worker-economy-v2
-      - name: Contract Board V2 staged pool + repetition browser proof
+      - name: Contract Board V2 compatibility proof
         run: npm run smoke:browser:contract-board-v2
       - name: Progression browser compatibility proof
         run: npm run smoke:browser:progression-v2
+      - name: Core Rebuild V1 end-to-end browser proof
+        run: npm run smoke:browser:core-rebuild-v1
       - name: Platform and responsive browser proof
         run: npm run smoke:browser:platform
       - name: Build release manifest
         run: npm run release:manifest
-      - name: Package release candidate
+      - name: Package internal release candidate
         run: zip -r arcade-incremental-release-candidate-v10.zip dist
-      - name: Package P0/P1 Foundation manual review candidate
-        run: |
-          SHORT_SHA="${GITHUB_SHA:0:8}"
-          REVIEW_DIR="manual-review-p0-p1-foundation"
-          REVIEW_ZIP="arcade-incremental-manual-review-p0-p1-foundation-run${GITHUB_RUN_NUMBER}-${SHORT_SHA}.zip"
-          rm -rf "$REVIEW_DIR"
-          mkdir -p "$REVIEW_DIR/dist"
-          cp -r dist/. "$REVIEW_DIR/dist/"
-          cp review/review-start.html "$REVIEW_DIR/dist/review-start.html"
-          cp review/START_REVIEW.bat "$REVIEW_DIR/START_REVIEW.bat"
-          cp review/README_REVIEW.txt "$REVIEW_DIR/README_REVIEW.txt"
-          cp docs/MANUAL_REVIEW_P0_P1_FOUNDATION.md "$REVIEW_DIR/MANUAL_REVIEW_P0_P1_FOUNDATION.md"
-          cp docs/PRODUCT_ROADMAP_V2.md "$REVIEW_DIR/PRODUCT_ROADMAP_V2.md"
-          cp docs/BASE_UX_ARCHITECTURE_V1.md "$REVIEW_DIR/BASE_UX_ARCHITECTURE_V1.md"
-          cp docs/ECONOMY_PROGRESSION_MODEL_V3.md "$REVIEW_DIR/ECONOMY_PROGRESSION_MODEL_V3.md"
-          cp docs/TALENT_BUSINESS_ERA_MATRIX_V3.md "$REVIEW_DIR/TALENT_BUSINESS_ERA_MATRIX_V3.md"
-          printf 'Manual Review - P0/P1 Foundation\ncommit=%s\nrun=%s\nsave=V10\nseed=owner-review-v1\norigin=http://127.0.0.1:41971\nfeatures=business-stage-v1,base-shell-v1,base-tabs,overview,economy-progression-model-v3,talent-era-matrix,manual-review-dev-v2,z8,processing-plant\n' "$GITHUB_SHA" "$GITHUB_RUN_ID" > "$REVIEW_DIR/BUILD_INFO.txt"
-          zip -r "$REVIEW_ZIP" "$REVIEW_DIR"
-          echo "REVIEW_ZIP=$REVIEW_ZIP" >> "$GITHUB_ENV"
       - uses: actions/upload-artifact@v4
         with:
           name: arcade-incremental-release-candidate-v10
           path: arcade-incremental-release-candidate-v10.zip
-          if-no-files-found: error
-      - uses: actions/upload-artifact@v4
-        with:
-          name: arcade-incremental-manual-review-p0-p1-foundation-run-${{ github.run_number }}
-          path: ${{ env.REVIEW_ZIP }}
           if-no-files-found: error
