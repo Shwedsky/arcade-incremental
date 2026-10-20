@@ -66,9 +66,9 @@ export const PACK_E_ZONE_PROFILE:PackEZoneProfile={
   id:'z8',
   name:'Портовый терминал',
   description:'Ричстакеры, рефконтейнеры, генераторы, тали и силовые шкафы. Самый тяжёлый фронтир: высокая ценность сосредоточена в крупных портовых узлах.',
-  hpMultiplier:3.85,
+  hpMultiplier:3.45,
   yieldMultiplier:2.90,
-  masteryTarget:14_200,
+  masteryTarget:12_400,
   nodeWeights:{small_scrap:.02,cable:.04,small_appliance:.04,bike_fan:.04,medium_appliance:.26,large_appliance:.60}
 };
 

@@ -11,9 +11,9 @@ const weightSum=Object.values(PACK_E_ZONE_PROFILE.nodeWeights).reduce((sum,value
 assert.ok(Math.abs(weightSum-1)<1e-9,'Z8 target weights must sum to 1');
 assert.equal(PACK_E_ZONE_PROFILE.id,'z8');
 assert.equal(PACK_E_ZONE_PROFILE.name,'Портовый терминал');
-assert.equal(PACK_E_ZONE_PROFILE.hpMultiplier,3.85);
+assert.equal(PACK_E_ZONE_PROFILE.hpMultiplier,3.45);
 assert.equal(PACK_E_ZONE_PROFILE.yieldMultiplier,2.90);
-assert.equal(PACK_E_ZONE_PROFILE.masteryTarget,14_200);
+assert.equal(PACK_E_ZONE_PROFILE.masteryTarget,12_400);
 assert.equal(PACK_E_ZONE_PROFILE.nodeWeights.large_appliance,.60,'Z8 must be heavier than Z7 rather than only higher HP');
 assert.equal(Z8_MIN_LEVEL,16);
 

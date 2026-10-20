@@ -219,6 +219,7 @@ function augmentPanel(){
   const panel=document.querySelector<HTMLElement>('#hfDevPanel');if(!panel||panel.dataset.devV2==='1')return;
   const grids=panel.querySelectorAll<HTMLElement>('.hfDevGrid');
   grids[0]?.insertAdjacentHTML('beforeend','<button data-dev="level16">Уровень 16</button><button data-dev="level30">Уровень 30</button><button data-dev="level50">Уровень 50</button>');
+  if(!panel.querySelector('[data-dev="reset"]'))grids[0]?.insertAdjacentHTML('beforeend','<button data-dev="reset" class="danger" title="Удалить локальный review-save и начать прохождение заново">⟲ Сбросить ВЕСЬ прогресс</button>');
   grids[1]?.insertAdjacentHTML('beforeend','<button data-zone-dev="z8">К старту Z8</button><button data-dev="plantReady">Plant ready</button>');
   const resourceButton=panel.querySelector<HTMLElement>('[data-dev="resources"]');if(resourceButton)resourceButton.textContent='+100k ₽ + все ресурсы';
   const queueButton=panel.querySelector<HTMLButtonElement>('[data-dev="queue24"]');
@@ -246,7 +247,7 @@ function handleDevClick(event:MouseEvent){
   if(action==='queueFinish'||action==='queue24'){finishWorkshopQueue();return}
   if(action==='queueReset'){mutateSave(save=>{save.scheduler=save.scheduler??{};save.scheduler.actions=[];save.scheduler.lastAdvancedAt=now()});return}
   if(action==='counters'){mutateSave(resetCounters);return}
-  if(action==='reset'&&confirm('Сбросить только локальный review-save?')){resetReviewSave();return}
+  if(action==='reset'&&confirm('Начать review с нуля? Весь локальный прогресс этой сборки будет удалён.')){resetReviewSave();return}
 }
 
 document.addEventListener('click',handleDevClick,true);
