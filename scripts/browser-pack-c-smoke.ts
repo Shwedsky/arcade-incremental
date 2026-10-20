@@ -3,6 +3,7 @@ import { spawn } from 'node:child_process';
 import { once } from 'node:events';
 import { fileURLToPath } from 'node:url';
 import { chromium, type BrowserContext, type Page } from 'playwright';
+import {openBaseSurface} from './base-shell-test-utils.ts';
 
 const PORT=4177;
 const ORIGIN=`http://127.0.0.1:${PORT}`;
@@ -48,10 +49,10 @@ try{
   // 3. Full Pack C bridge: Z6 -> Yard -> third worker -> Operator -> accelerated production -> persistence.
   const c3=await browser.newContext();const mastered={z1:100,z2:100,z3:100,z4:100,z5:100,z6:100};await withSave(c3,baseV6({midgame:midgame(mastered,'z5'),packC:packC()}));const p3=await c3.newPage();await p3.goto(`${ORIGIN}/?seed=packc-main`);await p3.click('#garage');await p3.waitForSelector('#garageScreen:not([hidden])');
   await p3.click('#zonesGarage');await p3.waitForSelector('#zoneScreen:not([hidden])');const z6=p3.locator('[data-zone="z6"] button');assert.equal(await z6.isDisabled(),false);await z6.click();let s3=await state(p3);assert.equal(s3.midgame.currentZone,'z6');
-  const yard=p3.locator('#acquireSalvageYard');assert.equal(await yard.isDisabled(),false);await yard.click();s3=await state(p3);assert.equal(s3.packC.salvageYardOwned,true);
-  const hire3=p3.locator('#hireWorker3');assert.equal(await hire3.isDisabled(),false);await hire3.click();s3=await state(p3);assert.equal(s3.packC.crew3.hired,true);
-  const operator=p3.locator('#assignOperator');assert.equal(await operator.isDisabled(),false);await operator.click();s3=await state(p3);assert.equal(s3.packC.crew3.role,'operator');assert.equal(s3.packC.crew3.assignment,null);
-  const alloy=p3.locator('#packCAlloy');assert.equal(await alloy.isDisabled(),false);await alloy.click();s3=await state(p3);assert.equal(s3.packC.production.kind,'alloyBillet');const duration=s3.packC.production.endsAt-s3.packC.production.startedAt;assert.equal(duration,162000,'Workshop ×0.90 and Operator ×0.75 must combine on Pack C cell');
+  await openBaseSurface(p3,'logistics');const yard=p3.locator('#acquireSalvageYard');assert.equal(await yard.isDisabled(),false);await yard.click();s3=await state(p3);assert.equal(s3.packC.salvageYardOwned,true);
+  await openBaseSurface(p3,'crew');const hire3=p3.locator('#hireWorker3');assert.equal(await hire3.isDisabled(),false);await hire3.click();s3=await state(p3);assert.equal(s3.packC.crew3.hired,true);
+  await openBaseSurface(p3,'crew');const operator=p3.locator('#assignOperator');assert.equal(await operator.isDisabled(),false);await operator.click();s3=await state(p3);assert.equal(s3.packC.crew3.role,'operator');assert.equal(s3.packC.crew3.assignment,null);
+  await openBaseSurface(p3,'logistics');const alloy=p3.locator('#packCAlloy');assert.equal(await alloy.isDisabled(),false);await alloy.click();s3=await state(p3);assert.equal(s3.packC.production.kind,'alloyBillet');const duration=s3.packC.production.endsAt-s3.packC.production.startedAt;assert.equal(duration,162000,'Workshop ×0.90 and Operator ×0.75 must combine on Pack C cell');
   await p3.reload();await p3.waitForSelector('#garage');s3=await state(p3);assert.equal(s3.saveVersion,10);assert.equal(s3.packC.salvageYardOwned,true);assert.equal(s3.packC.crew3.hired,true);assert.equal(s3.packC.crew3.role,'operator');assert.equal(s3.packC.production.kind,'alloyBillet');assert.ok(s3.talents.includes('workshop_8'));assert.ok(s3.talents.includes('automation_8'));assert.equal(s3.packD.recoveryRig.owned,false);await c3.close();
 
   console.log('browser Content Pack C proof: PASS');
