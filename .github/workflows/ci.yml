@@ -40,6 +40,8 @@ jobs:
         run: npm run smoke:progression-v2
       - name: Business Stage V1 domain smoke
         run: npm run smoke:business-stage
+      - name: Industrial Chain V1 migration + sink proof
+        run: npm run smoke:industrial-chain-v1
       - name: Midgame domain smoke
         run: npm run smoke:midgame
       - name: Visual foundation smoke
