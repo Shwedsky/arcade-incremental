@@ -128,6 +128,10 @@ function zonePreset(save:any,zone:string){
 function plantReady(save:any){
   grantAllResources(save);ensureWorkersAndInfrastructure(save);
   save.cash=Math.max(Number(save.cash??0),6_000_000);save.xp=Math.max(Number(save.xp??0),XP_FOR_LEVEL[30]);
+  // Plant readiness follows the real gate: a mature generic crew plus an unlocked
+  // Operator role. Keep the complete Automation chain through Dispatcher so the
+  // review preset demonstrates a legal progression state instead of bypassing it.
+  save.talents=Array.from(new Set([...(save.talents??[]),'automation_1','automation_2','automation_3','automation_4','automation_5','automation_6']));
   save.installed=['workbench','press','wire','plastic'];save.machineLevels={workbench:3,press:3,wire:2,plastic:2};save.equipmentLevels={tool:4,cart:4};
   const mid=ensureObject(save,'midgame');mid.currentZone='z8';mid.mastery={...(mid.mastery??{}),z1:100,z2:100,z3:100,z4:100,z5:100,z6:100,z7:100,z8:100};
   const packE=ensureObject(save,'packE');packE.portPowerAssemblies=Math.max(Number(packE.portPowerAssemblies??0),1);packE.portPowerDiscovered=true;packE.processingPlantOwned=false;packE.plantLines=0;packE.production=[];
