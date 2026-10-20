@@ -3,6 +3,7 @@ import {spawn,type ChildProcess} from 'node:child_process';
 import {once} from 'node:events';
 import {fileURLToPath} from 'node:url';
 import {chromium} from 'playwright';
+import {openBaseSurface} from './base-shell-test-utils.ts';
 
 const PORT=41983,ORIGIN=`http://127.0.0.1:${PORT}`,SAVE_KEY='arcade-incremental-playable-v0-save-v2';
 const dist=fileURLToPath(new URL('../dist',import.meta.url)),viteBin=fileURLToPath(new URL('../node_modules/vite/bin/vite.js',import.meta.url));
@@ -45,7 +46,7 @@ try{
   await page.waitForFunction(()=>document.querySelector('#vanText')?.textContent?.includes('/ 500 кг'));
   assert.match(await page.locator('#vanText').innerText(),/500 кг/,'Van Packing must change real field-buffer capacity');
 
-  await page.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.forceGarage());await page.waitForSelector('#garageScreen:not([hidden])');
+  await page.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.forceGarage());await page.waitForSelector('#garageScreen:not([hidden])');await openBaseSurface(page,'contracts');
   await page.waitForFunction(()=>document.querySelectorAll('#contractPanel [data-contract-offer]').length===2);
   const offers=page.locator('#contractPanel [data-contract-offer]');assert.equal(await offers.count(),2);const names=await offers.locator('h2').allInnerTexts();assert.equal(new Set(names).size,2,'Contract Choice must present two distinct offers');
   const before=Number((await page.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.getState().contract.completed))||0);
