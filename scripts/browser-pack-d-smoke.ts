@@ -3,6 +3,7 @@ import { spawn } from 'node:child_process';
 import { once } from 'node:events';
 import { fileURLToPath } from 'node:url';
 import { chromium, type BrowserContext, type Page } from 'playwright';
+import {openBaseSurface} from './base-shell-test-utils.ts';
 
 const PORT=4178;
 const ORIGIN=`http://127.0.0.1:${PORT}`;
@@ -47,16 +48,16 @@ try{
 
   // 2. Z7 is a real map frontier after mastered Z6 + Yard + Truck. Rig still requires the active signature assembly.
   const c2=await browser.newContext();await withSave(c2,baseV7({packD:packD({recoveryAssemblies:0})}));const p2=await c2.newPage();await p2.goto(`${ORIGIN}/?seed=packd-z7`);await dismissOffline(p2);await p2.click('#garage');await p2.waitForSelector('#garageScreen:not([hidden])');
-  await p2.click('#zonesGarage');await p2.waitForSelector('#zoneScreen:not([hidden])');const z7=p2.locator('[data-zone="z7"] button');assert.equal(await z7.count(),1);assert.equal(await z7.isDisabled(),false);await z7.click();let s2=await state(p2);assert.equal(s2.midgame.currentZone,'z7');const rigBlocked=p2.locator('#acquireRecoveryRig');assert.equal(await rigBlocked.isDisabled(),true);await c2.close();
+  await p2.click('#zonesGarage');await p2.waitForSelector('#zoneScreen:not([hidden])');const z7=p2.locator('[data-zone="z7"] button');assert.equal(await z7.count(),1);assert.equal(await z7.isDisabled(),false);await z7.click();let s2=await state(p2);assert.equal(s2.midgame.currentZone,'z7');await openBaseSurface(p2,'logistics');const rigBlocked=p2.locator('#acquireRecoveryRig');assert.equal(await rigBlocked.isDisabled(),true);await c2.close();
 
   // 3. Full Pack D bridge: signature assembly -> Rig -> mastered Z7 -> Workshop -> worker #4 -> Operator -> persistence.
   const mastered={z1:100,z2:100,z3:100,z4:100,z5:100,z6:100,z7:100};
   const c3=await browser.newContext();await withSave(c3,baseV7({midgame:midgame(mastered,'z7'),packD:packD()}));const p3=await c3.newPage();await p3.goto(`${ORIGIN}/?seed=packd-main`);await dismissOffline(p3);await p3.click('#garage');await p3.waitForSelector('#garageScreen:not([hidden])');
-  const rig=p3.locator('#acquireRecoveryRig');assert.equal(await rig.isDisabled(),false);await rig.click();let s3=await state(p3);assert.equal(s3.packD.recoveryRig.owned,true);assert.equal(s3.packD.recoveryAssemblies,0);assert.match(await p3.locator('#vanText').innerText(),/1800/,'Recovery Rig must become the active 1800 kg field depot');
-  const workshop=p3.locator('#acquireIndustrialWorkshop');assert.equal(await workshop.isDisabled(),false);await workshop.click();s3=await state(p3);assert.equal(s3.packD.industrialWorkshopOwned,true);assert.equal(s3.packD.productionCells,2);assert.match((await p3.locator('#queuePanel').textContent())??'',/0 \/ 2/,'Industrial Workshop must add one real generic workshop slot');
-  const hire4=p3.locator('#hireWorker4');assert.equal(await hire4.isDisabled(),false);await hire4.click();const z7worker=p3.locator('[data-worker4-zone="z7"]');assert.equal(await z7worker.isDisabled(),false);await z7worker.click();s3=await state(p3);assert.equal(s3.packD.crew4.role,'scavenger');assert.equal(s3.packD.crew4.assignment,'z7');
-  const op4=p3.locator('#assignOperator4');assert.equal(await op4.isDisabled(),false);await op4.click();s3=await state(p3);assert.equal(s3.packD.crew4.role,'operator');assert.equal(s3.packD.crew4.assignment,null);
-  const alloy=p3.locator('#packCAlloy');assert.equal(await alloy.isDisabled(),false);await alloy.click();s3=await state(p3);assert.equal(s3.packC.production.kind,'alloyBillet');assert.equal(s3.packC.production.endsAt-s3.packC.production.startedAt,204000,'Worker #4 Operator must apply its real ×0.85 industrial-cell effect');
+  await openBaseSurface(p3,'logistics');const rig=p3.locator('#acquireRecoveryRig');assert.equal(await rig.isDisabled(),false);await rig.click();let s3=await state(p3);assert.equal(s3.packD.recoveryRig.owned,true);assert.equal(s3.packD.recoveryAssemblies,0);assert.match(await p3.locator('#vanText').innerText(),/1800/,'Recovery Rig must become the active 1800 kg field depot');
+  await openBaseSurface(p3,'logistics');const workshop=p3.locator('#acquireIndustrialWorkshop');assert.equal(await workshop.isDisabled(),false);await workshop.click();s3=await state(p3);assert.equal(s3.packD.industrialWorkshopOwned,true);assert.equal(s3.packD.productionCells,2);await openBaseSurface(p3,'production');assert.match((await p3.locator('#queuePanel').textContent())??'',/0 \/ 2/,'Industrial Workshop must add one real generic workshop slot');
+  await openBaseSurface(p3,'crew');const hire4=p3.locator('#hireWorker4');assert.equal(await hire4.isDisabled(),false);await hire4.click();await openBaseSurface(p3,'crew');const z7worker=p3.locator('[data-worker4-zone="z7"]');assert.equal(await z7worker.isDisabled(),false);await z7worker.click();s3=await state(p3);assert.equal(s3.packD.crew4.role,'scavenger');assert.equal(s3.packD.crew4.assignment,'z7');
+  await openBaseSurface(p3,'crew');const op4=p3.locator('#assignOperator4');assert.equal(await op4.isDisabled(),false);await op4.click();s3=await state(p3);assert.equal(s3.packD.crew4.role,'operator');assert.equal(s3.packD.crew4.assignment,null);
+  await openBaseSurface(p3,'logistics');const alloy=p3.locator('#packCAlloy');assert.equal(await alloy.isDisabled(),false);await alloy.click();s3=await state(p3);assert.equal(s3.packC.production.kind,'alloyBillet');assert.equal(s3.packC.production.endsAt-s3.packC.production.startedAt,204000,'Worker #4 Operator must apply its real ×0.85 industrial-cell effect');
   await p3.reload();await p3.waitForSelector('#garage');s3=await state(p3);assert.equal(s3.saveVersion,10);assert.equal(s3.packD.recoveryRig.owned,true);assert.equal(s3.packD.industrialWorkshopOwned,true);assert.equal(s3.packD.productionCells,2);assert.equal(s3.packD.crew4.hired,true);assert.equal(s3.packD.crew4.role,'operator');assert.equal(s3.packC.production.kind,'alloyBillet');await c3.close();
 
   console.log('browser Content Pack D proof: PASS');
