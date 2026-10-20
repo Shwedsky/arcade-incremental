@@ -3,6 +3,7 @@ import {spawn,type ChildProcess} from 'node:child_process';
 import {once} from 'node:events';
 import {fileURLToPath} from 'node:url';
 import {chromium} from 'playwright';
+import {openBaseSurface} from './base-shell-test-utils.ts';
 
 const PORT=41981,ORIGIN=`http://127.0.0.1:${PORT}`,SAVE_KEY='arcade-incremental-playable-v0-save-v2';
 const dist=fileURLToPath(new URL('../dist',import.meta.url)),viteBin=fileURLToPath(new URL('../node_modules/vite/bin/vite.js',import.meta.url));
@@ -22,7 +23,7 @@ try{
   const earlyCtx=await browser.newContext({viewport:{width:1280,height:800},storageState:{cookies:[],origins:[{origin:ORIGIN,localStorage:[{name:SAVE_KEY,value:JSON.stringify({...fresh,lastSeen:Date.now()})}]}]}}),early=await earlyCtx.newPage();
   await early.goto(`${ORIGIN}/?seed=contract-v2-early`);await early.waitForFunction(()=>(globalThis as any).__SALVAGE_TEST__?.getState()?.saveVersion===10);
   await early.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.forceGarage());
-  await early.waitForSelector('#garageScreen:not([hidden])');
+  await early.waitForSelector('#garageScreen:not([hidden])');await openBaseSurface(early,'contracts');
   const earlyText=await early.locator('#contractPanel').innerText();
   assert.match(earlyText,/\d+ доступно/);assert.doesNotMatch(earlyText,/ПРОМЫШЛЕННЫЙ|Насос|Компрессор|Стальные заготовки/);
   await earlyCtx.close();
@@ -39,7 +40,7 @@ try{
 
   const ctx=await browser.newContext({viewport:{width:1440,height:900},storageState:{cookies:[],origins:[{origin:ORIGIN,localStorage:[{name:SAVE_KEY,value:JSON.stringify(late)}]}]}}),page=await ctx.newPage(),errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto(`${ORIGIN}/?seed=contract-v2-late`);await page.waitForFunction(()=>(globalThis as any).__SALVAGE_TEST__?.getState()?.saveVersion===10);await page.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.forceGarage());
-  await page.waitForSelector('#garageScreen:not([hidden])');
+  await page.waitForSelector('#garageScreen:not([hidden])');await openBaseSurface(page,'contracts');
   const header=await page.locator('#contractPanel > .contractHead small').innerText();const match=header.match(/(\d+) доступно/);assert.ok(match);assert.ok(Number(match![1])>=20,'late board must expose the broad staged pool');
   const titles:string[]=[];
   for(let i=0;i<10;i++){
