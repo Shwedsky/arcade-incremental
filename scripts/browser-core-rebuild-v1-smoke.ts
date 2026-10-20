@@ -58,11 +58,38 @@ try{
   await openBaseSurface(page,'crew');await page.waitForSelector(`[data-worker-card="${workerId}"] .v3Metrics`);
   assert.match(await page.locator(`[data-worker-card="${workerId}"]`).innerText(),/кг\/ч/,'assignment effect must be visible on the same worker card');
 
+  // Generic Operator: first measure a Plant cycle without an Operator, finish it,
+  // then assign a normal roster worker to the Plant and prove the next real job is faster.
+  const operatorWorkerId=s.workforceV3.workers[1].id;
+  const productionBefore=await page.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.getProductionV3View());
+  assert.equal(productionBefore.unlocked,true,'late Talent V4 preset must unlock Operator');
+  assert.ok(productionBefore.cells.some((cell:any)=>cell.id==='heavy_cell'));
+  assert.ok(productionBefore.cells.some((cell:any)=>cell.id==='plant_lines'));
+  assert.equal(productionBefore.cells.find((cell:any)=>cell.id==='plant_lines').speedFactor,1,'unassigned Plant must have no hidden worker speed bonus');
+  await page.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.doStartPlantAlloy());
+  s=await page.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.getState());
+  const baselineJob=s.packE.production.at(-1);assert.ok(baselineJob,'baseline Plant job must start');
+  const baselineDuration=baselineJob.endsAt-baselineJob.startedAt;
+  await page.evaluate((at)=>(globalThis as any).__SALVAGE_TEST__.advancePlantTo(at),baselineJob.endsAt+1);
+  assert.equal(await page.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.assignGenericProduction(arguments[0],'plant_lines'),operatorWorkerId),true);
+  s=await page.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.getState());
+  const operatorWorker=s.workforceV3.workers.find((w:any)=>w.id===operatorWorkerId);
+  assert.equal(operatorWorker.role,'operator');assert.equal(operatorWorker.status,'production');assert.equal(operatorWorker.productionCellId,'plant_lines');
+  const productionAssigned=await page.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.getProductionV3View());
+  const plantCell=productionAssigned.cells.find((cell:any)=>cell.id==='plant_lines');assert.ok(plantCell.speedFactor<.9,'assigned Operator must expose a material speed factor');
+  await page.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.doStartPlantAlloy());
+  s=await page.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.getState());
+  const operatorJob=s.packE.production.at(-1);assert.ok(operatorJob,'Operator Plant job must start');
+  const operatorDuration=operatorJob.endsAt-operatorJob.startedAt;
+  assert.ok(operatorDuration<baselineDuration*.9,`Operator must shorten a real Plant cycle: ${operatorDuration} vs ${baselineDuration}`);
+  await openBaseSurface(page,'crew');await page.waitForFunction((id)=>document.querySelector(`[data-worker-card="${id}"] .v3OperatorBlock`)?.textContent?.includes('Линии Processing Plant'),operatorWorkerId);
+  const operatorText=await page.locator(`[data-worker-card="${operatorWorkerId}"] .v3OperatorBlock`).innerText();assert.match(operatorText,/Работает: Линии Processing Plant/);assert.match(operatorText,/% быстрее/);
+
   // Standing buyer: partial 10kg delivery persists instead of rotating contract away.
   await openBaseSurface(page,'contracts');await page.waitForSelector('#contractBoardV3Root');
   assert.ok(await page.locator('.standingBuyer').count()>=4,'standing buyers remain permanently visible');
   assert.ok(await page.locator('.specialOrder').count()>=1,'late state must expose high-margin special orders');
-  const beforeMetal=s.storage.metal,beforeCash=s.cash;
+  s=await page.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.getState());const beforeMetal=s.storage.metal,beforeCash=s.cash;
   await page.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.submitStandingV3('standing_metal',10));
   await page.waitForFunction(()=>Number((globalThis as any).__SALVAGE_TEST__.getState().contract?.standingProgress?.standing_metal)>=9.99);
   s=await page.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.getState());
@@ -100,6 +127,6 @@ try{
   await offlinePage.waitForSelector('#offlineScreen:not([hidden])');await offlinePage.waitForSelector('.offlineRoutesV3 li');
   const offlineText=await offlinePage.locator('.offlineRoutesV3').innerText();assert.match(offlineText,/кг\/ч/);assert.match(offlineText,/\+\d/,'offline report must show real persisted route gain');
 
-  console.log('Core Rebuild V1 browser proof: Talent V4 + generic roster/fleet + route delta + standing contracts + Hangar scene + real offline report: PASS');
+  console.log('Core Rebuild V1 browser proof: Talent V4 + generic roster/fleet + route delta + real Operator production + standing contracts + Hangar scene + real offline report: PASS');
   await context.close();
 }finally{await browser.close();await stopServer()}
