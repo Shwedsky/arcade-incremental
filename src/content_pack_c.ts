@@ -178,9 +178,10 @@ export function fabricateHeavyModule(state:PackCState,kind:HeavyFabricatedModule
   state.modules[kind]++;return true;
 }
 
-export function productionDurationSec(state:PackCState,kind:PackCProductionKind):number{
-  const operator=state.crew3.hired&&state.crew3.role==='operator';
-  return PACK_C_PRODUCTION_SECONDS[kind]*(operator ? .75 : 1);
+export function productionDurationSec(_state:PackCState,kind:PackCProductionKind):number{
+  // Workforce V3 owns staffing. Domain production remains deterministic at
+  // base duration; runtime applies the assigned generic Operator factor once.
+  return PACK_C_PRODUCTION_SECONDS[kind];
 }
 
 export function canStartPackCProduction(state:PackCState,kind:PackCProductionKind,inv:PackCInventory):boolean{
