@@ -32,6 +32,7 @@ export interface BusinessStageDef{
 }
 
 const CORE_SURFACES=['overview','production','storage','contracts','development'] as const satisfies readonly BaseSurfaceId[];
+const EQUIPPED_SURFACES=['overview','production','storage','logistics','contracts','development'] as const satisfies readonly BaseSurfaceId[];
 const WORKFORCE_SURFACES=['overview','production','storage','crew','logistics','contracts','development'] as const satisfies readonly BaseSurfaceId[];
 
 export const BUSINESS_STAGES:Record<BusinessStageId,BusinessStageDef>={
@@ -45,7 +46,7 @@ export const BUSINESS_STAGES:Record<BusinessStageId,BusinessStageDef>={
     id:'equipped_garage',rank:1,title:'Рабочий гараж',shortTitle:'Гараж',eyebrow:'РАБОЧАЯ МАСТЕРСКАЯ',
     fantasy:'Гараж уже производит ценность: несколько станков, склад и очередь работают между вылазками.',
     pressure:'Активные поездки становятся длиннее, а повторный фарм старых зон просится в транспорт и автоматизацию.',
-    nextMilestone:'Фургон и первый рабочий',surfaces:CORE_SURFACES
+    nextMilestone:'Фургон и первый рабочий',surfaces:EQUIPPED_SURFACES
   },
   workforce_garage:{
     id:'workforce_garage',rank:2,title:'Гараж с бригадой',shortTitle:'Гараж + команда',eyebrow:'МАЛЫЙ БИЗНЕС',
