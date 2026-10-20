@@ -47,8 +47,8 @@ try{
   await p2.click('#zonesGarage');await p2.waitForSelector('#zoneScreen:not([hidden])');assert.equal(await p2.locator('[data-zone="z4"]').count(),1);assert.equal(await p2.locator('[data-zone="z4"] button').isDisabled(),false);await p2.click('#zoneClose');
   await openBaseSurface(p2,'logistics');const hangar=p2.locator('#acquireHangar');assert.equal(await hangar.isDisabled(),false);await hangar.click();let s2=await state(p2);assert.equal(s2.packB.hangarOwned,true);
   await openBaseSurface(p2,'logistics');const truck=p2.locator('#acquireTruck');assert.equal(await truck.isDisabled(),false);await truck.click();s2=await state(p2);assert.equal(s2.packB.truck.owned,true);assert.ok(s2.workforceV3.fleet.some((v:any)=>v.type==='truck'),'Truck purchase must create explicit generic fleet asset');
-  await openBaseSurface(p2,'crew');const hire2=p2.locator('#hireWorker2');assert.equal(await hire2.isDisabled(),false);await hire2.click();s2=await state(p2);assert.equal(s2.packB.secondWorker.hired,true);assert.ok(s2.workforceV3.workers.length>=2,'second legacy-compatible hire must create second generic roster worker');
-  const worker2Id=s2.workforceV3.workers[1].id;
+  const beforeHire=s2.workforceV3.workers.length;const hired=await p2.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.hireGenericWorker());assert.ok(hired,'Hangar stage must allow another generic worker');s2=await state(p2);assert.equal(s2.workforceV3.workers.length,beforeHire+1);assert.equal(s2.packB.secondWorker.hired,true,'generic second hire must maintain the legacy compatibility mirror');
+  const worker2Id=hired.id;
   const route=await p2.evaluate((id)=>(globalThis as any).__SALVAGE_TEST__.assignGenericRoute(id,'z1',null),worker2Id);assert.equal(route.zone,'z1');s2=await state(p2);assert.equal(s2.workforceV3.routes.find((r:any)=>r.workerIds.includes(worker2Id))?.zone,'z1');
 
   // 3. Talent V4 Wide Swing is a real higher-era unlock after the seven Salvage nodes.
