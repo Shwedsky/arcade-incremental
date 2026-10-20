@@ -106,6 +106,8 @@ jobs:
         run: npm run smoke:browser:progression-v2
       - name: Core Rebuild V1 end-to-end browser proof
         run: npm run smoke:browser:core-rebuild-v1
+      - name: Owner Feedback V5 browser acceptance
+        run: npm run smoke:browser:owner-feedback-v5
       - name: Platform and responsive browser proof
         run: npm run smoke:browser:platform
       - name: Build release manifest
