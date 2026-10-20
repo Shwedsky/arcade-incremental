@@ -7,7 +7,7 @@ rather than pretending to be a full economy simulator.
 from __future__ import annotations
 
 Z7 = {"hp": 3.25, "yield": 2.55, "mastery": 12_200, "large_share": .52, "target_hours": 4.5}
-Z8 = {"hp": 3.85, "yield": 2.90, "mastery": 14_200, "large_share": .60, "target_hours": 5.0}
+Z8 = {"hp": 3.45, "yield": 2.90, "mastery": 12_400, "large_share": .60, "target_hours": 4.6}
 
 PLANT = {
     "cash": 1_200_000,
@@ -36,12 +36,12 @@ PLANT = {
 
 def check() -> None:
     assert Z8["hp"] > Z7["hp"]
-    assert 1.10 <= Z8["hp"] / Z7["hp"] <= 1.25
+    assert 1.05 <= Z8["hp"] / Z7["hp"] <= 1.15
     assert Z8["yield"] > Z7["yield"]
     assert 1.08 <= Z8["yield"] / Z7["yield"] <= 1.20
     assert Z8["mastery"] > Z7["mastery"]
     assert Z8["large_share"] > Z7["large_share"]
-    assert Z8["target_hours"] == 5.0
+    assert Z8["target_hours"] == 4.6
 
     assert PLANT["cash"] == 1_200_000
     assert PLANT["storage_kg"] == 150_000

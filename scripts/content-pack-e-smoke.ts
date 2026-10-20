@@ -11,9 +11,9 @@ const weightSum=Object.values(PACK_E_ZONE_PROFILE.nodeWeights).reduce((sum,value
 assert.ok(Math.abs(weightSum-1)<1e-9,'Z8 target weights must sum to 1');
 assert.equal(PACK_E_ZONE_PROFILE.id,'z8');
 assert.equal(PACK_E_ZONE_PROFILE.name,'Портовый терминал');
-assert.equal(PACK_E_ZONE_PROFILE.hpMultiplier,3.85);
+assert.equal(PACK_E_ZONE_PROFILE.hpMultiplier,3.45);
 assert.equal(PACK_E_ZONE_PROFILE.yieldMultiplier,2.90);
-assert.equal(PACK_E_ZONE_PROFILE.masteryTarget,14_200);
+assert.equal(PACK_E_ZONE_PROFILE.masteryTarget,12_400);
 assert.equal(PACK_E_ZONE_PROFILE.nodeWeights.large_appliance,.60,'Z8 must be heavier than Z7 rather than only higher HP');
 assert.equal(Z8_MIN_LEVEL,16);
 
@@ -54,11 +54,11 @@ const richInventory=():PackEInventory=>({
   industrialController:PROCESSING_PLANT_RECIPE.industrialController+10,
   heavyHydraulicCylinder:PROCESSING_PLANT_RECIPE.heavyHydraulicCylinder+10
 });
-const readyCtx:ProcessingPlantContext={z8Mastered:true,industrialWorkshopOwned:true,recoveryRigOwned:true,worker4Hired:true};
+const readyCtx:ProcessingPlantContext={z8Mastered:true,industrialWorkshopOwned:true,recoveryRigOwned:true,staffingReady:true};
 const plant=createDefaultPackE();plant.portPowerAssemblies=1;
 const inv=richInventory();
 assert.equal(canAcquireProcessingPlant(plant,inv,{...readyCtx,z8Mastered:false}),false,'cash/resources cannot bypass Z8 mastery');
-assert.equal(canAcquireProcessingPlant(plant,inv,{...readyCtx,worker4Hired:false}),false,'Plant requires minimal mature staffing');
+assert.equal(canAcquireProcessingPlant(plant,inv,{...readyCtx,staffingReady:false}),false,'Plant requires mature generic staffing readiness');
 assert.equal(canAcquireProcessingPlant(plant,inv,readyCtx),true);
 const cashBefore=inv.cash,alloyBefore=inv.alloyBillet;
 assert.equal(acquireProcessingPlant(plant,inv,readyCtx),true);
@@ -84,6 +84,6 @@ const legacyDefault=normalizePackE(undefined);assert.deepEqual(legacyDefault,cre
 console.log(JSON.stringify({
   zone:{id:PACK_E_ZONE_PROFILE.id,hp:PACK_E_ZONE_PROFILE.hpMultiplier,yield:PACK_E_ZONE_PROFILE.yieldMultiplier,mastery:PACK_E_ZONE_PROFILE.masteryTarget,largeShare:PACK_E_ZONE_PROFILE.nodeWeights.large_appliance},
   signaturePity:PORT_POWER_ASSEMBLY_PITY,
-  plant:{cash:PROCESSING_PLANT_CASH,storage:PROCESSING_PLANT_STORAGE_KG,lines:PROCESSING_PLANT_LINES,alloyCycle:`${PLANT_ALLOY_INPUT} -> ${PLANT_ALLOY_OUTPUT} / ${PLANT_ALLOY_SECONDS}s`}
+  plant:{cash:PROCESSING_PLANT_CASH,storage:PROCESSING_PLANT_STORAGE_KG,lines:PROCESSING_PLANT_LINES,staffing:'generic-ready',alloyCycle:`${PLANT_ALLOY_INPUT} -> ${PLANT_ALLOY_OUTPUT} / ${PLANT_ALLOY_SECONDS}s`}
 },null,2));
-console.log('Content Pack E domain smoke: PASS');
+console.log('Content Pack E domain smoke / generic staffing readiness: PASS');

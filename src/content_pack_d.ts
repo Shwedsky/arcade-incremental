@@ -81,7 +81,7 @@ export const RECOVERY_RIG_RECIPE={
 } as const;
 
 export const INDUSTRIAL_WORKSHOP_RECIPE={
-  metal:360,cleanCopper:70,granulate:60,steelBlank:90,aluminiumBillet:36,alloyBillet:150,drive:3,control:4,hydraulicPower:4,heavyFrame:5,
+  metal:360,cleanCopper:70,granulate:60,steelBlank:126,aluminiumBillet:0,alloyBillet:150,drive:3,control:4,hydraulicPower:4,heavyFrame:5,
   industrialController:2,heavyHydraulicCylinder:2
 } as const;
 
@@ -165,12 +165,12 @@ export function truckWorkerRouteEligible(state:PackDState):boolean{return state.
 
 export function canAcquireIndustrialWorkshop(state:PackDState,inv:PackDInventory,z7Mastered:boolean):boolean{
   const r=INDUSTRIAL_WORKSHOP_RECIPE;
-  return state.recoveryRig.owned&&!state.industrialWorkshopOwned&&z7Mastered&&inv.cash>=INDUSTRIAL_WORKSHOP_CASH&&inv.metal>=r.metal&&inv.cleanCopper>=r.cleanCopper&&inv.granulate>=r.granulate&&inv.steelBlank>=r.steelBlank&&inv.aluminiumBillet>=r.aluminiumBillet&&inv.alloyBillet>=r.alloyBillet&&inv.drive>=r.drive&&inv.control>=r.control&&inv.hydraulicPower>=r.hydraulicPower&&inv.heavyFrame>=r.heavyFrame&&inv.industrialController>=r.industrialController&&inv.heavyHydraulicCylinder>=r.heavyHydraulicCylinder;
+  return state.recoveryRig.owned&&!state.industrialWorkshopOwned&&z7Mastered&&inv.cash>=INDUSTRIAL_WORKSHOP_CASH&&inv.metal>=r.metal&&inv.cleanCopper>=r.cleanCopper&&inv.granulate>=r.granulate&&inv.steelBlank>=r.steelBlank&&inv.alloyBillet>=r.alloyBillet&&inv.drive>=r.drive&&inv.control>=r.control&&inv.hydraulicPower>=r.hydraulicPower&&inv.heavyFrame>=r.heavyFrame&&inv.industrialController>=r.industrialController&&inv.heavyHydraulicCylinder>=r.heavyHydraulicCylinder;
 }
 
 export function acquireIndustrialWorkshop(state:PackDState,inv:PackDInventory,z7Mastered:boolean):boolean{
   if(!canAcquireIndustrialWorkshop(state,inv,z7Mastered))return false;const r=INDUSTRIAL_WORKSHOP_RECIPE;
-  inv.cash-=INDUSTRIAL_WORKSHOP_CASH;inv.metal-=r.metal;inv.cleanCopper-=r.cleanCopper;inv.granulate-=r.granulate;inv.steelBlank-=r.steelBlank;inv.aluminiumBillet-=r.aluminiumBillet;inv.alloyBillet-=r.alloyBillet;inv.drive-=r.drive;inv.control-=r.control;inv.hydraulicPower-=r.hydraulicPower;inv.heavyFrame-=r.heavyFrame;inv.industrialController-=r.industrialController;inv.heavyHydraulicCylinder-=r.heavyHydraulicCylinder;state.industrialWorkshopOwned=true;state.productionCells=2;return true;
+  inv.cash-=INDUSTRIAL_WORKSHOP_CASH;inv.metal-=r.metal;inv.cleanCopper-=r.cleanCopper;inv.granulate-=r.granulate;inv.steelBlank-=r.steelBlank;inv.alloyBillet-=r.alloyBillet;inv.drive-=r.drive;inv.control-=r.control;inv.hydraulicPower-=r.hydraulicPower;inv.heavyFrame-=r.heavyFrame;inv.industrialController-=r.industrialController;inv.heavyHydraulicCylinder-=r.heavyHydraulicCylinder;state.industrialWorkshopOwned=true;state.productionCells=2;return true;
 }
 
 export function canHireFourthWorker(state:PackDState,cash:number):boolean{return state.industrialWorkshopOwned&&!state.crew4.hired&&cash>=FOURTH_WORKER_COST}

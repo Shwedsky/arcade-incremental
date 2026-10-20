@@ -3,6 +3,7 @@ import { spawn } from 'node:child_process';
 import { once } from 'node:events';
 import { fileURLToPath } from 'node:url';
 import { chromium, type BrowserContext, type Page } from 'playwright';
+import {openBaseSurface} from './base-shell-test-utils.ts';
 
 const PORT=4176;
 const ORIGIN=`http://127.0.0.1:${PORT}`;
@@ -25,7 +26,7 @@ const packB=(now=Date.now())=>({
   secondWorker:{hired:false,assignment:null,lastTick:now}
 });
 const baseV4=(overrides:Record<string,unknown>={})=>({
-  v:4,xp:20000,storage:{metal:2000,copper:50,plastic:50},components:{bearing:10,motor:10,hydraulic:4,electronics:10},processed:{briquette:800,cleanCopper:200,granulate:20},cash:1_000_000,
+  v:4,xp:120000,storage:{metal:2000,copper:50,plastic:50},components:{bearing:10,motor:10,hydraulic:4,electronics:10},processed:{briquette:800,cleanCopper:200,granulate:20},cash:1_000_000,
   installed:['workbench','press','wire','plastic'],machineLevels:{workbench:1,press:2,wire:1,plastic:1},talents:['salvage_1','salvage_2','salvage_3','salvage_4','salvage_5','salvage_6','salvage_7'],equipmentLevels:{tool:4,cart:4},jobs:[],contract:{index:0,completed:0},totalDestroyed:2500,lastSeen:Date.now(),midgame:midgame(),...overrides
 });
 const baseV5=(overrides:Record<string,unknown>={})=>({...baseV4(),v:5,packB:packB(),...overrides});
@@ -35,25 +36,27 @@ async function state(page:Page){return page.evaluate(()=>(globalThis as any).__S
 await waitServer();
 const browser=await chromium.launch({headless:true});
 try{
-  // 1. Existing V4 saves migrate through current V7 while preserving empty Pack B/Pack D defaults.
+  // 1. Existing V4 saves migrate to Save V10 while preserving empty late-pack defaults.
   const c1=await browser.newContext();await withSave(c1,baseV4({midgame:{...midgame(),currentZone:'z3',mastery:{z1:100,z2:100,z3:100,z4:0,z5:0,z6:0}}}));
   const p1=await c1.newPage();await p1.goto(`${ORIGIN}/?seed=packb-migrate`);await p1.waitForSelector('#garage');
   const s1=await state(p1);assert.equal(s1.saveVersion,10);assert.equal(s1.packB.hangarOwned,false);assert.equal(s1.packB.truck.owned,false);assert.equal(s1.packD.recoveryRig.owned,false);assert.equal(s1.midgame.mastery.z3,100);assert.equal(s1.midgame.mastery.z4,0);await c1.close();
 
-  // 2. Full production path: Z4 -> Hangar -> Truck -> worker #2.
+  // 2. Full production path: Z4 -> Hangar -> Truck -> second generic roster worker.
   const c2=await browser.newContext();await withSave(c2,baseV5());const p2=await c2.newPage();await p2.goto(`${ORIGIN}/?seed=packb-main`);await p2.waitForSelector('#garage');
   await p2.click('#garage');await p2.waitForSelector('#garageScreen:not([hidden])');
   await p2.click('#zonesGarage');await p2.waitForSelector('#zoneScreen:not([hidden])');assert.equal(await p2.locator('[data-zone="z4"]').count(),1);assert.equal(await p2.locator('[data-zone="z4"] button').isDisabled(),false);await p2.click('#zoneClose');
-  const hangar=p2.locator('#acquireHangar');assert.equal(await hangar.isDisabled(),false);await hangar.click();let s2=await state(p2);assert.equal(s2.packB.hangarOwned,true);
-  const truck=p2.locator('#acquireTruck');assert.equal(await truck.isDisabled(),false);await truck.click();s2=await state(p2);assert.equal(s2.packB.truck.owned,true);
-  const hire2=p2.locator('#hireWorker2');assert.equal(await hire2.isDisabled(),false);await hire2.click();await p2.locator('[data-worker2-zone="z1"]').click();s2=await state(p2);assert.equal(s2.packB.secondWorker.hired,true);assert.equal(s2.packB.secondWorker.assignment,'z1');
+  await openBaseSurface(p2,'logistics');const hangar=p2.locator('#acquireHangar');assert.equal(await hangar.isDisabled(),false);await hangar.click();let s2=await state(p2);assert.equal(s2.packB.hangarOwned,true);
+  await openBaseSurface(p2,'logistics');const truck=p2.locator('#acquireTruck');assert.equal(await truck.isDisabled(),false);await truck.click();s2=await state(p2);assert.equal(s2.packB.truck.owned,true);assert.ok(s2.workforceV3.fleet.some((v:any)=>v.type==='truck'),'Truck purchase must create explicit generic fleet asset');
+  const beforeHire=s2.workforceV3.workers.length;const hired=await p2.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.hireGenericWorker());assert.ok(hired,'Hangar stage must allow another generic worker');s2=await state(p2);assert.equal(s2.workforceV3.workers.length,beforeHire+1);assert.equal(s2.packB.secondWorker.hired,true,'generic second hire must maintain the legacy compatibility mirror');
+  const worker2Id=hired.id;
+  const route=await p2.evaluate((id)=>(globalThis as any).__SALVAGE_TEST__.assignGenericRoute(id,'z1',null),worker2Id);assert.equal(route.zone,'z1');s2=await state(p2);assert.equal(s2.workforceV3.routes.find((r:any)=>r.workerIds.includes(worker2Id))?.zone,'z1');
 
-  // 3. Tier-II Wide Swing is a real unlock after the seven accepted Salvage nodes.
+  // 3. Talent V4 Wide Swing is a real higher-era unlock after the seven Salvage nodes.
   await p2.click('#talentsGarage');await p2.waitForSelector('#talentScreen:not([hidden])');const wide=p2.locator('[data-talent="salvage_8"]');assert.equal(await wide.count(),1);assert.equal(await wide.isDisabled(),false);await wide.click();s2=await state(p2);assert.equal(s2.talents.includes('salvage_8'),true);await p2.click('#talentsClose');
   await p2.click('#next');await p2.waitForSelector('#garageScreen',{state:'hidden'});await p2.waitForFunction(()=>!document.querySelector<HTMLElement>('#vanHud')?.hidden);assert.equal(await p2.locator('#vanHud').evaluate(el=>el.classList.contains('truckMode')),true);assert.match(await p2.locator('#vanText').innerText(),/1000/);
 
-  // 4. Pack B state survives a normal reload under Save V8.
-  await p2.reload();await p2.waitForSelector('#garage');s2=await state(p2);assert.equal(s2.saveVersion,10);assert.equal(s2.packB.hangarOwned,true);assert.equal(s2.packB.truck.owned,true);assert.equal(s2.packB.secondWorker.assignment,'z1');assert.equal(s2.talents.includes('salvage_8'),true);await c2.close();
+  // 4. Pack B and generic route state survive normal Save V10 reload.
+  await p2.reload();await p2.waitForSelector('#garage');s2=await state(p2);assert.equal(s2.saveVersion,10);assert.equal(s2.packB.hangarOwned,true);assert.equal(s2.packB.truck.owned,true);assert.equal(s2.workforceV3.routes.find((r:any)=>r.workerIds.includes(worker2Id))?.zone,'z1');assert.equal(s2.talents.includes('salvage_8'),true);await c2.close();
 
-  console.log('browser Content Pack B proof: PASS');
+  console.log('browser Content Pack B proof / generic roster: PASS');
 }finally{await browser.close();await stopServer()}

@@ -3,6 +3,7 @@ import { spawn } from 'node:child_process';
 import { once } from 'node:events';
 import { fileURLToPath } from 'node:url';
 import { chromium, type BrowserContext, type Page } from 'playwright';
+import {openBaseSurface} from './base-shell-test-utils.ts';
 
 const PORT=4177;
 const ORIGIN=`http://127.0.0.1:${PORT}`;
@@ -37,7 +38,7 @@ async function state(page:Page){return page.evaluate(()=>(globalThis as any).__S
 await waitServer();
 const browser=await chromium.launch({headless:true});
 try{
-  // 1. V5 -> current V7 migration adds Pack C/Pack D defaults without wiping accepted Pack B progress.
+  // 1. V5 -> current Save V10 migration adds later packs without wiping accepted Pack B progress.
   const c1=await browser.newContext();await withSave(c1,baseV5());const p1=await c1.newPage();await p1.goto(`${ORIGIN}/?seed=packc-migrate`);await p1.waitForSelector('#garage');
   const s1=await state(p1);assert.equal(s1.saveVersion,10);assert.equal(s1.packB.hangarOwned,true);assert.equal(s1.packB.truck.owned,true);assert.equal(s1.packC.salvageYardOwned,false);assert.equal(s1.packC.materials.alloyScrap,0);assert.equal(s1.packD.recoveryRig.owned,false);await c1.close();
 
@@ -45,14 +46,19 @@ try{
   const c2=await browser.newContext();await withSave(c2,baseV6({packC:packC({discoveredIndustrial:[],industrial:{industrialController:0,heavyHydraulicCylinder:0}})}));const p2=await c2.newPage();await p2.goto(`${ORIGIN}/?seed=packc-zones`);await p2.click('#garage');await p2.waitForSelector('#garageScreen:not([hidden])');
   await p2.click('#zonesGarage');await p2.waitForSelector('#zoneScreen:not([hidden])');assert.equal(await p2.locator('[data-zone="z5"] button').isDisabled(),false);assert.equal(await p2.locator('[data-zone="z6"] button').isDisabled(),true);await c2.close();
 
-  // 3. Full Pack C bridge: Z6 -> Yard -> third worker -> Operator -> accelerated production -> persistence.
+  // 3. Full Pack C bridge: Z6 -> Yard -> generic third hire -> Operator -> accelerated production -> persistence.
   const c3=await browser.newContext();const mastered={z1:100,z2:100,z3:100,z4:100,z5:100,z6:100};await withSave(c3,baseV6({midgame:midgame(mastered,'z5'),packC:packC()}));const p3=await c3.newPage();await p3.goto(`${ORIGIN}/?seed=packc-main`);await p3.click('#garage');await p3.waitForSelector('#garageScreen:not([hidden])');
   await p3.click('#zonesGarage');await p3.waitForSelector('#zoneScreen:not([hidden])');const z6=p3.locator('[data-zone="z6"] button');assert.equal(await z6.isDisabled(),false);await z6.click();let s3=await state(p3);assert.equal(s3.midgame.currentZone,'z6');
-  const yard=p3.locator('#acquireSalvageYard');assert.equal(await yard.isDisabled(),false);await yard.click();s3=await state(p3);assert.equal(s3.packC.salvageYardOwned,true);
-  const hire3=p3.locator('#hireWorker3');assert.equal(await hire3.isDisabled(),false);await hire3.click();s3=await state(p3);assert.equal(s3.packC.crew3.hired,true);
-  const operator=p3.locator('#assignOperator');assert.equal(await operator.isDisabled(),false);await operator.click();s3=await state(p3);assert.equal(s3.packC.crew3.role,'operator');assert.equal(s3.packC.crew3.assignment,null);
-  const alloy=p3.locator('#packCAlloy');assert.equal(await alloy.isDisabled(),false);await alloy.click();s3=await state(p3);assert.equal(s3.packC.production.kind,'alloyBillet');const duration=s3.packC.production.endsAt-s3.packC.production.startedAt;assert.equal(duration,162000,'Workshop ×0.90 and Operator ×0.75 must combine on Pack C cell');
-  await p3.reload();await p3.waitForSelector('#garage');s3=await state(p3);assert.equal(s3.saveVersion,10);assert.equal(s3.packC.salvageYardOwned,true);assert.equal(s3.packC.crew3.hired,true);assert.equal(s3.packC.crew3.role,'operator');assert.equal(s3.packC.production.kind,'alloyBillet');assert.ok(s3.talents.includes('workshop_8'));assert.ok(s3.talents.includes('automation_8'));assert.equal(s3.packD.recoveryRig.owned,false);await c3.close();
+  await openBaseSurface(p3,'logistics');const yard=p3.locator('#acquireSalvageYard');assert.equal(await yard.isDisabled(),false);await yard.click();s3=await state(p3);assert.equal(s3.packC.salvageYardOwned,true);
+  const beforeHire=s3.workforceV3.workers.length;const hired=await p3.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.hireGenericWorker());assert.ok(hired,'Salvage Yard stage must allow another generic worker');s3=await state(p3);assert.equal(s3.workforceV3.workers.length,beforeHire+1);assert.equal(s3.packC.crew3.hired,true,'generic third hire must maintain the legacy compatibility mirror');
+  const genericWorkerId=hired.id;
+  const productionBefore=await p3.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.getProductionV3View());assert.equal(productionBefore.unlocked,true);assert.equal(productionBefore.cells.find((c:any)=>c.id==='heavy_cell').speedFactor,1);
+  assert.equal(await p3.evaluate((id)=>(globalThis as any).__SALVAGE_TEST__.assignGenericProduction(id,'heavy_cell'),genericWorkerId),true);
+  s3=await state(p3);const assigned=s3.workforceV3.workers.find((w:any)=>w.id===genericWorkerId);assert.equal(assigned.role,'operator');assert.equal(assigned.status,'production');assert.equal(assigned.productionCellId,'heavy_cell');
+  const productionAssigned=await p3.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.getProductionV3View());const cell=productionAssigned.cells.find((c:any)=>c.id==='heavy_cell');assert.ok(cell.speedFactor<.9,'generic Operator must expose a material speed factor');
+  await openBaseSurface(p3,'logistics');const alloy=p3.locator('#packCAlloy');assert.equal(await alloy.isDisabled(),false);await alloy.click();s3=await state(p3);assert.equal(s3.packC.production.kind,'alloyBillet');const duration=s3.packC.production.endsAt-s3.packC.production.startedAt;
+  const workshopOnlyDuration=240_000*.78;assert.ok(duration<workshopOnlyDuration*.9,`generic Operator must shorten the real Pack C cycle: ${duration} vs workshop-only ${workshopOnlyDuration}`);
+  await p3.reload();await p3.waitForSelector('#garage');s3=await state(p3);assert.equal(s3.saveVersion,10);assert.equal(s3.packC.salvageYardOwned,true);assert.equal(s3.packC.crew3.hired,true);const persisted=s3.workforceV3.workers.find((w:any)=>w.id===genericWorkerId);assert.equal(persisted.role,'operator');assert.equal(persisted.productionCellId,'heavy_cell');assert.equal(s3.packC.production.kind,'alloyBillet');assert.ok(s3.talents.includes('workshop_8'));assert.ok(s3.talents.includes('automation_8'));assert.equal(s3.packD.recoveryRig.owned,false);await c3.close();
 
-  console.log('browser Content Pack C proof: PASS');
+  console.log('browser Content Pack C proof / generic Operator: PASS');
 }finally{await browser.close();await stopServer()}

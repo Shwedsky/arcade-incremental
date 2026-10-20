@@ -21,7 +21,7 @@ ZONES = [
     ("Z5","Industrial Zone",1090.0,1.20,120,3.5),
     ("Z6","Abandoned Factory",1315.0,1.10,140,4.0),
     ("Z7","Heavy Depot",1555.0,1.00,160,4.5),
-    ("Z8","Port Terminal",1905.0,0.90,180,5.0),
+    ("Z8","Port Terminal",1905.0,0.96,180,4.6),
 ]
 
 BASE_STAGES = [
@@ -115,7 +115,7 @@ def write_csv(path,rows):
 def check():
     ar=active_rows()
     assert all(5.0 <= r["cart_fill_min"] <= 7.0 for r in ar), ar
-    assert [r["mastery_target_active_h"] for r in ar] == [1.5,2.0,2.5,3.0,3.5,4.0,4.5,5.0]
+    assert [r["mastery_target_active_h"] for r in ar] == [1.5,2.0,2.5,3.0,3.5,4.0,4.5,4.6]
     assert HIRE_COSTS == sorted(HIRE_COSTS)
     assert [x[1] for x in BASE_STAGES] == sorted(x[1] for x in BASE_STAGES)
     assert all(ratio <= .45 for _,ratio,_,_,_ in ROUTES)

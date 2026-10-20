@@ -42,7 +42,7 @@ export interface ProcessingPlantContext{
   z8Mastered:boolean;
   industrialWorkshopOwned:boolean;
   recoveryRigOwned:boolean;
-  worker4Hired:boolean;
+  staffingReady:boolean;
 }
 
 export interface PackEInventory{
@@ -66,9 +66,9 @@ export const PACK_E_ZONE_PROFILE:PackEZoneProfile={
   id:'z8',
   name:'Портовый терминал',
   description:'Ричстакеры, рефконтейнеры, генераторы, тали и силовые шкафы. Самый тяжёлый фронтир: высокая ценность сосредоточена в крупных портовых узлах.',
-  hpMultiplier:3.85,
+  hpMultiplier:3.45,
   yieldMultiplier:2.90,
-  masteryTarget:14_200,
+  masteryTarget:12_400,
   nodeWeights:{small_scrap:.02,cable:.04,small_appliance:.04,bike_fan:.04,medium_appliance:.26,large_appliance:.60}
 };
 
@@ -85,8 +85,8 @@ export const PROCESSING_PLANT_RECIPE={
   metal:720,
   cleanCopper:120,
   granulate:100,
-  steelBlank:160,
-  aluminiumBillet:72,
+  steelBlank:232,
+  aluminiumBillet:0,
   alloyBillet:260,
   drive:5,
   control:6,
@@ -165,9 +165,9 @@ export function rollZ8IndustrialComponent(discovered:ReadonlyArray<PackEAdvanced
 
 export function canAcquireProcessingPlant(state:PackEState,inv:PackEInventory,ctx:ProcessingPlantContext):boolean{
   const r=PROCESSING_PLANT_RECIPE;
-  return !state.processingPlantOwned&&ctx.industrialWorkshopOwned&&ctx.recoveryRigOwned&&ctx.z8Mastered&&ctx.worker4Hired&&
+  return !state.processingPlantOwned&&ctx.industrialWorkshopOwned&&ctx.recoveryRigOwned&&ctx.z8Mastered&&ctx.staffingReady&&
     inv.cash>=PROCESSING_PLANT_CASH&&inv.metal>=r.metal&&inv.cleanCopper>=r.cleanCopper&&inv.granulate>=r.granulate&&
-    inv.steelBlank>=r.steelBlank&&inv.aluminiumBillet>=r.aluminiumBillet&&inv.alloyBillet>=r.alloyBillet&&
+    inv.steelBlank>=r.steelBlank&&inv.alloyBillet>=r.alloyBillet&&
     inv.drive>=r.drive&&inv.control>=r.control&&inv.hydraulicPower>=r.hydraulicPower&&inv.heavyFrame>=r.heavyFrame&&
     inv.industrialController>=r.industrialController&&inv.heavyHydraulicCylinder>=r.heavyHydraulicCylinder&&
     state.portPowerAssemblies>=r.portPowerAssemblies;
@@ -177,7 +177,7 @@ export function acquireProcessingPlant(state:PackEState,inv:PackEInventory,ctx:P
   if(!canAcquireProcessingPlant(state,inv,ctx))return false;
   const r=PROCESSING_PLANT_RECIPE;
   inv.cash-=PROCESSING_PLANT_CASH;inv.metal-=r.metal;inv.cleanCopper-=r.cleanCopper;inv.granulate-=r.granulate;
-  inv.steelBlank-=r.steelBlank;inv.aluminiumBillet-=r.aluminiumBillet;inv.alloyBillet-=r.alloyBillet;
+  inv.steelBlank-=r.steelBlank;inv.alloyBillet-=r.alloyBillet;
   inv.drive-=r.drive;inv.control-=r.control;inv.hydraulicPower-=r.hydraulicPower;inv.heavyFrame-=r.heavyFrame;
   inv.industrialController-=r.industrialController;inv.heavyHydraulicCylinder-=r.heavyHydraulicCylinder;
   state.portPowerAssemblies-=r.portPowerAssemblies;state.processingPlantOwned=true;state.plantLines=PROCESSING_PLANT_LINES;return true;

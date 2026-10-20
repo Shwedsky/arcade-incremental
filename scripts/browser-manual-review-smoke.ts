@@ -4,6 +4,7 @@ import { spawn, type ChildProcess } from 'node:child_process';
 import { once } from 'node:events';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
+import {openBaseSurface} from './base-shell-test-utils.ts';
 
 const REVIEW_PORT=41971;
 const NORMAL_PORT=41972;
@@ -92,6 +93,7 @@ try{
   // Garage discovery UX: known basics are readable; future materials/components are mystery slots until found.
   await reviewPage.click('#garage');
   await reviewPage.waitForSelector('#garageScreen:not([hidden])');
+  await openBaseSurface(reviewPage,'storage');
   await reviewPage.waitForSelector('#storage [data-hf-slot="metal"]');
   assert.match(await reviewPage.locator('#storage [data-hf-slot="metal"]').innerText(),/Металл/);
   assert.match(await reviewPage.locator('#storage [data-hf-slot="alScrap"]').innerText(),/Неизвестный материал/);

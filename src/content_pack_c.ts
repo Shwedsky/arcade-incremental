@@ -83,7 +83,7 @@ export interface PackCInventory{
 
 export const SALVAGE_YARD_CASH=250_000;
 export const THIRD_WORKER_COST=85_000;
-export const SALVAGE_YARD_RECIPE={metal:280,cleanCopper:36,briquette:40,steelBlank:32,aluminiumBillet:12,alloyBillet:42,hydraulicPower:2,heavyFrame:2,control:2} as const;
+export const SALVAGE_YARD_RECIPE={metal:280,cleanCopper:36,briquette:40,steelBlank:44,aluminiumBillet:0,alloyBillet:42,hydraulicPower:2,heavyFrame:2,control:2} as const;
 
 export const PACK_C_PRODUCTION_SECONDS:Record<PackCProductionKind,number>={
   alloyBillet:240,
@@ -178,9 +178,10 @@ export function fabricateHeavyModule(state:PackCState,kind:HeavyFabricatedModule
   state.modules[kind]++;return true;
 }
 
-export function productionDurationSec(state:PackCState,kind:PackCProductionKind):number{
-  const operator=state.crew3.hired&&state.crew3.role==='operator';
-  return PACK_C_PRODUCTION_SECONDS[kind]*(operator ? .75 : 1);
+export function productionDurationSec(_state:PackCState,kind:PackCProductionKind):number{
+  // Workforce V3 owns staffing. Domain production remains deterministic at
+  // base duration; runtime applies the assigned generic Operator factor once.
+  return PACK_C_PRODUCTION_SECONDS[kind];
 }
 
 export function canStartPackCProduction(state:PackCState,kind:PackCProductionKind,inv:PackCInventory):boolean{
@@ -216,14 +217,14 @@ export function productionProgress(state:PackCState,now=Date.now()):number{
 
 export function canAcquireSalvageYard(state:PackCState,inv:PackCInventory,z6Mastered:boolean):boolean{
   return !state.salvageYardOwned&&z6Mastered&&inv.cash>=SALVAGE_YARD_CASH&&inv.metal>=SALVAGE_YARD_RECIPE.metal&&
-    inv.cleanCopper>=SALVAGE_YARD_RECIPE.cleanCopper&&inv.briquette>=SALVAGE_YARD_RECIPE.briquette&&inv.steelBlank>=SALVAGE_YARD_RECIPE.steelBlank&&inv.aluminiumBillet>=SALVAGE_YARD_RECIPE.aluminiumBillet&&
+    inv.cleanCopper>=SALVAGE_YARD_RECIPE.cleanCopper&&inv.briquette>=SALVAGE_YARD_RECIPE.briquette&&inv.steelBlank>=SALVAGE_YARD_RECIPE.steelBlank&&
     state.materials.alloyBillet>=SALVAGE_YARD_RECIPE.alloyBillet&&state.modules.hydraulicPower>=SALVAGE_YARD_RECIPE.hydraulicPower&&
     state.modules.heavyFrame>=SALVAGE_YARD_RECIPE.heavyFrame&&inv.control>=SALVAGE_YARD_RECIPE.control;
 }
 
 export function acquireSalvageYard(state:PackCState,inv:PackCInventory,z6Mastered:boolean):boolean{
   if(!canAcquireSalvageYard(state,inv,z6Mastered))return false;
-  inv.cash-=SALVAGE_YARD_CASH;inv.metal-=SALVAGE_YARD_RECIPE.metal;inv.cleanCopper-=SALVAGE_YARD_RECIPE.cleanCopper;inv.briquette-=SALVAGE_YARD_RECIPE.briquette;inv.steelBlank-=SALVAGE_YARD_RECIPE.steelBlank;inv.aluminiumBillet-=SALVAGE_YARD_RECIPE.aluminiumBillet;
+  inv.cash-=SALVAGE_YARD_CASH;inv.metal-=SALVAGE_YARD_RECIPE.metal;inv.cleanCopper-=SALVAGE_YARD_RECIPE.cleanCopper;inv.briquette-=SALVAGE_YARD_RECIPE.briquette;inv.steelBlank-=SALVAGE_YARD_RECIPE.steelBlank;
   state.materials.alloyBillet-=SALVAGE_YARD_RECIPE.alloyBillet;state.modules.hydraulicPower-=SALVAGE_YARD_RECIPE.hydraulicPower;state.modules.heavyFrame-=SALVAGE_YARD_RECIPE.heavyFrame;inv.control-=SALVAGE_YARD_RECIPE.control;
   state.salvageYardOwned=true;return true;
 }

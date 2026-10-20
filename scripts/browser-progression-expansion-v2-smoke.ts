@@ -3,6 +3,7 @@ import {spawn,type ChildProcess} from 'node:child_process';
 import {once} from 'node:events';
 import {fileURLToPath} from 'node:url';
 import {chromium} from 'playwright';
+import {openBaseSurface} from './base-shell-test-utils.ts';
 
 const PORT=41983,ORIGIN=`http://127.0.0.1:${PORT}`,SAVE_KEY='arcade-incremental-playable-v0-save-v2';
 const dist=fileURLToPath(new URL('../dist',import.meta.url)),viteBin=fileURLToPath(new URL('../node_modules/vite/bin/vite.js',import.meta.url));
@@ -12,47 +13,27 @@ async function stop(p:ChildProcess){if(p.exitCode!==null)return;p.kill('SIGTERM'
 
 const proc=server();await waitServer();const browser=await chromium.launch({headless:true});
 try{
-  const seedCtx=await browser.newContext({viewport:{width:1200,height:800}}),seed=await seedCtx.newPage();
-  await seed.goto(`${ORIGIN}/?seed=progression-v2-fixture`);await seed.waitForFunction(()=>(globalThis as any).__SALVAGE_TEST__?.getState()?.saveVersion===10);
-  await seed.evaluate(()=>(globalThis as any).__SALVAGE_PLATFORM__.forceSave());
-  const raw=await seed.evaluate(key=>localStorage.getItem(key),SAVE_KEY);assert.ok(raw);const base=JSON.parse(raw!);await seedCtx.close();
+  const seedCtx=await browser.newContext({viewport:{width:1200,height:800}}),seed=await seedCtx.newPage();await seed.goto(`${ORIGIN}/?seed=progression-v4-fixture`);await seed.waitForFunction(()=>(globalThis as any).__SALVAGE_TEST__?.getState()?.saveVersion===10);await seed.evaluate(()=>(globalThis as any).__SALVAGE_PLATFORM__.forceSave());const raw=await seed.evaluate(key=>localStorage.getItem(key),SAVE_KEY);assert.ok(raw);const base=JSON.parse(raw!);await seedCtx.close();
 
-  // Existing Save V9 keeps old unlocked node IDs and now resolves naturally to L14.
+  // Grandfathered late talent IDs from older saves remain valid even when their new gates are stricter.
   const legacy=structuredClone(base);legacy.xp=33_000;legacy.talents=['workshop_8','automation_8'];legacy.lastSeen=Date.now();
-  const legacyCtx=await browser.newContext({viewport:{width:1280,height:850},storageState:{cookies:[],origins:[{origin:ORIGIN,localStorage:[{name:SAVE_KEY,value:JSON.stringify(legacy)}]}]}}),legacyPage=await legacyCtx.newPage();
-  await legacyPage.goto(`${ORIGIN}/?seed=progression-v2-legacy`);await legacyPage.waitForFunction(()=>(globalThis as any).__SALVAGE_TEST__?.getState()?.level===14);
-  let state=await legacyPage.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.getState());
-  assert.equal(state.saveVersion,10);assert.ok(state.talents.includes('workshop_8'));assert.ok(state.talents.includes('automation_8'));
-  await legacyPage.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.openTalents());
-  await legacyPage.waitForSelector('#talentScreen:not([hidden])');
-  assert.match(await legacyPage.locator('[data-talent="salvage_8"]').innerText(),/Tier II/);
-  assert.match(await legacyPage.locator('[data-talent="salvage_8"]').innerText(),/Нужен фургон/,'Tier II must explain the missing business milestone');
-  await legacyPage.evaluate(()=>(globalThis as any).__SALVAGE_PLATFORM__.forceSave());await legacyPage.reload();await legacyPage.waitForFunction(()=>(globalThis as any).__SALVAGE_TEST__?.getState()?.level===14);
-  state=await legacyPage.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.getState());assert.ok(state.talents.includes('workshop_8')&&state.talents.includes('automation_8'),'grandfathered node IDs must survive V9 reload');
-  await legacyCtx.close();
+  const legacyCtx=await browser.newContext({viewport:{width:1280,height:850},storageState:{cookies:[],origins:[{origin:ORIGIN,localStorage:[{name:SAVE_KEY,value:JSON.stringify(legacy)}]}]}}),legacyPage=await legacyCtx.newPage();await legacyPage.goto(`${ORIGIN}/?seed=progression-v4-legacy`);await legacyPage.waitForFunction(()=>(globalThis as any).__SALVAGE_TEST__?.getState()?.saveVersion===10);let st=await legacyPage.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.getState());assert.equal(st.level,14);assert.ok(st.talents.includes('workshop_8'));assert.ok(st.talents.includes('automation_8'));await legacyPage.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.openTalents());await legacyPage.waitForSelector('#talentScreen:not([hidden])');assert.equal(await legacyPage.locator('.talentNode').count(),40);assert.equal(await legacyPage.locator('[data-talent="workshop_8"]').isDisabled(),true);assert.equal(await legacyPage.locator('[data-talent="automation_8"]').isDisabled(),true);await legacyPage.waitForSelector('#talentImpactV4');assert.match(await legacyPage.locator('[data-impact-branch="workshop"]').innerText(),/Тяжёлый цикл/);assert.match(await legacyPage.locator('[data-impact-branch="automation"]').innerText(),/Operator/);await legacyPage.evaluate(()=>(globalThis as any).__SALVAGE_PLATFORM__.forceSave());await legacyPage.reload();await legacyPage.waitForFunction(()=>(globalThis as any).__SALVAGE_TEST__?.getState()?.saveVersion===10);st=await legacyPage.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.getState());assert.ok(st.talents.includes('workshop_8')&&st.talents.includes('automation_8'));await legacyCtx.close();
 
-  // Mature fixture can buy real Tier-II roots. Van Packing changes actual HUD capacity; Trade Choice renders two offers.
-  const mature=structuredClone(base);mature.xp=125_000;mature.lastSeen=Date.now();mature.cash=2_000_000;mature.storage={metal:9999,copper:9999,plastic:9999};
-  mature.talents=['salvage_1','salvage_2','salvage_3','salvage_4','salvage_5','salvage_6','salvage_7','logistics_1','logistics_2','logistics_3','logistics_4','trade_1','trade_2','trade_3'];
-  mature.midgame.van.owned=true;mature.midgame.worker.hired=true;mature.midgame.worker.lastTick=Date.now();mature.contract={index:0,completed:0};
-  const ctx=await browser.newContext({viewport:{width:1440,height:900},storageState:{cookies:[],origins:[{origin:ORIGIN,localStorage:[{name:SAVE_KEY,value:JSON.stringify(mature)}]}]}}),page=await ctx.newPage(),errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
-  await page.goto(`${ORIGIN}/?seed=progression-v2-live`);await page.waitForFunction(()=>(globalThis as any).__SALVAGE_TEST__?.getState()?.level===30);
-  await page.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.openTalents());await page.waitForSelector('#talentScreen:not([hidden])');
-  assert.equal(await page.locator('[data-talent="logistics_8"]').isDisabled(),false);assert.equal(await page.locator('[data-talent="trade_8"]').isDisabled(),false);
-  await page.click('[data-talent="logistics_8"]');await page.click('[data-talent="trade_8"]');
-  state=await page.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.getState());assert.ok(state.talents.includes('logistics_8')&&state.talents.includes('trade_8'));
+  // Mature V4 fixture: buy final Logistics and Trade nodes after their full predecessor chains.
+  const mature=structuredClone(base);mature.xp=125_000;mature.lastSeen=Date.now();mature.cash=5_000_000;mature.storage={metal:9999,copper:9999,plastic:9999};mature.components={bearing:99,motor:99,hydraulic:99,electronics:99};mature.processed={briquette:9999,cleanCopper:9999,granulate:9999};mature.installed=['workbench','press','wire','plastic'];
+  mature.talents=['logistics_1','logistics_2','logistics_3','logistics_4','logistics_5','logistics_6','logistics_7','trade_1','trade_2','trade_3','trade_4','trade_5','trade_6','trade_7'];
+  mature.midgame.van.owned=true;mature.midgame.worker.hired=true;mature.midgame.worker.lastTick=Date.now();mature.midgame.mastery={...mature.midgame.mastery,z1:100,z2:100,z3:100,z4:100,z5:100,z6:100};mature.midgame.discoveredComponents=['bearing','motor','hydraulic','electronics'];mature.midgame.discoveredMidComponents=['pump','compressor'];mature.midgame.midComponents={pump:99,compressor:99};
+  mature.packB={...mature.packB,hangarOwned:true,materials:{...mature.packB.materials,steelBlank:999,aluminiumBillet:0},modules:{drive:99,control:99,structural:99},industrial:{gearbox:99,generator:99},discoveredIndustrial:['gearbox','generator']};mature.packC={...mature.packC,salvageYardOwned:true,materials:{alloyScrap:999,alloyBillet:999},modules:{hydraulicPower:99,heavyFrame:99},industrial:{industrialController:99,heavyHydraulicCylinder:99},discoveredIndustrial:['industrialController','heavyHydraulicCylinder']};mature.contract={index:0,completed:0};
+  const ctx=await browser.newContext({viewport:{width:1440,height:900},storageState:{cookies:[],origins:[{origin:ORIGIN,localStorage:[{name:SAVE_KEY,value:JSON.stringify(mature)}]}]}}),page=await ctx.newPage(),errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));await page.goto(`${ORIGIN}/?seed=progression-v4-live`);await page.waitForFunction(()=>(globalThis as any).__SALVAGE_TEST__?.getState()?.level===30);
+  const beforeContract=await page.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.getContractV3View());assert.equal(beforeContract.specials.length,2,'trade_6 should expose two special-order choices before the capstone');
+  await page.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.openTalents());await page.waitForSelector('#talentScreen:not([hidden])');await page.waitForSelector('#talentImpactV4');assert.equal(await page.locator('[data-talent="logistics_8"]').isDisabled(),false);assert.equal(await page.locator('[data-talent="trade_8"]').isDisabled(),false);
+  const logisticsBefore=await page.locator('[data-impact-branch="logistics"]').innerText(),tradeBefore=await page.locator('[data-impact-branch="trade"]').innerText();assert.match(logisticsBefore,/Фургон\s*400 кг/,'live impact must show the real pre-capstone Van capacity');assert.match(tradeBefore,/Спецзаказы\s*2/,'live impact must show the two-choice Trade state before capstone');
+  await page.click('[data-talent="logistics_8"]');await page.click('[data-talent="trade_8"]');st=await page.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.getState());assert.ok(st.talents.includes('logistics_8')&&st.talents.includes('trade_8'));
+  await page.waitForFunction(()=>document.querySelector('[data-impact-branch="logistics"]')?.textContent?.includes('550 кг'));await page.waitForFunction(()=>document.querySelector('[data-impact-branch="trade"]')?.textContent?.includes('Спецзаказы3'));
+  const logisticsAfter=await page.locator('[data-impact-branch="logistics"]').innerText(),tradeAfter=await page.locator('[data-impact-branch="trade"]').innerText();assert.match(logisticsAfter,/Фургон\s*550 кг/,'live impact must update immediately after Van Packing');assert.match(tradeAfter,/Спецзаказы\s*3/,'live impact must update immediately after Contract Choice capstone');
   await page.click('#talentsClose');await page.waitForSelector('#talentScreen',{state:'hidden'});
-  await page.waitForFunction(()=>document.querySelector('#vanText')?.textContent?.includes('/ 500 кг'));
-  assert.match(await page.locator('#vanText').innerText(),/500 кг/,'Van Packing must change real field-buffer capacity');
-
-  await page.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.forceGarage());await page.waitForSelector('#garageScreen:not([hidden])');
-  await page.waitForFunction(()=>document.querySelectorAll('#contractPanel [data-contract-offer]').length===2);
-  const offers=page.locator('#contractPanel [data-contract-offer]');assert.equal(await offers.count(),2);const names=await offers.locator('h2').allInnerTexts();assert.equal(new Set(names).size,2,'Contract Choice must present two distinct offers');
-  const before=Number((await page.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.getState().contract.completed))||0);
-  const secondButton=offers.nth(1).locator('[data-contract-submit]');assert.equal(await secondButton.isDisabled(),false);await secondButton.click();
-  await page.waitForFunction((n:number)=>(globalThis as any).__SALVAGE_TEST__.getState().contract.completed===n+1,before);
-  await page.evaluate(()=>(globalThis as any).__SALVAGE_PLATFORM__.forceSave());const persisted=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)!),SAVE_KEY);assert.ok(persisted.talents.includes('trade_8'));assert.ok(persisted.contract.recentIds?.length>0);
-  assert.deepEqual(errors,[],`Progression Expansion V2 browser proof must not throw: ${errors.join(' | ')}`);
-  await ctx.close();
-  console.log('Progression Expansion V2 level + milestone + Tier-II browser acceptance: PASS');
+  await page.waitForFunction(()=>document.querySelector('#vanText')?.textContent?.includes('/ 550 кг'));assert.match(await page.locator('#vanText').innerText(),/550 кг/,'Van Packing V4 must add 150kg to the real 400kg field buffer');
+  const afterContract=await page.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.getContractV3View());assert.equal(afterContract.specials.length,3,'trade_8 must expand Contract V3 special choices from two to three');
+  await page.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.forceGarage());await page.waitForSelector('#garageScreen:not([hidden])');await openBaseSurface(page,'contracts');assert.equal(await page.locator('.specialOrder').count(),3);await page.evaluate(()=>(globalThis as any).__SALVAGE_PLATFORM__.forceSave());const persisted=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)!),SAVE_KEY);assert.ok(persisted.talents.includes('logistics_8'));assert.ok(persisted.talents.includes('trade_8'));assert.deepEqual(errors,[]);await ctx.close();
+  console.log('Talent V4 live impact + milestone + Van/Contract V3 capstone browser acceptance: PASS');
 }finally{await browser.close();await stop(proc)}
