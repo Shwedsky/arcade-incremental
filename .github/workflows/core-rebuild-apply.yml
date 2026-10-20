@@ -21,7 +21,9 @@ jobs:
         with:
           node-version: 22
       - name: Apply guarded main runtime integration
-        run: node scripts/apply-core-runtime-v3.mjs
+        run: |
+          node scripts/apply-core-runtime-v3.mjs
+          node scripts/apply-core-runtime-v3-stage2.mjs
       - name: Commit generated runtime patch when needed
         run: |
           if git diff --quiet -- src/main.ts; then
@@ -31,5 +33,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add src/main.ts
-          git commit -m "feat: integrate workforce fleet v3 runtime"
+          git commit -m "feat: integrate core runtime v3 stage2"
           git push origin HEAD:feature/p0-p1-business-stage-base-shell-v1
