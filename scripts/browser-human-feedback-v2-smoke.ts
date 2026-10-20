@@ -3,6 +3,7 @@ import {spawn,type ChildProcess} from 'node:child_process';
 import {once} from 'node:events';
 import {fileURLToPath} from 'node:url';
 import {chromium} from 'playwright';
+import {openBaseSurface} from './base-shell-test-utils.ts';
 
 const PORT=41973,ORIGIN=`http://127.0.0.1:${PORT}`,PRODISH=`http://0.0.0.0:${PORT}`;
 const SAVE_KEY='arcade-incremental-playable-v0-save-v2';
@@ -34,7 +35,7 @@ try{
 
   assert.match((await page.locator('#garage').innerText()).trim(),/^На базу/,'field return button must be renamed to На базу');
   assert.equal(await page.locator('#hfDevToggle').count(),1,'local manual review must expose DEV panel');
-  await page.click('#garage');await page.waitForSelector('#garageScreen:not([hidden])');
+  await page.click('#garage');await page.waitForSelector('#garageScreen:not([hidden])');await openBaseSurface(page,'production');
 
   // Occupy the only workshop slot, then queue the workbench upgrade behind it.
   await page.click('[data-equipment-upgrade="tool"]');
@@ -43,13 +44,16 @@ try{
   await page.waitForFunction(()=>{
     const s=(globalThis as any).__SALVAGE_TEST__.getState();return s.scheduler.actions.some((a:any)=>a.kind==='equipment'&&a.status==='active')&&s.scheduler.actions.some((a:any)=>a.kind==='upgrade_machine'&&a.status==='waiting');
   });
+  await openBaseSurface(page,'storage');
   await page.waitForFunction(()=>document.querySelector('#storage [data-hf-slot="metal"] .hfReservationLine')?.textContent?.includes('40.0'));
   assert.match(await page.locator('#storage [data-hf-slot="metal"] strong').innerText(),/^25\.0 кг$/,'90 - active tool 25 - waiting bench reservation 40 = 25 available metal');
   assert.match(await page.locator('#storage [data-hf-slot="metal"] .hfReservationLine').innerText(),/В очереди: 40\.0 кг/);
+  await openBaseSurface(page,'contracts');
   assert.equal(await page.locator('#completeContract').isDisabled(),true,'30 kg contract must not spend metal reserved by waiting workshop action');
   assert.match(await page.locator('#completeContract').innerText(),/очеред/i);
 
   // Picker value must survive the garage's 1-second rerender and enqueue the requested count.
+  await openBaseSurface(page,'production');
   await page.click('[data-machine="press"]');await page.waitForSelector('#processBatchNumber');
   await page.locator('#processBatchNumber').fill('7');await page.locator('#processBatchNumber').dispatchEvent('input');
   await page.waitForTimeout(1400);
