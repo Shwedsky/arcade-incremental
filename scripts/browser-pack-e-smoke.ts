@@ -3,6 +3,7 @@ import {spawn} from 'node:child_process';
 import {once} from 'node:events';
 import {fileURLToPath} from 'node:url';
 import {chromium,type BrowserContext,type Page} from 'playwright';
+import {openBaseSurface} from './base-shell-test-utils.ts';
 
 const PORT=41982,ORIGIN=`http://127.0.0.1:${PORT}`,SAVE_KEY='arcade-incremental-playable-v0-save-v2';
 const viteBin=fileURLToPath(new URL('../node_modules/vite/bin/vite.js',import.meta.url));
@@ -49,15 +50,15 @@ try{
   // 2. Z8 is a real selectable frontier, but workers cannot enter it before personal mastery.
   const c2=await browser.newContext({viewport:{width:1360,height:860}});await withSave(c2,richSave());const p2=await c2.newPage();await p2.goto(`${ORIGIN}/?seed=packe-z8`);await p2.waitForFunction(()=>(globalThis as any).__SALVAGE_TEST__?.getState()?.saveVersion===10);if(await p2.locator('#offlineScreen').isVisible())await p2.click('#offlineClose');await p2.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.forceGarage());await p2.waitForSelector('#garageScreen:not([hidden])');
   await p2.click('#zonesGarage');await p2.waitForSelector('#zoneScreen:not([hidden])');const z8=p2.locator('[data-zone="z8"]');assert.match((await z8.innerText()),/Портовый терминал/);const z8Select=z8.locator('button');assert.equal(await z8Select.isDisabled(),false);await z8Select.click();s=await state(p2);assert.equal(s.midgame.currentZone,'z8');
-  const workerZ8=p2.locator('[data-worker4-zone="z8"]');assert.equal(await workerZ8.isDisabled(),true,'worker #4 must stay out until Z8 is personally mastered');
+  await openBaseSurface(p2,'crew');const workerZ8=p2.locator('[data-worker4-zone="z8"]');assert.equal(await workerZ8.isDisabled(),true,'worker #4 must stay out until Z8 is personally mastered');
   await c2.close();
 
   // 3. A personally mastered/signature-complete Z8 unlocks Plant, which consumes the mixed recipe and keeps discovery history.
   const mature=richSave({midgame:midgame(100,'z8'),packE:packE({portPowerAssemblies:1,portPowerDiscovered:true})});
   const c3=await browser.newContext({viewport:{width:1440,height:900}});await withSave(c3,mature);const p3=await c3.newPage();await p3.goto(`${ORIGIN}/?seed=packe-plant`);await p3.waitForFunction(()=>(globalThis as any).__SALVAGE_TEST__?.getState()?.saveVersion===10);if(await p3.locator('#offlineScreen').isVisible())await p3.click('#offlineClose');await p3.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.forceGarage());await p3.waitForSelector('#garageScreen:not([hidden])');
-  const workerZ8Ready=p3.locator('[data-worker4-zone="z8"]');assert.equal(await workerZ8Ready.isDisabled(),false,'mastered Z8 may be automated after the player finishes it');
-  const plantButton=p3.locator('#acquireProcessingPlant');assert.equal(await plantButton.isDisabled(),false);await plantButton.click();s=await state(p3);assert.equal(s.packE.processingPlantOwned,true);assert.equal(s.packE.plantLines,2);assert.equal(s.packE.portPowerAssemblies,0);assert.equal(s.packE.portPowerDiscovered,true,'consuming the signature must never erase discovery history');
-  assert.match((await p3.locator('#transportPanel').innerText()),/150.?000 кг/);assert.match((await p3.locator('#contractPanel').innerText()),/26 доступно/,'Plant ownership must expose the three late contract hooks');
+  await openBaseSurface(p3,'crew');const workerZ8Ready=p3.locator('[data-worker4-zone="z8"]');assert.equal(await workerZ8Ready.isDisabled(),false,'mastered Z8 may be automated after the player finishes it');
+  await openBaseSurface(p3,'logistics');const plantButton=p3.locator('#acquireProcessingPlant');assert.equal(await plantButton.isDisabled(),false);await plantButton.click();s=await state(p3);assert.equal(s.packE.processingPlantOwned,true);assert.equal(s.packE.plantLines,2);assert.equal(s.packE.portPowerAssemblies,0);assert.equal(s.packE.portPowerDiscovered,true,'consuming the signature must never erase discovery history');
+  await openBaseSurface(p3,'logistics');assert.match((await p3.locator('#transportPanel').innerText()),/150.?000 кг/);await openBaseSurface(p3,'contracts');assert.match((await p3.locator('#contractPanel').innerText()),/26 доступно/,'Plant ownership must expose the three late contract hooks');
 
   // 4. Plant owns exactly two concurrent lines; third start blocks and 300s produces 80 Alloy Billet total.
   const beforeStart=await state(p3),billetAfterPlant=beforeStart.packC.materials.alloyBillet,scrapBefore=beforeStart.packC.materials.alloyScrap;
