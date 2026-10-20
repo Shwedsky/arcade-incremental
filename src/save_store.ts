@@ -12,6 +12,18 @@ export const BACKUP_SUFFIX='.backup';
 export const TEMP_SUFFIX='.tmp';
 export const MAX_SAVE_BYTES=180_000;
 
+// Core-system rebuild state is intentionally additive to Save V10 while the old
+// pack fields remain as a compatibility bridge. Keeping extensions here prevents
+// the legacy main-state serializer from deleting a new domain on its next 10s save.
+export const SAVE_EXTENSION_KEYS=['workforceV3'] as const;
+export type SaveExtensionKey=typeof SAVE_EXTENSION_KEYS[number];
+const saveExtensionProviders=new Map<SaveExtensionKey,()=>unknown>();
+
+export function registerSaveExtension(key:SaveExtensionKey,provider:()=>unknown):()=>void{
+  saveExtensionProviders.set(key,provider);
+  return()=>{if(saveExtensionProviders.get(key)===provider)saveExtensionProviders.delete(key)};
+}
+
 export function parseGameSave(raw:string|null):Record<string,unknown>|null{
   if(!raw)return null;
   try{
@@ -45,14 +57,30 @@ export function readResilientSave(storage:StorageLike,key:string):SaveReadResult
   return{raw:null,source:'none',recovered:!!primary,reason:primary?'all_candidates_invalid':undefined};
 }
 
+function augmentSaveWithExtensions(storage:StorageLike,key:string,raw:string):string{
+  const next=parseGameSave(raw);if(!next)return raw;
+  const current=parseGameSave(storage.getItem(key));
+  for(const extensionKey of SAVE_EXTENSION_KEYS){
+    const provider=saveExtensionProviders.get(extensionKey);
+    if(provider){
+      try{next[extensionKey]=provider()}catch{}
+    }else if(next[extensionKey]===undefined&&current?.[extensionKey]!==undefined){
+      // Critical boot/migration safety: main.ts may save once before the V3
+      // runtime module has registered its provider. Preserve the existing domain.
+      next[extensionKey]=current[extensionKey];
+    }
+  }
+  return JSON.stringify(next);
+}
+
 export function writeResilientSave(storage:StorageLike,key:string,raw:string):{ok:boolean;bytes:number;reason?:string}{
-  const parsed=parseGameSave(raw);const bytes=new TextEncoder().encode(raw).byteLength;
+  const augmented=augmentSaveWithExtensions(storage,key,raw),parsed=parseGameSave(augmented),bytes=new TextEncoder().encode(augmented).byteLength;
   if(!parsed)return{ok:false,bytes,reason:bytes>MAX_SAVE_BYTES?'too_large':'invalid_save'};
   try{
     const current=storage.getItem(key);
     if(parseGameSave(current))storage.setItem(key+BACKUP_SUFFIX,current!);
-    storage.setItem(key+TEMP_SUFFIX,raw);
-    storage.setItem(key,raw);
+    storage.setItem(key+TEMP_SUFFIX,augmented);
+    storage.setItem(key,augmented);
     storage.removeItem(key+TEMP_SUFFIX);
     return{ok:true,bytes};
   }catch{return{ok:false,bytes,reason:'storage_write_failed'}}
