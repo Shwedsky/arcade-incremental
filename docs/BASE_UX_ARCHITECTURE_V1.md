@@ -25,11 +25,12 @@ Available surfaces are unlocked by business stage; the UI does not invent a new 
 - **Контракты** — current buyer/order surface;
 - **Развитие** — existing permanent talent tree.
 
-### Workforce surfaces
+### Growth surfaces
 
-Appear once Van or first worker exists:
-- **Персонал** — workers/roles/assignments;
-- **Логистика** — vehicles, routes and transport assets.
+- **Логистика** — appears in Equipped Garage, before the Van is owned, because this surface must contain the first transport acquisition and then grow into vehicles/routes;
+- **Персонал** — appears once the business enters the workforce stage and there is a real worker-management loop.
+
+A system's purchase/unlock entry point must never be hidden behind the stage that the purchase itself creates.
 
 ## Business-stage navigation
 
@@ -39,12 +40,14 @@ Appear once Van or first worker exists:
 Player meaning: personal workshop.
 
 ### Equipped Garage
-Same surfaces, but Overview communicates growing machine/storage pressure.
+`Обзор / Производство / Склад / Логистика / Контракты / Развитие`
 
-Player meaning: working recycling garage.
+Logistics first acts as the place where the player acquires the first Van and learns the transport layer.
+
+Player meaning: working recycling garage that is beginning to outgrow hand-cart-only logistics.
 
 ### Workforce Garage
-Adds `Персонал / Логистика`.
+Adds **Персонал** while retaining Logistics.
 
 Player meaning: first small employer and first passive supply route.
 
@@ -102,8 +105,9 @@ Business scale must reduce micro per unit:
 ## Acceptance
 
 Base Shell V1 passes when automated browser review proves:
-- Starter and Equipped Garage hide Crew/Logistics;
-- Workforce stage exposes Crew/Logistics;
+- Starter Garage hides Crew/Logistics;
+- Equipped Garage exposes Logistics while Crew remains hidden;
+- Workforce stage exposes Crew and Logistics;
 - Hangar and Plant derive the correct stage from owned infrastructure;
 - Production, Storage, Contracts and Development remain reachable;
 - existing element IDs remain in the document and interactive;
