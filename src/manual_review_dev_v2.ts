@@ -132,6 +132,17 @@ function plantReady(save:any){
   // Operator role. Keep the complete Automation chain through Dispatcher so the
   // review preset demonstrates a legal progression state instead of bypassing it.
   save.talents=Array.from(new Set([...(save.talents??[]),'automation_1','automation_2','automation_3','automation_4','automation_5','automation_6']));
+  // DEV_PLANT_READY_V3_CANONICAL: review state must not depend on legacy-slot migration.
+  const workforceNow=now();
+  save.workforceV3={version:3,nextWorkerSerial:4,nextVehicleSerial:4,nextRouteSerial:1,workers:[
+    {id:'worker-1',name:'Рабочий 1',rank:2,role:'scavenger',status:'idle',routeId:null,productionCellId:null,hiredAt:workforceNow},
+    {id:'worker-2',name:'Рабочий 2',rank:2,role:'scavenger',status:'idle',routeId:null,productionCellId:null,hiredAt:workforceNow},
+    {id:'worker-3',name:'Рабочий 3',rank:1,role:'scavenger',status:'idle',routeId:null,productionCellId:null,hiredAt:workforceNow}
+  ],fleet:[
+    {id:'vehicle-1',type:'van',name:'Фургон #1',capacityKg:400,routeId:null,acquiredAt:workforceNow},
+    {id:'vehicle-2',type:'truck',name:'Грузовик #1',capacityKg:1000,routeId:null,acquiredAt:workforceNow},
+    {id:'vehicle-3',type:'recovery_rig',name:'Recovery Rig #1',capacityKg:1800,routeId:null,acquiredAt:workforceNow}
+  ],routes:[],lastSimulatedAt:workforceNow};
   save.installed=['workbench','press','wire','plastic'];save.machineLevels={workbench:3,press:3,wire:2,plastic:2};save.equipmentLevels={tool:4,cart:4};
   const mid=ensureObject(save,'midgame');mid.currentZone='z8';mid.mastery={...(mid.mastery??{}),z1:100,z2:100,z3:100,z4:100,z5:100,z6:100,z7:100,z8:100};
   const packE=ensureObject(save,'packE');packE.portPowerAssemblies=Math.max(Number(packE.portPowerAssemblies??0),1);packE.portPowerDiscovered=true;packE.processingPlantOwned=false;packE.plantLines=0;packE.production=[];
@@ -139,7 +150,7 @@ function plantReady(save:any){
 
 function unlockAll(save:any){
   plantReady(save);save.cash=Math.max(Number(save.cash??0),10_000_000);save.xp=Math.max(Number(save.xp??0),XP_FOR_LEVEL[50]);save.talents=Array.from(new Set([...(save.talents??[]),...RUNTIME_TALENTS]));
-  save.machineLevels={workbench:6,press:6,wire:6,plastic:6};save.equipmentLevels={tool:10,cart:10};delete save.workforceV3;
+  save.machineLevels={workbench:6,press:6,wire:6,plastic:6};save.equipmentLevels={tool:10,cart:10};
   const packE=ensureObject(save,'packE');packE.processingPlantOwned=true;packE.plantLines=2;packE.production=[];
 }
 
