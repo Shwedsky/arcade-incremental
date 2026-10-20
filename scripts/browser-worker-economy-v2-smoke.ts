@@ -3,6 +3,7 @@ import {spawn,type ChildProcess} from 'node:child_process';
 import {once} from 'node:events';
 import {fileURLToPath} from 'node:url';
 import {chromium,type BrowserContext,type Page} from 'playwright';
+import {openBaseSurface} from './base-shell-test-utils.ts';
 
 const PORT=41975,ORIGIN=`http://127.0.0.1:${PORT}`;
 const SAVE_KEY='arcade-incremental-playable-v0-save-v2';
@@ -48,13 +49,13 @@ try{
   assert.equal(s.midgame.economyV2.medals.z1,false,'migration must not grant a free full-clear medal');
 
   // First worker: mastered Z1 + 35k is enough; Van is explicitly not a gate anymore.
-  await page.click('#garage');await page.waitForSelector('#garageScreen:not([hidden])');
+  await page.click('#garage');await page.waitForSelector('#garageScreen:not([hidden])');await openBaseSurface(page,'crew');
   await page.waitForSelector('#hireWorker');
   assert.equal(await page.locator('#hireWorker').isDisabled(),false,'first worker must be hireable without Van');
   assert.doesNotMatch(await page.locator('#workerPanel').innerText(),/Сначала нужен фургон/);
   await page.click('#hireWorker');
   await page.waitForFunction(()=>(globalThis as any).__SALVAGE_TEST__.getState().midgame.worker.hired===true);
-  await page.click('[data-worker-zone="z1"]');
+  await openBaseSurface(page,'crew');await page.click('[data-worker-zone="z1"]');
   await page.waitForFunction(()=>(globalThis as any).__SALVAGE_TEST__.getState().midgame.worker.assignment==='z1');
 
   // Take the canonical runtime save, mutate the fixture outside the live page, and start a fresh context.
@@ -72,7 +73,7 @@ try{
   assert.equal(s.midgame.worker.assignment,'z1','worker assignment must survive canonical Save V10 load');
   assert.equal(s.midgame.economyV2.benchmarks.z1?.destroyed,50,'benchmark must survive canonical Save V10 load');
   assert.ok(Number.isFinite(s.midgame.economyV2.shifts.w1.remainingOfflineMs));
-  await page.click('#garage');await page.waitForSelector('#garageScreen:not([hidden])');
+  await page.click('#garage');await page.waitForSelector('#garageScreen:not([hidden])');await openBaseSurface(page,'crew');
   await page.waitForFunction(()=>document.querySelector('#workerPanel')?.textContent?.includes('Benchmark: 50 целей'));
   assert.match(await page.locator('#workerPanel').innerText(),/Benchmark: 50 целей за 1\.5 мин/);
   await page.click('#dispatchWorkers');
@@ -84,7 +85,7 @@ try{
   await context.close();
   session=await contextWithSave(vanSave);context=session.context;page=session.page;errors=session.errors;
   await page.waitForFunction(()=>!(document.querySelector('#vanHud') as HTMLElement).hidden);
-  await page.click('#garage');await page.waitForSelector('#garageScreen:not([hidden])');
+  await page.click('#garage');await page.waitForSelector('#garageScreen:not([hidden])');await openBaseSurface(page,'crew');
   await page.click('#toggleWorkerVan');
   s=await state(page);assert.equal(s.midgame.economyV2.vanWorker,'w1');
   await page.click('#next');await page.waitForSelector('#garageScreen',{state:'hidden'});
