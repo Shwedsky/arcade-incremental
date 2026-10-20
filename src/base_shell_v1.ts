@@ -67,7 +67,6 @@ function activeQueueCount(state:RuntimeState):number{
 }
 
 function pane(surface:BaseSurfaceId){return document.querySelector<HTMLElement>(`[data-base-pane="${surface}"]`)}
-function navButton(surface:BaseSurfaceId){return document.querySelector<HTMLButtonElement>(`[data-base-surface="${surface}"]`)}
 
 function openSurface(surface:BaseSurfaceId){
   if(surface==='development'){
@@ -120,6 +119,16 @@ function renderOverview(state:RuntimeState,def:BusinessStageDef){
     <section class="baseStagePrinciple"><b>Активный фронтир остаётся главным.</b><span>Рабочие автоматизируют освоенное, но новые зоны, первое открытие и целевой дефицит по-прежнему выгоднее закрывать лично.</span></section>`;
 }
 
+function allowedSurfaces(def:BusinessStageDef,state:RuntimeState):Set<BaseSurfaceId>{
+  const allowed=new Set<BaseSurfaceId>(def.surfaces);
+  // Worker Economy V2 deliberately allows the first hire without Van or a second
+  // machine: mastered Z1 + 35k is the real gate. Preserve that rule even if the
+  // derived business stage is still Starter Garage.
+  const firstWorkerEntryReady=!!state.midgame?.worker?.hired||(Number(state.midgame?.mastery?.z1??0)>=100&&Number(state.cash??0)>=35_000);
+  if(firstWorkerEntryReady)allowed.add('crew');
+  return allowed;
+}
+
 function applyStage(def:BusinessStageDef,state:RuntimeState){
   const garage=document.querySelector<HTMLElement>('#garageScreen'),box=document.querySelector<HTMLElement>('.garageBox');if(!garage||!box)return;
   garage.dataset.businessStage=def.id;box.dataset.businessStage=def.id;
@@ -129,7 +138,7 @@ function applyStage(def:BusinessStageDef,state:RuntimeState){
   if(title)title.textContent=def.title;
   if(lead)lead.textContent=def.fantasy;
 
-  const allowed=new Set(def.surfaces);
+  const allowed=allowedSurfaces(def,state);
   document.querySelectorAll<HTMLButtonElement>('[data-base-surface]').forEach(button=>{
     const surface=button.dataset.baseSurface as BaseSurfaceId;
     button.hidden=!allowed.has(surface);
