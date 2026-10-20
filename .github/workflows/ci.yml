@@ -28,11 +28,15 @@ jobs:
         run: npm run smoke:workshop-migration
       - name: Queued resource reservation smoke
         run: npm run smoke:reservations
-      - name: Worker Economy V2 domain smoke
+      - name: Worker Economy V2 legacy domain smoke
         run: npm run smoke:worker-economy-v2
-      - name: Contract Board V2 domain smoke
+      - name: Workforce / Fleet V3 domain smoke
+        run: npm run smoke:workforce-fleet-v3
+      - name: Contract Board V2 legacy domain smoke
         run: npm run smoke:contract-board-v2
-      - name: Progression Expansion V2 domain smoke
+      - name: Contract Board V3 standing + special domain smoke
+        run: npm run smoke:contract-board-v3
+      - name: Talent V4 / extended progression domain smoke
         run: npm run smoke:progression-v2
       - name: Business Stage V1 domain smoke
         run: npm run smoke:business-stage
@@ -56,9 +60,9 @@ jobs:
         run: npm run smoke:platform
       - name: Legacy progression pacing proof
         run: python models/progression_sim_v0.py --check
-      - name: Progression Expansion V2 model proof
+      - name: Talent V4 progression model proof
         run: python models/progression_expansion_v2.py --check
-      - name: Economy / Progression Model V3 proof
+      - name: Economy / Progression V4-compatible proof
         run: python models/economy_progression_model_v3.py --check
       - name: Mid/Late mechanics structural proof
         run: python models/mid_late_mechanics_sim_v1.py --check
@@ -96,7 +100,7 @@ jobs:
         run: npm run smoke:browser:worker-economy-v2
       - name: Contract Board V2 staged pool + repetition browser proof
         run: npm run smoke:browser:contract-board-v2
-      - name: Progression Expansion V2 level + milestone + Tier-II browser proof
+      - name: Progression browser compatibility proof
         run: npm run smoke:browser:progression-v2
       - name: Platform and responsive browser proof
         run: npm run smoke:browser:platform
