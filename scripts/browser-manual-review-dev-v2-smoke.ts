@@ -20,6 +20,8 @@ try{
   await page.click('#hfDevToggle');await page.waitForSelector('#hfDevPanel:not([hidden])');
   assert.equal(await page.locator('[data-zone-dev="z8"]').count(),1,'DEV panel must expose Z8 preset');
   assert.equal(await page.locator('[data-dev="plantReady"]').count(),1,'DEV panel must expose Plant-ready preset');
+  assert.equal(await page.locator('[data-dev="queueFinish"]').count(),1,'DEV panel must replace +24h with deterministic finish-queue control');
+  assert.match(await page.locator('[data-dev="queueFinish"]').innerText(),/Завершить всю очередь/);
 
   const before=await page.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.getState());
   await Promise.all([page.waitForLoadState('load'),page.click('[data-dev="resources"]')]);
@@ -31,6 +33,34 @@ try{
   assert.ok(s.packB.materials.aluminiumScrap>=1200,'late Pack B materials must be granted');
   assert.ok(s.packC.materials.alloyBillet>=800,'late Pack C materials must be granted');
   assert.ok(s.packE.portPowerAssemblies>=3,'Pack E signature material must be granted');
+
+  // Reproduce the owner's broken review save exactly: old +24h advances the
+  // scheduler epoch into tomorrow, then a newly queued upgrade starts there.
+  await closeOffline(page);await page.click('#hfDevToggle');
+  await Promise.all([page.waitForLoadState('load'),page.click('[data-dev="level5"]')]);
+  await page.waitForFunction(()=>(globalThis as any).__SALVAGE_TEST__?.getState()?.level>=5);await closeOffline(page);
+  await page.evaluate(()=>{
+    (globalThis as any).__SALVAGE_TEST__.advanceWorkshopTo(Date.now()+24*3600_000);
+    (globalThis as any).__SALVAGE_PLATFORM__.forceSave();
+    (globalThis as any).__SALVAGE_TEST__.forceGarage();
+  });
+  await page.waitForSelector('#garageScreen:not([hidden])');await openBaseSurface(page,'production');
+  const toolBefore=(await page.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.getState().equipmentLevels.tool)) as number;
+  await page.click('[data-equipment-upgrade="tool"]');
+  await page.waitForFunction(()=>{
+    const state=(globalThis as any).__SALVAGE_TEST__.getState();
+    return state.scheduler.lastAdvancedAt>Date.now()+23*3600_000&&state.scheduler.actions.some((action:any)=>action.status==='active'&&action.current?.endsAt>Date.now()+23*3600_000);
+  });
+  s=await page.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.getState());
+  assert.ok(s.scheduler.lastAdvancedAt>Date.now()+23*3600_000,'fixture must prove the old +24h clock poisoning');
+  assert.equal(s.equipmentLevels.tool,toolBefore,'future-dated upgrade must still be unfinished before DEV repair');
+
+  await page.click('#hfDevToggle');await page.waitForSelector('#hfDevPanel:not([hidden])');
+  await Promise.all([page.waitForLoadState('load'),page.click('[data-dev="queueFinish"]')]);
+  await page.waitForFunction((level:number)=>(globalThis as any).__SALVAGE_TEST__?.getState()?.equipmentLevels?.tool===level+1,toolBefore);
+  s=await page.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.getState());
+  assert.equal(s.scheduler.actions.filter((action:any)=>action.status!=='completed'&&action.status!=='cancelled').length,0,'finish queue must consume every accepted workshop action');
+  assert.ok(s.scheduler.lastAdvancedAt<=Date.now()+5000,'finish queue must rebase scheduler clock to real time instead of leaving it +24h');
 
   await closeOffline(page);await page.click('#hfDevToggle');
   await Promise.all([page.waitForLoadState('load'),page.click('[data-zone-dev="z8"]')]);
@@ -49,6 +79,6 @@ try{
   await page.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.forceGarage());await page.waitForSelector('#garageScreen:not([hidden])');await openBaseSurface(page,'logistics');
   assert.equal(await page.locator('#acquireProcessingPlant').isDisabled(),false,'Plant-ready must actually make Plant purchasable');
 
-  console.log('Manual Review DEV V2 durable grants + Z8 + Plant-ready: PASS');
+  console.log('Manual Review DEV V2 durable grants + queue instant-finish/clock repair + Z8 + Plant-ready: PASS');
   await context.close();
 }finally{await browser.close();await stopServer()}
