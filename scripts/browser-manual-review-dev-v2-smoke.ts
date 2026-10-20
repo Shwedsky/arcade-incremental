@@ -3,6 +3,7 @@ import {spawn} from 'node:child_process';
 import {once} from 'node:events';
 import {fileURLToPath} from 'node:url';
 import {chromium} from 'playwright';
+import {openBaseSurface} from './base-shell-test-utils.ts';
 
 const PORT=41984,ORIGIN=`http://127.0.0.1:${PORT}`;
 const viteBin=fileURLToPath(new URL('../node_modules/vite/bin/vite.js',import.meta.url));
@@ -45,7 +46,7 @@ try{
   s=await page.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.getState());
   assert.equal(s.packD.crew4.hired,true,'Plant-ready must include worker #4');
   assert.equal(s.packE.portPowerDiscovered,true);assert.ok(s.packE.portPowerAssemblies>=1);
-  await page.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.forceGarage());await page.waitForSelector('#garageScreen:not([hidden])');
+  await page.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.forceGarage());await page.waitForSelector('#garageScreen:not([hidden])');await openBaseSurface(page,'logistics');
   assert.equal(await page.locator('#acquireProcessingPlant').isDisabled(),false,'Plant-ready must actually make Plant purchasable');
 
   console.log('Manual Review DEV V2 durable grants + Z8 + Plant-ready: PASS');
