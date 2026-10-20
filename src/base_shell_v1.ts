@@ -73,7 +73,7 @@ function openSurface(surface:BaseSurfaceId){
     document.querySelector<HTMLButtonElement>('#talentsGarage')?.click();
     return;
   }
-  const target=pane(surface);if(!target||target.hidden)return;
+  const target=pane(surface);if(!target||target.dataset.available==='false')return;
   activeSurface=surface;
   for(const id of PANE_SURFACES){const node=pane(id);if(node)node.hidden=id!==surface}
   document.querySelectorAll<HTMLButtonElement>('[data-base-surface]').forEach(button=>{
