@@ -71,7 +71,7 @@ try{
   const baselineJob=s.packE.production.at(-1);assert.ok(baselineJob,'baseline Plant job must start');
   const baselineDuration=baselineJob.endsAt-baselineJob.startedAt;
   await page.evaluate((at)=>(globalThis as any).__SALVAGE_TEST__.advancePlantTo(at),baselineJob.endsAt+1);
-  assert.equal(await page.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.assignGenericProduction(arguments[0],'plant_lines'),operatorWorkerId),true);
+  assert.equal(await page.evaluate((id)=>(globalThis as any).__SALVAGE_TEST__.assignGenericProduction(id,'plant_lines'),operatorWorkerId),true);
   s=await page.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.getState());
   const operatorWorker=s.workforceV3.workers.find((w:any)=>w.id===operatorWorkerId);
   assert.equal(operatorWorker.role,'operator');assert.equal(operatorWorker.status,'production');assert.equal(operatorWorker.productionCellId,'plant_lines');
