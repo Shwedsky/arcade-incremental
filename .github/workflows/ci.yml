@@ -80,6 +80,8 @@ jobs:
         run: npm run smoke:browser:workshop-queue
       - name: Manual review launch + feedback UX proof
         run: npm run smoke:browser:manual-review
+      - name: Manual Review DEV V2 durable preset proof
+        run: npm run smoke:browser:manual-review-dev-v2
       - name: Human Feedback V2 reservations + sticky batch + local DEV proof
         run: npm run smoke:browser:human-feedback-v2
       - name: Human Feedback V3 persistent discovery + Z2 world-space proof
@@ -109,7 +111,7 @@ jobs:
           cp review/README_REVIEW.txt "$REVIEW_DIR/README_REVIEW.txt"
           cp docs/MANUAL_TARGET_RUN_V1.md "$REVIEW_DIR/MANUAL_TARGET_RUN_V1.md"
           cp docs/CONTENT_PACK_E_V1_MODEL.md "$REVIEW_DIR/CONTENT_PACK_E_V1_MODEL.md"
-          printf 'Manual Review - Content Pack E V1\ncommit=%s\nrun=%s\nsave=V10\nseed=owner-review-v1\norigin=http://127.0.0.1:41971\nfeatures=z8-port-terminal,port-power-signature,processing-plant,plant-lines,plant-contracts,save-v10,level30,tier2-roots,worker-economy-v2\n' "$GITHUB_SHA" "$GITHUB_RUN_ID" > "$REVIEW_DIR/BUILD_INFO.txt"
+          printf 'Manual Review - Content Pack E V1\ncommit=%s\nrun=%s\nsave=V10\nseed=owner-review-v1\norigin=http://127.0.0.1:41971\nfeatures=z8-port-terminal,port-power-signature,processing-plant,plant-lines,plant-contracts,save-v10,level30,tier2-roots,worker-economy-v2,manual-review-dev-v2\n' "$GITHUB_SHA" "$GITHUB_RUN_ID" > "$REVIEW_DIR/BUILD_INFO.txt"
           zip -r "$REVIEW_ZIP" "$REVIEW_DIR"
           echo "REVIEW_ZIP=$REVIEW_ZIP" >> "$GITHUB_ENV"
       - uses: actions/upload-artifact@v4
