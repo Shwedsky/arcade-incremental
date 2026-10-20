@@ -1,0 +1,14 @@
+import fs from 'node:fs';
+const path='src/manual_review_dev_v2.ts';
+let source=fs.readFileSync(path,'utf8');
+if(source.includes('// DEV_PLANT_READY_V3_CANONICAL'))process.exit(0);
+const talentLine="  save.talents=Array.from(new Set([...(save.talents??[]),'automation_1','automation_2','automation_3','automation_4','automation_5','automation_6']));";
+if(!source.includes(talentLine))throw new Error('Plant-ready talent anchor not found');
+const canonical=`${talentLine}\n  // DEV_PLANT_READY_V3_CANONICAL: review state must not depend on legacy-slot migration.\n  const workforceNow=now();\n  save.workforceV3={version:3,nextWorkerSerial:4,nextVehicleSerial:4,nextRouteSerial:1,workers:[\n    {id:'worker-1',name:'Рабочий 1',rank:2,role:'scavenger',status:'idle',routeId:null,productionCellId:null,hiredAt:workforceNow},\n    {id:'worker-2',name:'Рабочий 2',rank:2,role:'scavenger',status:'idle',routeId:null,productionCellId:null,hiredAt:workforceNow},\n    {id:'worker-3',name:'Рабочий 3',rank:1,role:'scavenger',status:'idle',routeId:null,productionCellId:null,hiredAt:workforceNow}\n  ],fleet:[\n    {id:'vehicle-1',type:'van',name:'Фургон #1',capacityKg:400,routeId:null,acquiredAt:workforceNow},\n    {id:'vehicle-2',type:'truck',name:'Грузовик #1',capacityKg:1000,routeId:null,acquiredAt:workforceNow},\n    {id:'vehicle-3',type:'recovery_rig',name:'Recovery Rig #1',capacityKg:1800,routeId:null,acquiredAt:workforceNow}\n  ],routes:[],lastSimulatedAt:workforceNow};`;
+source=source.replace(talentLine,canonical);
+const unlockOld="  save.machineLevels={workbench:6,press:6,wire:6,plastic:6};save.equipmentLevels={tool:10,cart:10};delete save.workforceV3;";
+const unlockNew="  save.machineLevels={workbench:6,press:6,wire:6,plastic:6};save.equipmentLevels={tool:10,cart:10};";
+if(!source.includes(unlockOld))throw new Error('unlockAll workforce deletion anchor not found');
+source=source.replace(unlockOld,unlockNew);
+fs.writeFileSync(path,source);
+console.log('Applied canonical Workforce V3 Plant-ready DEV preset');
