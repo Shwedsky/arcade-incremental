@@ -42,10 +42,10 @@ replaceExact('src/manual_review_dev_v2.ts',
 "if(action==='reset'&&confirm('Начать review с нуля? Весь локальный прогресс этой сборки будет удалён.')){resetReviewSave();return}");
 
 // Owner pacing verdict: keep Z8 hardest, remove the late-game slog spike.
-replaceExact('src/content_pack_e.ts','  hpMultiplier:3.85,\n  yieldMultiplier:2.90,\n  masteryTarget:14_200,','  hpMultiplier:3.45,\n  yieldMultiplier:2.90,\n  masteryTarget:12_000,');
+replaceExact('src/content_pack_e.ts','  hpMultiplier:3.85,\n  yieldMultiplier:2.90,\n  masteryTarget:14_200,','  hpMultiplier:3.45,\n  yieldMultiplier:2.90,\n  masteryTarget:12_400,');
 replaceExact('scripts/content-pack-e-smoke.ts','assert.equal(PACK_E_ZONE_PROFILE.hpMultiplier,3.85);','assert.equal(PACK_E_ZONE_PROFILE.hpMultiplier,3.45);');
-replaceExact('scripts/content-pack-e-smoke.ts','assert.equal(PACK_E_ZONE_PROFILE.masteryTarget,14_200);','assert.equal(PACK_E_ZONE_PROFILE.masteryTarget,12_000);');
-replaceExact('models/content_pack_e_v1.py','Z8 = {"hp": 3.85, "yield": 2.90, "mastery": 14_200, "large_share": .60, "target_hours": 5.0}','Z8 = {"hp": 3.45, "yield": 2.90, "mastery": 12_000, "large_share": .60, "target_hours": 4.6}');
+replaceExact('scripts/content-pack-e-smoke.ts','assert.equal(PACK_E_ZONE_PROFILE.masteryTarget,14_200);','assert.equal(PACK_E_ZONE_PROFILE.masteryTarget,12_400);');
+replaceExact('models/content_pack_e_v1.py','Z8 = {"hp": 3.85, "yield": 2.90, "mastery": 14_200, "large_share": .60, "target_hours": 5.0}','Z8 = {"hp": 3.45, "yield": 2.90, "mastery": 12_400, "large_share": .60, "target_hours": 4.6}');
 replaceExact('models/content_pack_e_v1.py','    assert 1.10 <= Z8["hp"] / Z7["hp"] <= 1.25','    assert 1.05 <= Z8["hp"] / Z7["hp"] <= 1.15');
 replaceExact('models/content_pack_e_v1.py','    assert Z8["target_hours"] == 5.0','    assert Z8["target_hours"] == 4.6');
 replaceExact('models/mid_late_mechanics_sim_v1.py','    ("Z8","Port Terminal",1905.0,0.90,180,5.0),','    ("Z8","Port Terminal",1905.0,0.96,180,4.6),');
