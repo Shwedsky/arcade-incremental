@@ -24,9 +24,11 @@ try{
   const openFixture=async(fixture:any,seed:string)=>{
     const context=await browser.newContext({viewport:{width:1440,height:900},storageState:{cookies:[],origins:[{origin:ORIGIN,localStorage:[{name:SAVE_KEY,value:JSON.stringify(fixture)}]}]}}),page=await context.newPage();
     await page.goto(`${ORIGIN}/?seed=${seed}`);
-    await page.waitForFunction(()=>(globalThis as any).__SALVAGE_BASE_SHELL__?.getStage());
+    await page.waitForFunction(()=>(globalThis as any).__SALVAGE_TEST__?.getState()?.saveVersion===10);
     await page.click('#garage');await page.waitForSelector('#garageScreen:not([hidden])');
     await page.waitForSelector('#baseShellNav');
+    await page.evaluate(()=>(globalThis as any).__SALVAGE_BASE_SHELL__?.refresh?.());
+    await page.waitForFunction(()=>(globalThis as any).__SALVAGE_BASE_SHELL__?.getStage?.()!=null);
     return{context,page};
   };
 
@@ -43,7 +45,7 @@ try{
   await a.context.close();
 
   const equipped=structuredClone(starter);equipped.installed=['workbench','press'];equipped.machineLevels={workbench:1,press:1};
-  const b=await openFixture(equipped,'base-shell-equipped');assert.equal(await b.page.evaluate(()=>(globalThis as any).__SALVAGE_BASE_SHELL__.getStage()),'equipped_garage');assert.match(await b.page.locator('#baseStageTitle').innerText(),/Рабочий гараж/);assert.equal(await b.page.locator('[data-base-surface="logistics"]').isVisible(),true,'Logistics must be reachable before first Van purchase');assert.equal(await b.page.locator('[data-base-surface="crew"]').isHidden(),true);await b.page.click('[data-base-surface="logistics"]');assert.equal(await b.page.locator('#transportPanel').isVisible(),true);await b.context.close();
+  const b=await openFixture(equipped,'base-shell-equipped');assert.equal(await b.page.evaluate(()=>(globalThis as any).__SALVAGE_BASE_SHELL__.getStage()),'equipped_garage');assert.match(await b.page.locator('#baseStageTitle').innerText(),/Рабочий гараж/);assert.equal(await b.page.locator('[data-base-surface="logistics"]').isVisible(),true,'Logistics must be reachable before first Van purchase');assert.equal(await b.page.locator('[data-base-surface="crew"]').isVisible(),true,'Crew must be reachable before first worker hire');await b.page.click('[data-base-surface="logistics"]');assert.equal(await b.page.locator('#transportPanel').isVisible(),true);await b.page.click('[data-base-surface="crew"]');assert.equal(await b.page.locator('#workerPanel').isVisible(),true);await b.context.close();
 
   const workforce=structuredClone(equipped);workforce.midgame.van={...workforce.midgame.van,owned:true};workforce.midgame.worker={...workforce.midgame.worker,hired:true,assignment:'z1',lastTick:Date.now()};
   const c=await openFixture(workforce,'base-shell-workforce');assert.equal(await c.page.evaluate(()=>(globalThis as any).__SALVAGE_BASE_SHELL__.getStage()),'workforce_garage');assert.equal(await c.page.locator('[data-base-surface="crew"]').isVisible(),true);assert.equal(await c.page.locator('[data-base-surface="logistics"]').isVisible(),true);await c.page.click('[data-base-surface="crew"]');assert.equal(await c.page.locator('#workerPanel').isVisible(),true);await c.page.click('[data-base-surface="logistics"]');assert.equal(await c.page.locator('#transportPanel').isVisible(),true);await c.context.close();
