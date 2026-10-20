@@ -61,12 +61,24 @@ try{
   await page.click('#talentsClose');
 
   // OWNER REQUEST: a 100%-mastered zone must stay alive while the cart has room,
-  // even without the old full-clear medal requirement.
+  // even without the old full-clear medal requirement. Walk the actual character
+  // until real combat breaks one object; then prove that the mastered-zone runtime
+  // replenishes that deficit. This avoids a fake test-only destroy shortcut.
   await page.evaluate((key)=>{(globalThis as any).__SALVAGE_PLATFORM__.forceSave();const raw=localStorage.getItem(key);if(!raw)throw new Error('save missing');const save=JSON.parse(raw);save.midgame.currentZone='z1';save.midgame.mastery={...save.midgame.mastery,z1:100};save.midgame.economyV2={...save.midgame.economyV2,medals:{...(save.midgame.economyV2?.medals??{}),z1:false}};save.lastSeen=Date.now();localStorage.setItem(key,JSON.stringify(save))},SAVE_KEY);
   await page.reload();await waitGame(page);await page.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.selectZone('z1'));await page.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.forceGarage());await page.click('#next');
   await page.waitForFunction(()=>(globalThis as any).__SALVAGE_TEST__.getState().alive>20);const initialAlive=(await state(page)).alive;
-  const respawnProof=await page.waitForFunction((initial)=>{const api=(globalThis as any).__SALVAGE_TEST__,before=api.getState().alive;if(before>=initial)return false;api.forceRespawnTick();const after=api.getState().alive;return after>before?{before,after}:false},initialAlive,{timeout:12_000});
-  const respawn=await respawnProof.jsonValue() as any;assert.ok(respawn.after>respawn.before,'100% mastered zone must replenish destroyed objects while cart has room');
+  let sawRealBreak=false;
+  for(const key of ['d','s','a','w','d','s']){
+    await page.keyboard.down(key);
+    try{await page.waitForFunction((initial)=>(globalThis as any).__SALVAGE_TEST__.getState().alive<initial,initialAlive,{timeout:2200});sawRealBreak=true}catch{}
+    finally{await page.keyboard.up(key)}
+    if(sawRealBreak)break;
+  }
+  assert.equal(sawRealBreak,true,'real movement/combat on mastered Z1 must be able to destroy salvage');
+  const aliveAfterBreak=(await state(page)).alive;assert.ok(aliveAfterBreak<initialAlive,'test needs a real field deficit before checking respawn');
+  await page.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.forceRespawnTick());
+  await page.waitForFunction((before)=>(globalThis as any).__SALVAGE_TEST__.getState().alive>before,aliveAfterBreak,{timeout:2500});
+  const aliveAfterRespawn=(await state(page)).alive;assert.ok(aliveAfterRespawn>aliveAfterBreak,'100% mastered zone must replenish destroyed objects while cart has room');
 
   // OWNER REQUEST: full DEV reset must be obvious and really start progression over.
   await page.click('#garage');await page.waitForSelector('#garageScreen:not([hidden])');await page.click('#hfDevToggle');await page.waitForSelector('#hfDevPanel:not([hidden])');
