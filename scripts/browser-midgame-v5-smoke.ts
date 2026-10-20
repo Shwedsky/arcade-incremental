@@ -42,10 +42,10 @@ try{
   await p2.click('#zonesGarage');await p2.waitForSelector('#zoneScreen:not([hidden])');const z3=p2.locator('[data-zone="z3"] button');assert.equal(await z3.isDisabled(),false);await z3.click();
   await p2.waitForSelector('#zoneScreen',{state:'hidden'});assert.equal((await state(p2)).midgame.currentZone,'z3');
   await openBaseSurface(p2,'logistics');const buyVan=p2.locator('#buyVan');assert.equal(await buyVan.isDisabled(),false);await buyVan.click();let s2=await state(p2);assert.equal(s2.midgame.van.owned,true);assert.ok(s2.cash<120000);
-  await openBaseSurface(p2,'crew');const hire=p2.locator('#hireWorker');assert.equal(await hire.isDisabled(),false);await hire.click();s2=await state(p2);assert.equal(s2.midgame.worker.hired,true);assert.equal(s2.workforceV3.workers.length,1,'first legacy-compatible hire must create generic roster worker');
+  await openBaseSurface(p2,'crew');await p2.waitForSelector('#workforceV3Root');const hire=p2.locator('[data-v3-hire]');assert.equal(await hire.count(),1);assert.equal(await hire.isDisabled(),false);await hire.click();await p2.waitForFunction(()=>(globalThis as any).__SALVAGE_TEST__.getState().workforceV3.workers.length===1);s2=await state(p2);assert.equal(s2.midgame.worker.hired,true,'generic first hire must maintain the Save V10 compatibility mirror');assert.equal(s2.workforceV3.workers.length,1,'first hire must create one generic roster worker');
   const workerId=s2.workforceV3.workers[0].id;
   const route=await p2.evaluate((id)=>(globalThis as any).__SALVAGE_TEST__.assignGenericRoute(id,'z1',null),workerId);assert.equal(route.zone,'z1');s2=await state(p2);assert.equal(s2.workforceV3.routes.find((r:any)=>r.workerIds.includes(workerId))?.zone,'z1');
-  await p2.reload();await p2.waitForSelector('#garage');s2=await state(p2);assert.equal(s2.saveVersion,10);assert.equal(s2.midgame.van.owned,true);assert.equal(s2.workforceV3.routes.find((r:any)=>r.workerIds.includes(workerId))?.zone,'z1','generic route must persist through reload');await c2.close();
+  await p2.reload();await p2.waitForSelector('#garage');s2=await state(p2);assert.equal(s2.saveVersion,10);assert.equal(s2.midgame.van.owned,true);assert.equal(s2.midgame.worker.hired,true);assert.equal(s2.workforceV3.routes.find((r:any)=>r.workerIds.includes(workerId))?.zone,'z1','generic route must persist through reload');await c2.close();
 
   // Legacy saves with a worker assignment still migrate into a real generic route,
   // so old offline progress remains valid without keeping the old route UI alive.
@@ -53,5 +53,5 @@ try{
   await withSave(c3,baseSave({storage:{metal:0,copper:0,plastic:0},components:{bearing:0,motor:0,hydraulic:0,electronics:0},midgame:mid3,lastSeen:now-2*3600000}));
   const p3=await c3.newPage();await p3.goto(`${ORIGIN}/?seed=mid-v9-worker`);await p3.waitForFunction(()=>(globalThis as any).__SALVAGE_TEST__?.getState().storage.metal>0);const s3=await state(p3);assert.ok(s3.storage.metal>100);assert.equal(s3.midgame.mastery.z1,100);assert.equal(s3.midgame.mastery.z2,0);assert.equal(s3.workforceV3.routes[0]?.zone,'z1','legacy assigned worker must migrate to Workforce V3 route');await c3.close();
 
-  console.log('browser midgame Save V9 regression / Workforce V3 routes: PASS');
+  console.log('browser midgame Save V10 regression / generic Crew hire + Workforce V3 routes: PASS');
 }finally{await browser.close();await stopServer()}
