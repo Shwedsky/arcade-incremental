@@ -25,6 +25,7 @@ try{
     const context=await browser.newContext({viewport:{width:1440,height:900},storageState:{cookies:[],origins:[{origin:ORIGIN,localStorage:[{name:SAVE_KEY,value:JSON.stringify(fixture)}]}]}}),page=await context.newPage();
     await page.goto(`${ORIGIN}/?seed=${seed}`);
     await page.waitForFunction(()=>(globalThis as any).__SALVAGE_TEST__?.getState()?.saveVersion===10);
+    const offline=page.locator('#offlineScreen');if(await offline.isVisible())await page.click('#offlineClose');
     await page.click('#garage');await page.waitForSelector('#garageScreen:not([hidden])');
     await page.waitForSelector('#baseShellNav');
     await page.evaluate(()=>(globalThis as any).__SALVAGE_BASE_SHELL__?.refresh?.());
