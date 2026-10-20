@@ -47,13 +47,14 @@ assert.equal(assignThirdWorkerScavenger(state,'z4',true,1_000),true);
 const scav=simulateThirdWorker(state,economy,['bearing','motor'],3_601_000,false);assert.ok(scav.resources.metal>0);
 const normalDuration=productionDurationSec(state,'alloyBillet');
 assert.equal(assignThirdWorkerOperator(state,4_000_000),true);
-assert.equal(simulateThirdWorker(state,economy,['bearing','motor'],5_000_000,false).resources.metal,0,'Operator cannot scavenge simultaneously');
-const operatorDuration=productionDurationSec(state,'alloyBillet');assert.equal(operatorDuration,normalDuration*.75);
+assert.equal(simulateThirdWorker(state,economy,['bearing','motor'],5_000_000,false).resources.metal,0,'legacy Operator cannot scavenge simultaneously');
+const legacyOperatorDuration=productionDurationSec(state,'alloyBillet');
+assert.equal(legacyOperatorDuration,normalDuration,'legacy Pack C worker role must not own production speed; Workforce V3 runtime applies the real Operator factor');
 
 state.materials.alloyScrap=25;
 assert.equal(startPackCProduction(state,'alloyBillet',inv,10_000),true);
 assert.ok(state.production);assert.equal(advancePackCProduction(state,state.production!.endsAt-1),undefined);
 assert.equal(advancePackCProduction(state,state.production!.endsAt),'alloyBillet');assert.ok(state.materials.alloyBillet>=18);
 
-console.log(JSON.stringify({zones:Object.values(PACK_C_ZONE_PROFILES).map(z=>({id:z.id,hp:z.hpMultiplier,yield:z.yieldMultiplier,mastery:z.masteryTarget})),controllerPity:12,cylinderPity:10,alloyBatch:'25 -> 18',operatorCycleMultiplier:.75,thirdWorker:true,salvageYard:true},null,2));
-console.log('Content Pack C domain smoke: PASS');
+console.log(JSON.stringify({zones:Object.values(PACK_C_ZONE_PROFILES).map(z=>({id:z.id,hp:z.hpMultiplier,yield:z.yieldMultiplier,mastery:z.masteryTarget})),controllerPity:12,cylinderPity:10,alloyBatch:'25 -> 18',legacyOperatorOwnsProductionSpeed:false,thirdWorker:true,salvageYard:true},null,2));
+console.log('Content Pack C domain smoke / generic Operator ownership: PASS');
