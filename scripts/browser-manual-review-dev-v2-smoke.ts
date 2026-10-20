@@ -9,7 +9,7 @@ const PORT=41984,ORIGIN=`http://127.0.0.1:${PORT}`;
 const viteBin=fileURLToPath(new URL('../node_modules/vite/bin/vite.js',import.meta.url));
 const server=spawn(process.execPath,[viteBin,'preview','--host','127.0.0.1','--port',String(PORT),'--strictPort'],{stdio:['ignore','pipe','pipe']});
 let output='';server.stdout.on('data',b=>output+=String(b));server.stderr.on('data',b=>output+=String(b));
-async function waitServer(){for(let i=0;i<80;i++){try{const r=await fetch(ORIGIN);if(r.ok)return}catch{}await new Promise(r=>setTimeout(r,125))}throw new Error(`server did not start\n${output}`)}
+async function waitServer(){for(let i=0;i<80;i++){try{const r=await fetch(ORIGIN);if(r.ok)return}catch{}await new Promise(r=>setTimeout(r,125))}throw new Error(`preview server did not start\n${output}`)}
 async function stopServer(){if(server.exitCode!==null)return;server.kill('SIGTERM');await Promise.race([once(server,'exit'),new Promise(r=>setTimeout(r,1500))]);if(server.exitCode===null)server.kill('SIGKILL')}
 async function closeOffline(page:any){if(await page.locator('#offlineScreen').isVisible())await page.click('#offlineClose')}
 
@@ -34,8 +34,10 @@ try{
   assert.ok(s.packC.materials.alloyBillet>=800,'late Pack C materials must be granted');
   assert.ok(s.packE.portPowerAssemblies>=3,'Pack E signature material must be granted');
 
-  // Reproduce the owner's broken review save exactly: old +24h advances the
-  // scheduler epoch into tomorrow, then a newly queued upgrade starts there.
+  // Reproduce the owner's broken review session: the legacy +24h action moves
+  // the in-memory scheduler cursor into tomorrow. A new upgrade then receives
+  // a future current.endsAt even though getState() defensively masks the raw
+  // future lastAdvancedAt value.
   await closeOffline(page);await page.click('#hfDevToggle');
   await Promise.all([page.waitForLoadState('load'),page.click('[data-dev="level5"]')]);
   await page.waitForFunction(()=>(globalThis as any).__SALVAGE_TEST__?.getState()?.level>=5);await closeOffline(page);
@@ -49,10 +51,11 @@ try{
   await page.click('[data-equipment-upgrade="tool"]');
   await page.waitForFunction(()=>{
     const state=(globalThis as any).__SALVAGE_TEST__.getState();
-    return state.scheduler.lastAdvancedAt>Date.now()+23*3600_000&&state.scheduler.actions.some((action:any)=>action.status==='active'&&action.current?.endsAt>Date.now()+23*3600_000);
+    return state.scheduler.actions.some((action:any)=>action.status==='active'&&action.current?.endsAt>Date.now()+23*3600_000);
   });
   s=await page.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.getState());
-  assert.ok(s.scheduler.lastAdvancedAt>Date.now()+23*3600_000,'fixture must prove the old +24h clock poisoning');
+  const poisoned=s.scheduler.actions.find((action:any)=>action.status==='active');
+  assert.ok(poisoned?.current?.endsAt>Date.now()+23*3600_000,'fixture must prove a newly queued upgrade is future-dated after legacy +24h');
   assert.equal(s.equipmentLevels.tool,toolBefore,'future-dated upgrade must still be unfinished before DEV repair');
 
   await page.click('#hfDevToggle');await page.waitForSelector('#hfDevPanel:not([hidden])');
@@ -60,7 +63,7 @@ try{
   await page.waitForFunction((level:number)=>(globalThis as any).__SALVAGE_TEST__?.getState()?.equipmentLevels?.tool===level+1,toolBefore);
   s=await page.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.getState());
   assert.equal(s.scheduler.actions.filter((action:any)=>action.status!=='completed'&&action.status!=='cancelled').length,0,'finish queue must consume every accepted workshop action');
-  assert.ok(s.scheduler.lastAdvancedAt<=Date.now()+5000,'finish queue must rebase scheduler clock to real time instead of leaving it +24h');
+  assert.ok(s.scheduler.lastAdvancedAt<=Date.now()+5000,'finish queue reload must restore scheduler clock to real time');
 
   await closeOffline(page);await page.click('#hfDevToggle');
   await Promise.all([page.waitForLoadState('load'),page.click('[data-zone-dev="z8"]')]);
