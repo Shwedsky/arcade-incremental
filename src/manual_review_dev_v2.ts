@@ -182,7 +182,8 @@ function finishWorkshopQueue(){
     // normal accepted/reserved queue semantics the large deterministic advance
     // above removes every terminal action before this point.
     if(action?.current&&Number(action.current.startedAt)>t){
-      const duration=Math.max(1,Number(action?.durationMs??(action.current.endsAt-action.current.startedAt)??1));
+      const fallbackDuration=Number(action.current.endsAt)-Number(action.current.startedAt);
+      const duration=Math.max(1,Number(action?.durationMs??fallbackDuration));
       action.current={startedAt:t,endsAt:t+duration};
     }
   }
