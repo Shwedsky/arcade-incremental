@@ -82,7 +82,7 @@ try{
   const operatorJob=s.packE.production.at(-1);assert.ok(operatorJob,'Operator Plant job must start');
   const operatorDuration=operatorJob.endsAt-operatorJob.startedAt;
   assert.ok(operatorDuration<baselineDuration*.9,`Operator must shorten a real Plant cycle: ${operatorDuration} vs ${baselineDuration}`);
-  await openBaseSurface(page,'crew');await page.waitForFunction((id)=>document.querySelector(`[data-worker-card="${id}"] .v3OperatorBlock`)?.textContent?.includes('Линии Processing Plant'),operatorWorkerId);
+  await openBaseSurface(page,'crew');await page.waitForFunction((id)=>document.querySelector(`[data-worker-card="${id}"] .v3OperatorBlock`)?.textContent?.includes('Работает: Линии Processing Plant'),operatorWorkerId);
   const operatorText=await page.locator(`[data-worker-card="${operatorWorkerId}"] .v3OperatorBlock`).innerText();assert.match(operatorText,/Работает: Линии Processing Plant/);assert.match(operatorText,/% быстрее/);
 
   // Standing buyer: partial 10kg delivery persists instead of rotating contract away.
