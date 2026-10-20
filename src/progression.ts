@@ -102,8 +102,6 @@ export const TALENTS: TalentDef[] = [
 
 export const TALENT_BY_ID = new Map(TALENTS.map((talent) => [talent.id, talent]));
 
-// Levels 1-30 preserve the shipped curve. 31-50 extend progression instead of
-// permanently locking half of the tree behind an arbitrary level-30 ceiling.
 export const LEVEL_XP = [
   0,120,420,1800,3200,5200,7800,11000,15000,20000,
   23000,26000,29500,33000,37000,41000,45500,50000,55000,60000,
