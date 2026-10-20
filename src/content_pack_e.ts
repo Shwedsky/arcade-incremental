@@ -42,7 +42,7 @@ export interface ProcessingPlantContext{
   z8Mastered:boolean;
   industrialWorkshopOwned:boolean;
   recoveryRigOwned:boolean;
-  worker4Hired:boolean;
+  staffingReady:boolean;
 }
 
 export interface PackEInventory{
@@ -165,7 +165,7 @@ export function rollZ8IndustrialComponent(discovered:ReadonlyArray<PackEAdvanced
 
 export function canAcquireProcessingPlant(state:PackEState,inv:PackEInventory,ctx:ProcessingPlantContext):boolean{
   const r=PROCESSING_PLANT_RECIPE;
-  return !state.processingPlantOwned&&ctx.industrialWorkshopOwned&&ctx.recoveryRigOwned&&ctx.z8Mastered&&ctx.worker4Hired&&
+  return !state.processingPlantOwned&&ctx.industrialWorkshopOwned&&ctx.recoveryRigOwned&&ctx.z8Mastered&&ctx.staffingReady&&
     inv.cash>=PROCESSING_PLANT_CASH&&inv.metal>=r.metal&&inv.cleanCopper>=r.cleanCopper&&inv.granulate>=r.granulate&&
     inv.steelBlank>=r.steelBlank&&inv.alloyBillet>=r.alloyBillet&&
     inv.drive>=r.drive&&inv.control>=r.control&&inv.hydraulicPower>=r.hydraulicPower&&inv.heavyFrame>=r.heavyFrame&&
