@@ -19,7 +19,7 @@ assert.equal(deriveBusinessStage(withSignals({industrialWorkshopOwned:true,salva
 
 assert.deepEqual(BUSINESS_STAGES.starter_garage.surfaces,['overview','production','storage','contracts','development']);
 assert.ok(BUSINESS_STAGES.equipped_garage.surfaces.includes('logistics'),'Logistics must appear before Van purchase so the player can buy the first vehicle');
-assert.equal(BUSINESS_STAGES.equipped_garage.surfaces.includes('crew'),false,'Crew remains hidden before workforce begins');
+assert.ok(BUSINESS_STAGES.equipped_garage.surfaces.includes('crew'),'Crew must appear before first hire so the player can recruit the first worker');
 assert.ok(BUSINESS_STAGES.workforce_garage.surfaces.includes('crew'));
 assert.ok(BUSINESS_STAGES.workforce_garage.surfaces.includes('logistics'));
 assert.equal(businessStage(withSignals({hangarOwned:true})).nextMilestone,'Развернуть Salvage Yard');
