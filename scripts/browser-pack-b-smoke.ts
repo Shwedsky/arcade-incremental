@@ -3,6 +3,7 @@ import { spawn } from 'node:child_process';
 import { once } from 'node:events';
 import { fileURLToPath } from 'node:url';
 import { chromium, type BrowserContext, type Page } from 'playwright';
+import {openBaseSurface} from './base-shell-test-utils.ts';
 
 const PORT=4176;
 const ORIGIN=`http://127.0.0.1:${PORT}`;
@@ -44,9 +45,9 @@ try{
   const c2=await browser.newContext();await withSave(c2,baseV5());const p2=await c2.newPage();await p2.goto(`${ORIGIN}/?seed=packb-main`);await p2.waitForSelector('#garage');
   await p2.click('#garage');await p2.waitForSelector('#garageScreen:not([hidden])');
   await p2.click('#zonesGarage');await p2.waitForSelector('#zoneScreen:not([hidden])');assert.equal(await p2.locator('[data-zone="z4"]').count(),1);assert.equal(await p2.locator('[data-zone="z4"] button').isDisabled(),false);await p2.click('#zoneClose');
-  const hangar=p2.locator('#acquireHangar');assert.equal(await hangar.isDisabled(),false);await hangar.click();let s2=await state(p2);assert.equal(s2.packB.hangarOwned,true);
-  const truck=p2.locator('#acquireTruck');assert.equal(await truck.isDisabled(),false);await truck.click();s2=await state(p2);assert.equal(s2.packB.truck.owned,true);
-  const hire2=p2.locator('#hireWorker2');assert.equal(await hire2.isDisabled(),false);await hire2.click();await p2.locator('[data-worker2-zone="z1"]').click();s2=await state(p2);assert.equal(s2.packB.secondWorker.hired,true);assert.equal(s2.packB.secondWorker.assignment,'z1');
+  await openBaseSurface(p2,'logistics');const hangar=p2.locator('#acquireHangar');assert.equal(await hangar.isDisabled(),false);await hangar.click();let s2=await state(p2);assert.equal(s2.packB.hangarOwned,true);
+  await openBaseSurface(p2,'logistics');const truck=p2.locator('#acquireTruck');assert.equal(await truck.isDisabled(),false);await truck.click();s2=await state(p2);assert.equal(s2.packB.truck.owned,true);
+  await openBaseSurface(p2,'crew');const hire2=p2.locator('#hireWorker2');assert.equal(await hire2.isDisabled(),false);await hire2.click();await p2.locator('[data-worker2-zone="z1"]').click();s2=await state(p2);assert.equal(s2.packB.secondWorker.hired,true);assert.equal(s2.packB.secondWorker.assignment,'z1');
 
   // 3. Tier-II Wide Swing is a real unlock after the seven accepted Salvage nodes.
   await p2.click('#talentsGarage');await p2.waitForSelector('#talentScreen:not([hidden])');const wide=p2.locator('[data-talent="salvage_8"]');assert.equal(await wide.count(),1);assert.equal(await wide.isDisabled(),false);await wide.click();s2=await state(p2);assert.equal(s2.talents.includes('salvage_8'),true);await p2.click('#talentsClose');
