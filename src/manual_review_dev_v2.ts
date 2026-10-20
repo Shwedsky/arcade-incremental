@@ -164,7 +164,12 @@ function finishWorkshopQueue(){
   const api=gameApi();const state=api?.getState?.();if(!state)return;
   const actions=liveQueueActions(state),scheduler=state.scheduler??{};
   const t=now();
-  const baseline=Math.max(t,Number(scheduler.lastAdvancedAt??0),...actions.map((action:any)=>Number(action?.createdAt??0)));
+  const timeSignals=actions.flatMap((action:any)=>[
+    Number(action?.createdAt??0),
+    Number(action?.current?.startedAt??0),
+    Number(action?.current?.endsAt??0)
+  ]);
+  const baseline=Math.max(t,Number(scheduler.lastAdvancedAt??0),...timeSignals);
   const totalMs=actions.reduce((sum:number,action:any)=>sum+remainingQueueDurationMs(action),0);
   if(actions.length&&typeof api.advanceWorkshopTo==='function')api.advanceWorkshopTo(baseline+Math.max(60_000,totalMs+60_000));
 
