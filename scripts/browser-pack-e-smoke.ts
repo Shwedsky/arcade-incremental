@@ -45,22 +45,22 @@ try{
   // 1. A real V9-era save migrates to V10 with Pack E empty and no reset of late infrastructure.
   const legacy=richSave({v:9,midgame:{...midgame(),mastery:{z1:100,z2:100,z3:100,z4:100,z5:100,z6:100,z7:100}}});delete (legacy as any).packE;
   const c1=await browser.newContext({viewport:{width:1280,height:800}});await withSave(c1,legacy);const p1=await c1.newPage();await p1.goto(`${ORIGIN}/?seed=packe-v9-migrate`);await p1.waitForFunction(()=>(globalThis as any).__SALVAGE_TEST__?.getState()?.saveVersion===10);
-  let s=await state(p1);assert.equal(s.saveVersion,10);assert.equal(s.packD.industrialWorkshopOwned,true);assert.equal(s.midgame.mastery.z7,100);assert.equal(s.midgame.mastery.z8,0);assert.equal(s.packE.processingPlantOwned,false);assert.equal(s.packE.portPowerDiscovered,false);await c1.close();
+  let s=await state(p1);assert.equal(s.saveVersion,10);assert.equal(s.packD.industrialWorkshopOwned,true);assert.equal(s.midgame.mastery.z7,100);assert.equal(s.midgame.mastery.z8,0);assert.equal(s.packE.processingPlantOwned,false);assert.equal(s.packE.portPowerDiscovered,false);assert.ok(s.workforceV3.workers.length>=3,'late legacy staffing must migrate into generic roster');await c1.close();
 
-  // 2. Z8 is a real selectable frontier, but workers cannot enter it before personal mastery.
+  // 2. Z8 is selectable by the player, but generic workers cannot route there before personal mastery.
   const c2=await browser.newContext({viewport:{width:1360,height:860}});await withSave(c2,richSave());const p2=await c2.newPage();await p2.goto(`${ORIGIN}/?seed=packe-z8`);await p2.waitForFunction(()=>(globalThis as any).__SALVAGE_TEST__?.getState()?.saveVersion===10);if(await p2.locator('#offlineScreen').isVisible())await p2.click('#offlineClose');await p2.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.forceGarage());await p2.waitForSelector('#garageScreen:not([hidden])');
   await p2.click('#zonesGarage');await p2.waitForSelector('#zoneScreen:not([hidden])');const z8=p2.locator('[data-zone="z8"]');assert.match((await z8.innerText()),/Портовый терминал/);const z8Select=z8.locator('button');assert.equal(await z8Select.isDisabled(),false);await z8Select.click();s=await state(p2);assert.equal(s.midgame.currentZone,'z8');
-  await openBaseSurface(p2,'crew');const workerZ8=p2.locator('[data-worker4-zone="z8"]');assert.equal(await workerZ8.isDisabled(),true,'worker #4 must stay out until Z8 is personally mastered');
+  const workerId=s.workforceV3.workers[0].id;const blockedRoute=await p2.evaluate((id)=>(globalThis as any).__SALVAGE_TEST__.assignGenericRoute(id,'z8',null),workerId);assert.equal(blockedRoute,null,'generic worker must stay out until Z8 is personally mastered');
   await c2.close();
 
-  // 3. A personally mastered/signature-complete Z8 unlocks Plant, which consumes the mixed recipe and keeps discovery history.
+  // 3. A personally mastered/signature-complete Z8 plus a mature generic team unlocks Plant.
   const mature=richSave({midgame:midgame(100,'z8'),packE:packE({portPowerAssemblies:1,portPowerDiscovered:true})});
   const c3=await browser.newContext({viewport:{width:1440,height:900}});await withSave(c3,mature);const p3=await c3.newPage();await p3.goto(`${ORIGIN}/?seed=packe-plant`);await p3.waitForFunction(()=>(globalThis as any).__SALVAGE_TEST__?.getState()?.saveVersion===10);if(await p3.locator('#offlineScreen').isVisible())await p3.click('#offlineClose');await p3.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.forceGarage());await p3.waitForSelector('#garageScreen:not([hidden])');
-  await openBaseSurface(p3,'crew');const workerZ8Ready=p3.locator('[data-worker4-zone="z8"]');assert.equal(await workerZ8Ready.isDisabled(),false,'mastered Z8 may be automated after the player finishes it');
-  await openBaseSurface(p3,'logistics');const plantButton=p3.locator('#acquireProcessingPlant');assert.equal(await plantButton.isDisabled(),false);await plantButton.click();s=await state(p3);assert.equal(s.packE.processingPlantOwned,true);assert.equal(s.packE.plantLines,2);assert.equal(s.packE.portPowerAssemblies,0);assert.equal(s.packE.portPowerDiscovered,true,'consuming the signature must never erase discovery history');
-  await openBaseSurface(p3,'logistics');assert.match((await p3.locator('#transportPanel').innerText()),/150.?000 кг/);await openBaseSurface(p3,'contracts');assert.match((await p3.locator('#contractPanel').innerText()),/26 доступно/,'Plant ownership must expose the three late contract hooks');
+  s=await state(p3);assert.ok(s.workforceV3.workers.length>=3,'Plant must use generic team readiness, not worker #4 identity');const matureWorkerId=s.workforceV3.workers[0].id;const readyRoute=await p3.evaluate((id)=>(globalThis as any).__SALVAGE_TEST__.assignGenericRoute(id,'z8',null),matureWorkerId);assert.equal(readyRoute.zone,'z8','mastered Z8 may be automated by any eligible generic worker');
+  await openBaseSurface(p3,'logistics');const transportText=(await p3.locator('#transportPanel').innerText());assert.match(transportText,/Команда/);assert.doesNotMatch(transportText,/Worker #4/);const plantButton=p3.locator('#acquireProcessingPlant');assert.equal(await plantButton.isDisabled(),false);await plantButton.click();s=await state(p3);assert.equal(s.packE.processingPlantOwned,true);assert.equal(s.packE.plantLines,2);assert.equal(s.packE.portPowerAssemblies,0);assert.equal(s.packE.portPowerDiscovered,true,'consuming the signature must never erase discovery history');
+  await openBaseSurface(p3,'logistics');assert.match((await p3.locator('#transportPanel').innerText()),/150.?000 кг/);await openBaseSurface(p3,'contracts');assert.ok(await p3.locator('.specialOrder').count()>=1,'Plant ownership must expose late high-margin Contract V3 orders');
 
-  // 4. Plant owns exactly two concurrent lines; third start blocks and 300s produces 80 Alloy Billet total.
+  // 4. Plant owns exactly two concurrent lines; third start blocks and 300s produces 80 reinforced-alloy output total without an assigned Operator.
   const beforeStart=await state(p3),billetAfterPlant=beforeStart.packC.materials.alloyBillet,scrapBefore=beforeStart.packC.materials.alloyScrap;
   await p3.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.doStartPlantAlloy());
   await p3.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.doStartPlantAlloy());
@@ -68,8 +68,8 @@ try{
   await p3.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.doStartPlantAlloy());s=await state(p3);assert.equal(s.packE.production.length,2,'third line must remain blocked');
   const finish=Math.max(...s.packE.production.map((job:any)=>job.endsAt))+1;const completed=await p3.evaluate((at:number)=>(globalThis as any).__SALVAGE_TEST__.advancePlantTo(at),finish);assert.equal(completed,80);s=await state(p3);assert.equal(s.packE.production.length,0);assert.equal(s.packC.materials.alloyBillet,billetAfterPlant+80);
 
-  // 5. Save V10 persists the Plant and both the consumed-signature history and line outputs.
-  await p3.evaluate(()=>(globalThis as any).__SALVAGE_PLATFORM__.forceSave());await p3.reload();await p3.waitForFunction(()=>(globalThis as any).__SALVAGE_TEST__?.getState()?.saveVersion===10);s=await state(p3);assert.equal(s.packE.processingPlantOwned,true);assert.equal(s.packE.portPowerDiscovered,true);assert.equal(s.packE.portPowerAssemblies,0);assert.equal(s.packC.materials.alloyBillet,billetAfterPlant+80);await c3.close();
+  // 5. Save V10 persists Plant, signature history, generic staffing/routes and outputs.
+  await p3.evaluate(()=>(globalThis as any).__SALVAGE_PLATFORM__.forceSave());await p3.reload();await p3.waitForFunction(()=>(globalThis as any).__SALVAGE_TEST__?.getState()?.saveVersion===10);s=await state(p3);assert.equal(s.packE.processingPlantOwned,true);assert.equal(s.packE.portPowerDiscovered,true);assert.equal(s.packE.portPowerAssemblies,0);assert.equal(s.packC.materials.alloyBillet,billetAfterPlant+80);assert.ok(s.workforceV3.workers.length>=3);assert.equal(s.workforceV3.routes.some((r:any)=>r.zone==='z8'),true);await c3.close();
 
-  console.log('Content Pack E Z8 + Processing Plant Chromium acceptance: PASS');
+  console.log('Content Pack E Z8 + Processing Plant generic staffing Chromium acceptance: PASS');
 }finally{await browser.close();await stopServer()}
