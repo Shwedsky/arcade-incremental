@@ -32,8 +32,8 @@ export interface BusinessStageDef{
 }
 
 const CORE_SURFACES=['overview','production','storage','contracts','development'] as const satisfies readonly BaseSurfaceId[];
-const EQUIPPED_SURFACES=['overview','production','storage','logistics','contracts','development'] as const satisfies readonly BaseSurfaceId[];
-const WORKFORCE_SURFACES=['overview','production','storage','crew','logistics','contracts','development'] as const satisfies readonly BaseSurfaceId[];
+const EQUIPPED_SURFACES=['overview','production','storage','crew','logistics','contracts','development'] as const satisfies readonly BaseSurfaceId[];
+const WORKFORCE_SURFACES=EQUIPPED_SURFACES;
 
 export const BUSINESS_STAGES:Record<BusinessStageId,BusinessStageDef>={
   starter_garage:{
