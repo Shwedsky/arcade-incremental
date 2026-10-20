@@ -41,6 +41,7 @@
     "smoke:browser:contract-board-v2": "tsx scripts/browser-contract-board-v2-smoke.ts",
     "smoke:browser:progression-v2": "tsx scripts/browser-progression-expansion-v2-smoke.ts",
     "smoke:browser:core-rebuild-v1": "tsx scripts/browser-core-rebuild-v1-smoke.ts",
+    "smoke:browser:owner-feedback-v5": "tsx scripts/browser-owner-feedback-v5-smoke.ts",
     "smoke:save": "tsx scripts/save-safety-smoke.ts",
     "smoke:platform": "tsx scripts/platform-smoke.ts",
     "smoke:browser:platform": "tsx scripts/browser-platform-smoke.ts",
