@@ -46,12 +46,12 @@ try{
   const c2=await browser.newContext();await withSave(c2,baseV6({packC:packC({discoveredIndustrial:[],industrial:{industrialController:0,heavyHydraulicCylinder:0}})}));const p2=await c2.newPage();await p2.goto(`${ORIGIN}/?seed=packc-zones`);await p2.click('#garage');await p2.waitForSelector('#garageScreen:not([hidden])');
   await p2.click('#zonesGarage');await p2.waitForSelector('#zoneScreen:not([hidden])');assert.equal(await p2.locator('[data-zone="z5"] button').isDisabled(),false);assert.equal(await p2.locator('[data-zone="z6"] button').isDisabled(),true);await c2.close();
 
-  // 3. Full Pack C bridge: Z6 -> Yard -> third hire -> generic Operator -> accelerated production -> persistence.
+  // 3. Full Pack C bridge: Z6 -> Yard -> generic third hire -> Operator -> accelerated production -> persistence.
   const c3=await browser.newContext();const mastered={z1:100,z2:100,z3:100,z4:100,z5:100,z6:100};await withSave(c3,baseV6({midgame:midgame(mastered,'z5'),packC:packC()}));const p3=await c3.newPage();await p3.goto(`${ORIGIN}/?seed=packc-main`);await p3.click('#garage');await p3.waitForSelector('#garageScreen:not([hidden])');
   await p3.click('#zonesGarage');await p3.waitForSelector('#zoneScreen:not([hidden])');const z6=p3.locator('[data-zone="z6"] button');assert.equal(await z6.isDisabled(),false);await z6.click();let s3=await state(p3);assert.equal(s3.midgame.currentZone,'z6');
   await openBaseSurface(p3,'logistics');const yard=p3.locator('#acquireSalvageYard');assert.equal(await yard.isDisabled(),false);await yard.click();s3=await state(p3);assert.equal(s3.packC.salvageYardOwned,true);
-  await openBaseSurface(p3,'crew');const hire3=p3.locator('#hireWorker3');assert.equal(await hire3.isDisabled(),false);await hire3.click();s3=await state(p3);assert.equal(s3.packC.crew3.hired,true);assert.ok(s3.workforceV3.workers.length>=3,'legacy third hire must materialize in generic roster');
-  const genericWorkerId=s3.workforceV3.workers[2].id;
+  const beforeHire=s3.workforceV3.workers.length;const hired=await p3.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.hireGenericWorker());assert.ok(hired,'Salvage Yard stage must allow another generic worker');s3=await state(p3);assert.equal(s3.workforceV3.workers.length,beforeHire+1);assert.equal(s3.packC.crew3.hired,true,'generic third hire must maintain the legacy compatibility mirror');
+  const genericWorkerId=hired.id;
   const productionBefore=await p3.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.getProductionV3View());assert.equal(productionBefore.unlocked,true);assert.equal(productionBefore.cells.find((c:any)=>c.id==='heavy_cell').speedFactor,1);
   assert.equal(await p3.evaluate((id)=>(globalThis as any).__SALVAGE_TEST__.assignGenericProduction(id,'heavy_cell'),genericWorkerId),true);
   s3=await state(p3);const assigned=s3.workforceV3.workers.find((w:any)=>w.id===genericWorkerId);assert.equal(assigned.role,'operator');assert.equal(assigned.status,'production');assert.equal(assigned.productionCellId,'heavy_cell');
