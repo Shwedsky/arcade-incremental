@@ -10,11 +10,14 @@ export type BaseSurface='overview'|'production'|'storage'|'contracts'|'crew'|'lo
  * to the surface that owns the control they are about to exercise.
  */
 export async function openBaseSurface(page:Page,surface:BaseSurface){
-  await page.waitForFunction(()=>(globalThis as any).__SALVAGE_BASE_SHELL__?.getStage?.());
-  const available=await page.locator(`[data-base-surface="${surface}"]`).count();
-  if(!available)throw new Error(`Base Shell surface not found: ${surface}`);
-  const hidden=await page.locator(`[data-base-surface="${surface}"]`).isHidden();
-  if(hidden)throw new Error(`Base Shell surface unavailable for current business stage: ${surface}`);
+  await page.waitForSelector('#baseShellNav');
+  await page.evaluate(()=>(globalThis as any).__SALVAGE_BASE_SHELL__?.refresh?.());
+  await page.waitForFunction(()=>(globalThis as any).__SALVAGE_BASE_SHELL__?.getStage?.()!=null);
+
+  const button=page.locator(`[data-base-surface="${surface}"]`);
+  if(await button.count()===0)throw new Error(`Base Shell surface not found: ${surface}`);
+  if(await button.isHidden())throw new Error(`Base Shell surface unavailable for current business stage: ${surface}`);
+
   await page.evaluate((id)=>(globalThis as any).__SALVAGE_BASE_SHELL__.open(id),surface);
-  await page.waitForFunction((id)=>!(document.querySelector<HTMLElement>(`[data-base-pane="${id}"]`)?.hidden),surface);
+  await page.waitForSelector(`[data-base-pane="${surface}"]:not([hidden])`);
 }
