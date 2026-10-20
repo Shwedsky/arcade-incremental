@@ -2,7 +2,7 @@ import type { ComponentKind, ResourceKind, TargetClassId } from './sim.ts';
 import {simulateBenchmarkedWorker,type WorkerEconomyV2State} from './worker_economy_v2.ts';
 
 export type PackCZoneId='z5'|'z6';
-export type PackCCrewZoneId='z1'|'z2'|'z3'|'z4'|'z5'|'z6';
+export type PackCCrewZoneId='z1'|'z2'|'z3'|'z4'|'z5'|'z6'|'z7'|'z8';
 export type HeavyIndustrialComponentKind='industrialController'|'heavyHydraulicCylinder';
 export type HeavyFabricatedModuleKind='hydraulicPower'|'heavyFrame';
 export type PackCProductionKind='alloyBillet'|'hydraulicPower'|'heavyFrame';
@@ -244,7 +244,8 @@ export function assignThirdWorkerOperator(state:PackCState,now=Date.now()):boole
 
 const CREW3_RATES:Record<PackCCrewZoneId,Record<ResourceKind,number>>={
   z1:{metal:92,copper:6,plastic:16},z2:{metal:82,copper:10,plastic:13},z3:{metal:112,copper:11,plastic:15},
-  z4:{metal:132,copper:12,plastic:10},z5:{metal:162,copper:14,plastic:8},z6:{metal:178,copper:15,plastic:6}
+  z4:{metal:132,copper:12,plastic:10},z5:{metal:162,copper:14,plastic:8},z6:{metal:178,copper:15,plastic:6},
+  z7:{metal:205,copper:16,plastic:5},z8:{metal:232,copper:18,plastic:4}
 };
 
 export function simulateThirdWorker(state:PackCState,economy:WorkerEconomyV2State,discoveredComponents:ReadonlyArray<ComponentKind>,now=Date.now(),offline=false):{hours:number;resources:Record<ResourceKind,number>;components:Record<ComponentKind,number>;weight:number;source:string;offlineRemainingHours:number}{

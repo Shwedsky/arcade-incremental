@@ -46,6 +46,8 @@ jobs:
         run: npm run smoke:packc
       - name: Content Pack D domain smoke
         run: npm run smoke:packd
+      - name: Content Pack E domain smoke
+        run: npm run smoke:packe
       - name: Save safety smoke
         run: npm run smoke:save
       - name: Platform adapter smoke
@@ -58,6 +60,8 @@ jobs:
         run: python models/mid_late_mechanics_sim_v1.py --check
       - name: Worker / progression economy V2 model proof
         run: python models/worker_progression_economy_v2.py --check
+      - name: Content Pack E structural proof
+        run: python models/content_pack_e_v1.py
       - name: Install browser
         run: npx playwright install --with-deps chromium
       - name: Headless browser progression smoke
@@ -70,6 +74,8 @@ jobs:
         run: npm run smoke:browser:packc
       - name: Headless browser Content Pack D proof
         run: npm run smoke:browser:packd
+      - name: Headless browser Content Pack E proof
+        run: npm run smoke:browser:packe
       - name: Workshop Queue desktop/mobile browser proof
         run: npm run smoke:browser:workshop-queue
       - name: Manual review launch + feedback UX proof
@@ -78,7 +84,7 @@ jobs:
         run: npm run smoke:browser:human-feedback-v2
       - name: Human Feedback V3 persistent discovery + Z2 world-space proof
         run: npm run smoke:browser:human-feedback-v3
-      - name: Worker Economy V2 Save V9 + worker route browser proof
+      - name: Worker Economy V2 Save V10 + worker route browser proof
         run: npm run smoke:browser:worker-economy-v2
       - name: Contract Board V2 staged pool + repetition browser proof
         run: npm run smoke:browser:contract-board-v2
@@ -89,12 +95,12 @@ jobs:
       - name: Build release manifest
         run: npm run release:manifest
       - name: Package release candidate
-        run: zip -r arcade-incremental-release-candidate-v9.zip dist
-      - name: Package Progression Expansion V2 manual review candidate
+        run: zip -r arcade-incremental-release-candidate-v10.zip dist
+      - name: Package Content Pack E manual review candidate
         run: |
           SHORT_SHA="${GITHUB_SHA:0:8}"
-          REVIEW_DIR="manual-review-v1-progression-expansion-v2"
-          REVIEW_ZIP="arcade-incremental-manual-review-v1-progression-v2-run${GITHUB_RUN_NUMBER}-${SHORT_SHA}.zip"
+          REVIEW_DIR="manual-review-v1-content-pack-e"
+          REVIEW_ZIP="arcade-incremental-manual-review-v1-content-pack-e-run${GITHUB_RUN_NUMBER}-${SHORT_SHA}.zip"
           rm -rf "$REVIEW_DIR"
           mkdir -p "$REVIEW_DIR/dist"
           cp -r dist/. "$REVIEW_DIR/dist/"
@@ -102,17 +108,17 @@ jobs:
           cp review/START_REVIEW.bat "$REVIEW_DIR/START_REVIEW.bat"
           cp review/README_REVIEW.txt "$REVIEW_DIR/README_REVIEW.txt"
           cp docs/MANUAL_TARGET_RUN_V1.md "$REVIEW_DIR/MANUAL_TARGET_RUN_V1.md"
-          cp docs/PROGRESSION_EXPANSION_V2_MODEL.md "$REVIEW_DIR/PROGRESSION_EXPANSION_V2_MODEL.md"
-          printf 'Manual Review - Progression Expansion V2\ncommit=%s\nrun=%s\nsave=V9\nseed=owner-review-v1\norigin=http://127.0.0.1:41971\nfeatures=level30,tier2-roots,milestone-gates,van-packing,contract-choice,automation4,trade4,contract-board-v2,worker-economy-v2\n' "$GITHUB_SHA" "$GITHUB_RUN_ID" > "$REVIEW_DIR/BUILD_INFO.txt"
+          cp docs/CONTENT_PACK_E_V1_MODEL.md "$REVIEW_DIR/CONTENT_PACK_E_V1_MODEL.md"
+          printf 'Manual Review - Content Pack E V1\ncommit=%s\nrun=%s\nsave=V10\nseed=owner-review-v1\norigin=http://127.0.0.1:41971\nfeatures=z8-port-terminal,port-power-signature,processing-plant,plant-lines,plant-contracts,save-v10,level30,tier2-roots,worker-economy-v2\n' "$GITHUB_SHA" "$GITHUB_RUN_ID" > "$REVIEW_DIR/BUILD_INFO.txt"
           zip -r "$REVIEW_ZIP" "$REVIEW_DIR"
           echo "REVIEW_ZIP=$REVIEW_ZIP" >> "$GITHUB_ENV"
       - uses: actions/upload-artifact@v4
         with:
-          name: arcade-incremental-release-candidate-v9
-          path: arcade-incremental-release-candidate-v9.zip
+          name: arcade-incremental-release-candidate-v10
+          path: arcade-incremental-release-candidate-v10.zip
           if-no-files-found: error
       - uses: actions/upload-artifact@v4
         with:
-          name: arcade-incremental-manual-review-v1-progression-v2-run-${{ github.run_number }}
+          name: arcade-incremental-manual-review-v1-content-pack-e-run-${{ github.run_number }}
           path: ${{ env.REVIEW_ZIP }}
           if-no-files-found: error

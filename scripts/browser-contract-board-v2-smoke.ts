@@ -13,14 +13,14 @@ async function stop(p:ChildProcess){if(p.exitCode!==null)return;p.kill('SIGTERM'
 const proc=server();await waitServer();const browser=await chromium.launch({headless:true});
 try{
   const seedCtx=await browser.newContext({viewport:{width:1280,height:800}}),seed=await seedCtx.newPage();
-  await seed.goto(`${ORIGIN}/?seed=contract-v2-fixture`);await seed.waitForFunction(()=>(globalThis as any).__SALVAGE_TEST__?.getState()?.saveVersion===9);
+  await seed.goto(`${ORIGIN}/?seed=contract-v2-fixture`);await seed.waitForFunction(()=>(globalThis as any).__SALVAGE_TEST__?.getState()?.saveVersion===10);
   await seed.evaluate(()=>(globalThis as any).__SALVAGE_PLATFORM__.forceSave());
   const raw=await seed.evaluate(key=>localStorage.getItem(key),SAVE_KEY);assert.ok(raw);const fresh=JSON.parse(raw!);
   await seedCtx.close();
 
   // Fresh player: readable board only, no unavailable advanced families.
   const earlyCtx=await browser.newContext({viewport:{width:1280,height:800},storageState:{cookies:[],origins:[{origin:ORIGIN,localStorage:[{name:SAVE_KEY,value:JSON.stringify({...fresh,lastSeen:Date.now()})}]}]}}),early=await earlyCtx.newPage();
-  await early.goto(`${ORIGIN}/?seed=contract-v2-early`);await early.waitForFunction(()=>(globalThis as any).__SALVAGE_TEST__?.getState()?.saveVersion===9);
+  await early.goto(`${ORIGIN}/?seed=contract-v2-early`);await early.waitForFunction(()=>(globalThis as any).__SALVAGE_TEST__?.getState()?.saveVersion===10);
   await early.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.forceGarage());
   await early.waitForSelector('#garageScreen:not([hidden])');
   const earlyText=await early.locator('#contractPanel').innerText();
@@ -38,7 +38,7 @@ try{
   late.packC.materials={alloyScrap:999,alloyBillet:99};late.packC.modules={hydraulicPower:99,heavyFrame:99};late.packC.industrial={industrialController:99,heavyHydraulicCylinder:99};late.packC.discoveredIndustrial=['industrialController','heavyHydraulicCylinder'];late.packC.salvageYardOwned=true;
 
   const ctx=await browser.newContext({viewport:{width:1440,height:900},storageState:{cookies:[],origins:[{origin:ORIGIN,localStorage:[{name:SAVE_KEY,value:JSON.stringify(late)}]}]}}),page=await ctx.newPage(),errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
-  await page.goto(`${ORIGIN}/?seed=contract-v2-late`);await page.waitForFunction(()=>(globalThis as any).__SALVAGE_TEST__?.getState()?.saveVersion===9);await page.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.forceGarage());
+  await page.goto(`${ORIGIN}/?seed=contract-v2-late`);await page.waitForFunction(()=>(globalThis as any).__SALVAGE_TEST__?.getState()?.saveVersion===10);await page.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.forceGarage());
   await page.waitForSelector('#garageScreen:not([hidden])');
   const header=await page.locator('#contractPanel > .contractHead small').innerText();const match=header.match(/(\d+) доступно/);assert.ok(match);assert.ok(Number(match![1])>=20,'late board must expose the broad staged pool');
   const titles:string[]=[];

@@ -19,7 +19,7 @@ async function canonicalSave(page:Page){
 async function contextWithSave(save:any):Promise<{context:BrowserContext;page:Page;errors:string[]}>{
   const context=await browser.newContext({viewport:{width:1440,height:900},storageState:{cookies:[],origins:[{origin:ORIGIN,localStorage:[{name:SAVE_KEY,value:JSON.stringify(save)}]}]}});
   const page=await context.newPage(),errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
-  await page.goto(`${ORIGIN}/?seed=worker-v2-browser`);await page.waitForFunction(()=>(globalThis as any).__SALVAGE_TEST__?.getState()?.saveVersion===9);
+  await page.goto(`${ORIGIN}/?seed=worker-v2-browser`);await page.waitForFunction(()=>(globalThis as any).__SALVAGE_TEST__?.getState()?.saveVersion===10);
   const offline=page.locator('#offlineScreen');
   if(await offline.isVisible())await page.click('#offlineClose');
   return{context,page,errors};
@@ -30,7 +30,7 @@ try{
   // Produce a canonical save, then explicitly downgrade the fixture to V8 to prove migration.
   const seedContext=await browser.newContext({viewport:{width:1100,height:760}}),seedPage=await seedContext.newPage();
   await seedPage.goto(`${ORIGIN}/?seed=worker-v2-fixture`);
-  await seedPage.waitForFunction(()=>(globalThis as any).__SALVAGE_TEST__?.getState()?.saveVersion===9);
+  await seedPage.waitForFunction(()=>(globalThis as any).__SALVAGE_TEST__?.getState()?.saveVersion===10);
   await seedPage.evaluate(()=>(globalThis as any).__SALVAGE_PLATFORM__.forceSave());
   const raw=await seedPage.evaluate(key=>localStorage.getItem(key),SAVE_KEY);assert.ok(raw);
   const fixture=JSON.parse(raw!);
@@ -44,7 +44,7 @@ try{
   let session=await contextWithSave(fixture),context=session.context,page=session.page,errors=session.errors;
   let s=await state(page);
   assert.equal(s.midgame.van.owned,false,'V8 fixture must stay without Van');
-  assert.ok(s.midgame.economyV2,'V8 -> V9 must create Worker Economy V2 state');
+  assert.ok(s.midgame.economyV2,'V8 -> V10 must create Worker Economy V2 state');
   assert.equal(s.midgame.economyV2.medals.z1,false,'migration must not grant a free full-clear medal');
 
   // First worker: mastered Z1 + 35k is enough; Van is explicitly not a gate anymore.
@@ -69,8 +69,8 @@ try{
   session=await contextWithSave(benchmarkSave);context=session.context;page=session.page;errors=session.errors;
 
   s=await state(page);
-  assert.equal(s.midgame.worker.assignment,'z1','worker assignment must survive canonical Save V9 load');
-  assert.equal(s.midgame.economyV2.benchmarks.z1?.destroyed,50,'benchmark must survive canonical Save V9 load');
+  assert.equal(s.midgame.worker.assignment,'z1','worker assignment must survive canonical Save V10 load');
+  assert.equal(s.midgame.economyV2.benchmarks.z1?.destroyed,50,'benchmark must survive canonical Save V10 load');
   assert.ok(Number.isFinite(s.midgame.economyV2.shifts.w1.remainingOfflineMs));
   await page.click('#garage');await page.waitForSelector('#garageScreen:not([hidden])');
   await page.waitForFunction(()=>document.querySelector('#workerPanel')?.textContent?.includes('Benchmark: 50 целей'));
@@ -97,17 +97,17 @@ try{
   const awarded=await page.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.awardCurrentZoneMedal());
   assert.equal(awarded,true);
   await page.evaluate(()=>(globalThis as any).__SALVAGE_PLATFORM__.forceSave());
-  await page.reload();await page.waitForFunction(()=>(globalThis as any).__SALVAGE_TEST__?.getState()?.saveVersion===9);
-  s=await state(page);assert.equal(s.midgame.economyV2.medals.z1,true,'full-clear medal must survive Save V9 reload');
+  await page.reload();await page.waitForFunction(()=>(globalThis as any).__SALVAGE_TEST__?.getState()?.saveVersion===10);
+  s=await state(page);assert.equal(s.midgame.economyV2.medals.z1,true,'full-clear medal must survive Save V10 reload');
   const offlineAfterReload=page.locator('#offlineScreen');if(await offlineAfterReload.isVisible())await page.click('#offlineClose');
   await page.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.openZones());
   await page.waitForSelector('#zoneScreen:not([hidden])');
   assert.match(await page.locator('[data-zone="z1"]').innerText(),/полный сбор/i);
 
-  // Save emitted after migration must be V9, not merely a V9 test facade.
+  // Save emitted after migration must be V10, not merely a V10 test facade.
   await page.evaluate(()=>(globalThis as any).__SALVAGE_PLATFORM__.forceSave());
   const persistedVersion=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)!).v,SAVE_KEY);
-  assert.equal(persistedVersion,9);
+  assert.equal(persistedVersion,10);
   assert.deepEqual(errors,[],`Worker Economy V2 browser proof must not throw: ${errors.join(' | ')}`);
   await context.close();
   console.log('Worker & Progression Economy V2 browser acceptance: PASS');

@@ -2,12 +2,13 @@ import { BASE_DPS, getTargetClass, type ComponentKind, type ResourceKind, type S
 import type { MachineId } from './garage.ts';
 import { PACK_C_ZONE_PROFILES } from './content_pack_c.ts';
 import { PACK_D_ZONE_PROFILE } from './content_pack_d.ts';
+import { PACK_E_ZONE_PROFILE } from './content_pack_e.ts';
 import {
   createDefaultWorkerEconomy,normalizeWorkerEconomy,simulateBenchmarkedWorker,
   type WorkerEconomyV2State
 } from './worker_economy_v2.ts';
 
-export type ZoneId = 'z1' | 'z2' | 'z3' | 'z4' | 'z5' | 'z6' | 'z7';
+export type ZoneId = 'z1' | 'z2' | 'z3' | 'z4' | 'z5' | 'z6' | 'z7' | 'z8';
 export type MidComponentKind = 'pump' | 'compressor';
 
 export interface ZoneDef {
@@ -58,6 +59,10 @@ export const ZONE_DEFS: Record<ZoneId, ZoneDef> = {
   z7:{
     id:'z7',order:7,name:PACK_D_ZONE_PROFILE.name,subtitle:'Зона 7',description:PACK_D_ZONE_PROFILE.description,
     nodeWeights:PACK_D_ZONE_PROFILE.nodeWeights,hpMultiplier:PACK_D_ZONE_PROFILE.hpMultiplier,yieldMultiplier:PACK_D_ZONE_PROFILE.yieldMultiplier,masteryTarget:PACK_D_ZONE_PROFILE.masteryTarget,recommendedTool:7
+  },
+  z8:{
+    id:'z8',order:8,name:PACK_E_ZONE_PROFILE.name,subtitle:'Зона 8',description:PACK_E_ZONE_PROFILE.description,
+    nodeWeights:PACK_E_ZONE_PROFILE.nodeWeights,hpMultiplier:PACK_E_ZONE_PROFILE.hpMultiplier,yieldMultiplier:PACK_E_ZONE_PROFILE.yieldMultiplier,masteryTarget:PACK_E_ZONE_PROFILE.masteryTarget,recommendedTool:8
   }
 };
 
@@ -111,7 +116,7 @@ export function emptyMidComponentRecord():Record<MidComponentKind,number>{return
 
 export function createDefaultMidgame(now=Date.now()):MidgameState{
   return{
-    currentZone:'z1',mastery:{z1:0,z2:0,z3:0,z4:0,z5:0,z6:0,z7:0},discoveredComponents:[],discoveredMidComponents:[],midComponents:emptyMidComponentRecord(),
+    currentZone:'z1',mastery:{z1:0,z2:0,z3:0,z4:0,z5:0,z6:0,z7:0,z8:0},discoveredComponents:[],discoveredMidComponents:[],midComponents:emptyMidComponentRecord(),
     pity:{pump:0,compressor:0},
     van:{owned:false,resources:emptyResourceRecord(),components:emptyComponentRecord(),midComponents:emptyMidComponentRecord()},
     worker:{hired:false,assignment:null,lastTick:now},economyV2:createDefaultWorkerEconomy(now)
@@ -276,7 +281,8 @@ const WORKER_RATES:Record<ZoneId,Record<ResourceKind,number>>={
   z4:{metal:118,copper:10.5,plastic:10},
   z5:{metal:148,copper:12,plastic:8},
   z6:{metal:164,copper:13,plastic:6},
-  z7:{metal:188,copper:14,plastic:5}
+  z7:{metal:188,copper:14,plastic:5},
+  z8:{metal:210,copper:16,plastic:4}
 };
 
 export function simulateWorkerGain(state:MidgameState,now=Date.now(),_legacyMaxHours=8,offline=false):WorkerGain{

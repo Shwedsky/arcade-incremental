@@ -1,0 +1,13 @@
+.packECard{border-color:#65c4cf55;background:linear-gradient(145deg,#173139ee,#10262cee)}
+.packECard.done{box-shadow:inset 0 0 0 1px #65c4cf33,0 10px 30px #06141966}
+.packETag{display:inline-flex;padding:3px 8px;border:1px solid #65c4cf88;border-radius:999px;color:#91e3eb;font-size:10px;font-weight:900;letter-spacing:.12em}
+.packEGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin:10px 0}
+.packEGrid span{padding:7px 9px;border-radius:8px;background:#091b20aa;border:1px solid #65c4cf22;font-size:12px}
+.plantLines{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:10px 0}
+.plantLine{padding:9px;border-radius:9px;background:#081a1fbb;border:1px solid #65c4cf33}
+.plantLine b,.plantLine span,.plantLine small{display:block}
+.plantLine i{display:block;height:5px;margin:6px 0;border-radius:4px;background:#071114;overflow:hidden}
+.plantLine i em{display:block;height:100%;background:#65c4cf}
+.plantLine.empty{opacity:.68;border-style:dashed}
+.portSignature{color:#9be8ef;font-weight:800}
+@media(max-width:760px){.packEGrid,.plantLines{grid-template-columns:1fr}}

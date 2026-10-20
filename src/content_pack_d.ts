@@ -2,7 +2,7 @@ import type { ComponentKind, ResourceKind, TargetClassId } from './sim.ts';
 import {simulateBenchmarkedWorker,type WorkerEconomyV2State} from './worker_economy_v2.ts';
 
 export type PackDZoneId='z7';
-export type PackDCrewZoneId='z1'|'z2'|'z3'|'z4'|'z5'|'z6'|'z7';
+export type PackDCrewZoneId='z1'|'z2'|'z3'|'z4'|'z5'|'z6'|'z7'|'z8';
 export type PackDCrewRole='scavenger'|'operator';
 
 export interface PackDZoneProfile{
@@ -185,7 +185,7 @@ export function assignFourthWorkerOperator(state:PackDState,cell:number,now=Date
 }
 
 const CREW4_RATES:Record<PackDCrewZoneId,Record<ResourceKind,number>>={
-  z1:{metal:100,copper:6.5,plastic:17},z2:{metal:90,copper:11,plastic:14},z3:{metal:122,copper:12,plastic:16},z4:{metal:145,copper:13,plastic:10},z5:{metal:176,copper:15,plastic:8},z6:{metal:194,copper:16,plastic:6},z7:{metal:225,copper:17,plastic:5}
+  z1:{metal:100,copper:6.5,plastic:17},z2:{metal:90,copper:11,plastic:14},z3:{metal:122,copper:12,plastic:16},z4:{metal:145,copper:13,plastic:10},z5:{metal:176,copper:15,plastic:8},z6:{metal:194,copper:16,plastic:6},z7:{metal:225,copper:17,plastic:5},z8:{metal:252,copper:19,plastic:4}
 };
 export function simulateFourthWorker(state:PackDState,economy:WorkerEconomyV2State,discoveredComponents:ReadonlyArray<ComponentKind>,now=Date.now(),offline=false):{hours:number;resources:Record<ResourceKind,number>;components:Record<ComponentKind,number>;weight:number;source:string;offlineRemainingHours:number}{
   const empty={hours:0,resources:emptyResources(),components:emptyComponents(),weight:0,source:'none',offlineRemainingHours:economy.shifts.w4.remainingOfflineMs/3_600_000},w=state.crew4;if(!w.hired||w.role!=='scavenger'||!w.assignment){w.lastTick=now;return empty}

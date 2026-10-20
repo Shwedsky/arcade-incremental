@@ -44,7 +44,8 @@ export const ZONE_VISUALS:Record<ZoneId,ZoneVisualTheme>={
   z4:{id:'z4',label:'Авторазборка',groundTop:'#474b52',groundBottom:'#252b31',groundDust:'#686b72',lane:'#2d3338',laneMark:'#e8b64f',edge:'#1b2025',accent:'#f0a63c',accentSoft:'#f0a63c48',shadow:'#090d12c2',decor:['tire','tire','scrapstack','pallet','barrel','fence','puddle','cone']},
   z5:{id:'z5',label:'Промышленная зона',groundTop:'#3f4b50',groundBottom:'#202a2f',groundDust:'#657177',lane:'#2a3439',laneMark:'#e6c15a',edge:'#171f23',accent:'#6dc8d5',accentSoft:'#6dc8d548',shadow:'#071014c8',decor:['pallet','barrel','fence','puddle','cone','scrapstack','crate']},
   z6:{id:'z6',label:'Заброшенный завод',groundTop:'#51483f',groundBottom:'#292724',groundDust:'#78695b',lane:'#363431',laneMark:'#d9934d',edge:'#211d19',accent:'#d97845',accentSoft:'#d9784548',shadow:'#100b08cc',decor:['scrapstack','pallet','barrel','fence','puddle','crate','cone']},
-  z7:{id:'z7',label:'Тяжёлый парк',groundTop:'#49443b',groundBottom:'#24231f',groundDust:'#716758',lane:'#30302c',laneMark:'#e0ad58',edge:'#191916',accent:'#d6a05a',accentSoft:'#d6a05a48',shadow:'#0d0b08d0',decor:['scrapstack','scrapstack','pallet','barrel','fence','tire','puddle','cone']}
+  z7:{id:'z7',label:'Тяжёлый парк',groundTop:'#49443b',groundBottom:'#24231f',groundDust:'#716758',lane:'#30302c',laneMark:'#e0ad58',edge:'#191916',accent:'#d6a05a',accentSoft:'#d6a05a48',shadow:'#0d0b08d0',decor:['scrapstack','scrapstack','pallet','barrel','fence','tire','puddle','cone']},
+  z8:{id:'z8',label:'Портовый терминал',groundTop:'#344b52',groundBottom:'#1b2a30',groundDust:'#5b7379',lane:'#26363d',laneMark:'#e3cf6f',edge:'#111d22',accent:'#65c4cf',accentSoft:'#65c4cf48',shadow:'#061116d4',decor:['pallet','crate','fence','cone','puddle','barrel','scrapstack','tire']}
 };
 
 export const TARGET_VISUALS:Record<TargetClassId,TargetVisualSpec>={
@@ -67,7 +68,7 @@ export function zoneVisual(id:ZoneId):ZoneVisualTheme{return ZONE_VISUALS[id]}
 
 export function validateVisualFoundation():string[]{
   const errors:string[]=[];
-  for(const id of ['z1','z2','z3','z4','z5','z6','z7'] as ZoneId[]){
+  for(const id of ['z1','z2','z3','z4','z5','z6','z7','z8'] as ZoneId[]){
     const t=ZONE_VISUALS[id];
     if(!t||!t.groundTop||!t.accent||t.decor.length<5)errors.push(`zone:${id}`);
   }

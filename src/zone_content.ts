@@ -64,6 +64,14 @@ export const ZONE_CONTENT:Record<ZoneId,ZoneContentMatrix>={
     bike_fan:[v('Ступичный узел погрузчика','frame','bearing'),v('Вентилятор силового блока','fan','bearing','motor'),v('Каретка мачты','cart','bearing'),v('Приводной кардан','frame','gearbox','bearing')],
     medium_appliance:[v('Гидроблок погрузчика','pump','heavy_hydraulic','recovery'),v('Тяговый привод','generator','gearbox','alloy'),v('Генераторная установка','generator','generator','controller'),v('Редуктор мачты','frame','gearbox','recovery')],
     large_appliance:[v('Мачта вилочного погрузчика','frame','heavy_hydraulic','recovery','alloy'),v('Силовой модуль экскаватора','generator','gearbox','generator','recovery'),v('Гидростанция спецтехники','pump','heavy_hydraulic','controller','recovery'),v('Тяжёлый приводной мост','frame','gearbox','heavy_hydraulic','recovery')]
+  },
+  z8:{
+    small_scrap:[v('Контейнерные твистлоки','cans','metal','alloy'),v('Секции портовой рамы','frame','metal','alloy'),v('Панели ричстакера','sheet','metal','aluminium'),v('Гидролинии терминала','pipes','metal')],
+    cable:[v('Коса силового шкафа','loom','copper','controller'),v('Кабель рефконтейнера','coil','copper'),v('Жгут ричстакера','loom','copper','controller'),v('Шина портового генератора','coil','copper','generator')],
+    small_appliance:[v('Контроллер рефконтейнера','tool','controller'),v('Насос подъёмного контура','pump','pump','hydraulic'),v('Привод замка контейнера','small_motor','motor'),v('Портовый блок автоматики','generator','electronics','controller')],
+    bike_fan:[v('Ступица ричстакера','frame','bearing'),v('Вентилятор рефконтейнера','fan','bearing','motor'),v('Каретка портовой тали','cart','bearing'),v('Шкив подъёмного привода','frame','gearbox','bearing')],
+    medium_appliance:[v('Рефрижераторный модуль','compressor','compressor','controller','alloy'),v('Портовая генераторная установка','generator','generator','controller'),v('Привод контейнерной тали','frame','gearbox','heavy_hydraulic'),v('Силовой шкаф терминала','generator','controller','electronics','port_power')],
+    large_appliance:[v('Мачта ричстакера','frame','heavy_hydraulic','alloy','port_power'),v('Силовой модуль рефконтейнера','compressor','compressor','generator','port_power'),v('Подъёмная секция крана','frame','gearbox','heavy_hydraulic','port_power'),v('Портовая силовая сборка','generator','controller','generator','port_power')]
   }
 };
 

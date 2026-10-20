@@ -19,7 +19,7 @@ try{
   // during reload of an already-running page.
   const seedContext=await browser.newContext({viewport:{width:1000,height:700}}),seedPage=await seedContext.newPage();
   await seedPage.goto(`${ORIGIN}/?seed=hf-v2-fixture`);
-  await seedPage.waitForFunction(()=>(globalThis as any).__SALVAGE_TEST__?.getState()?.saveVersion===9);
+  await seedPage.waitForFunction(()=>(globalThis as any).__SALVAGE_TEST__?.getState()?.saveVersion===10);
   await seedPage.evaluate(()=>(globalThis as any).__SALVAGE_PLATFORM__.forceSave());
   const raw=await seedPage.evaluate((key)=>localStorage.getItem(key),SAVE_KEY);
   assert.ok(raw,'canonical fixture save must exist');
@@ -64,7 +64,7 @@ try{
 
   await context.close();
   const prodContext=await browser.newContext({viewport:{width:1200,height:800}}),prodPage=await prodContext.newPage();
-  await prodPage.goto(`${PRODISH}/?seed=hf-v2-prod-host`);await prodPage.waitForFunction(()=>(globalThis as any).__SALVAGE_TEST__?.getState()?.saveVersion===9);
+  await prodPage.goto(`${PRODISH}/?seed=hf-v2-prod-host`);await prodPage.waitForFunction(()=>(globalThis as any).__SALVAGE_TEST__?.getState()?.saveVersion===10);
   assert.equal(await prodPage.locator('#hfDevToggle').count(),0,'DEV panel must not appear on non-localhost production-like hostname');
   await prodContext.close();
   console.log('Human Feedback V2 reservations + sticky batch + local DEV browser smoke: PASS');
