@@ -85,8 +85,8 @@ export const PROCESSING_PLANT_RECIPE={
   metal:720,
   cleanCopper:120,
   granulate:100,
-  steelBlank:160,
-  aluminiumBillet:72,
+  steelBlank:232,
+  aluminiumBillet:0,
   alloyBillet:260,
   drive:5,
   control:6,
@@ -167,7 +167,7 @@ export function canAcquireProcessingPlant(state:PackEState,inv:PackEInventory,ct
   const r=PROCESSING_PLANT_RECIPE;
   return !state.processingPlantOwned&&ctx.industrialWorkshopOwned&&ctx.recoveryRigOwned&&ctx.z8Mastered&&ctx.worker4Hired&&
     inv.cash>=PROCESSING_PLANT_CASH&&inv.metal>=r.metal&&inv.cleanCopper>=r.cleanCopper&&inv.granulate>=r.granulate&&
-    inv.steelBlank>=r.steelBlank&&inv.aluminiumBillet>=r.aluminiumBillet&&inv.alloyBillet>=r.alloyBillet&&
+    inv.steelBlank>=r.steelBlank&&inv.alloyBillet>=r.alloyBillet&&
     inv.drive>=r.drive&&inv.control>=r.control&&inv.hydraulicPower>=r.hydraulicPower&&inv.heavyFrame>=r.heavyFrame&&
     inv.industrialController>=r.industrialController&&inv.heavyHydraulicCylinder>=r.heavyHydraulicCylinder&&
     state.portPowerAssemblies>=r.portPowerAssemblies;
@@ -177,7 +177,7 @@ export function acquireProcessingPlant(state:PackEState,inv:PackEInventory,ctx:P
   if(!canAcquireProcessingPlant(state,inv,ctx))return false;
   const r=PROCESSING_PLANT_RECIPE;
   inv.cash-=PROCESSING_PLANT_CASH;inv.metal-=r.metal;inv.cleanCopper-=r.cleanCopper;inv.granulate-=r.granulate;
-  inv.steelBlank-=r.steelBlank;inv.aluminiumBillet-=r.aluminiumBillet;inv.alloyBillet-=r.alloyBillet;
+  inv.steelBlank-=r.steelBlank;inv.alloyBillet-=r.alloyBillet;
   inv.drive-=r.drive;inv.control-=r.control;inv.hydraulicPower-=r.hydraulicPower;inv.heavyFrame-=r.heavyFrame;
   inv.industrialController-=r.industrialController;inv.heavyHydraulicCylinder-=r.heavyHydraulicCylinder;
   state.portPowerAssemblies-=r.portPowerAssemblies;state.processingPlantOwned=true;state.plantLines=PROCESSING_PLANT_LINES;return true;
