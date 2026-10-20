@@ -259,7 +259,12 @@ export interface LegacyWorkforceMigrationInputV3{
 
 export function migrateLegacyWorkforceV3(input:LegacyWorkforceMigrationInputV3,now=Date.now()):WorkforceFleetV3State{
   const state=createDefaultWorkforceFleetV3(now),legacy=[input.first,input.second,input.third,input.fourth];
-  legacy.forEach((item,index)=>{if(!item?.hired)return;const worker=hireWorkerV3(state,'processing_plant',now)!;worker.name=`Рабочий ${index+1}`;worker.role=('role' in item&&item.role)?item.role:'scavenger'});
+  legacy.forEach((item,index)=>{
+    if(!item?.hired)return;
+    const worker=hireWorkerV3(state,'processing_plant',now)!;
+    const legacyRole=('role' in item&&item.role==='operator')?'operator':'scavenger';
+    worker.name=`Рабочий ${index+1}`;worker.role=legacyRole;
+  });
   if(input.vanOwned)acquireVehicleV3(state,'processing_plant','van',now);
   if(input.truckOwned)acquireVehicleV3(state,'processing_plant','truck',now);
   if(input.rigOwned)acquireVehicleV3(state,'processing_plant','recovery_rig',now);
