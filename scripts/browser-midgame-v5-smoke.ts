@@ -3,6 +3,7 @@ import { spawn } from 'node:child_process';
 import { once } from 'node:events';
 import { fileURLToPath } from 'node:url';
 import { chromium, type BrowserContext, type Page } from 'playwright';
+import {openBaseSurface} from './base-shell-test-utils.ts';
 
 const PORT=4177;
 const ORIGIN=`http://127.0.0.1:${PORT}`;
@@ -40,8 +41,8 @@ try{
   await withSave(c2,baseSave({midgame:mid2}));const p2=await c2.newPage();await p2.goto(`${ORIGIN}/?seed=mid-v9-van`);await p2.click('#garage');await p2.waitForSelector('#garageScreen:not([hidden])');
   await p2.click('#zonesGarage');await p2.waitForSelector('#zoneScreen:not([hidden])');const z3=p2.locator('[data-zone="z3"] button');assert.equal(await z3.isDisabled(),false);await z3.click();
   await p2.waitForSelector('#zoneScreen',{state:'hidden'});assert.equal((await state(p2)).midgame.currentZone,'z3');
-  const buyVan=p2.locator('#buyVan');assert.equal(await buyVan.isDisabled(),false);await buyVan.click();let s2=await state(p2);assert.equal(s2.midgame.van.owned,true);assert.ok(s2.cash<120000);
-  const hire=p2.locator('#hireWorker');assert.equal(await hire.isDisabled(),false);await hire.click();s2=await state(p2);assert.equal(s2.midgame.worker.hired,true);const assign=p2.locator('[data-worker-zone="z1"]');assert.equal(await assign.isDisabled(),false);await assign.click();s2=await state(p2);assert.equal(s2.midgame.worker.assignment,'z1');
+  await openBaseSurface(p2,'logistics');const buyVan=p2.locator('#buyVan');assert.equal(await buyVan.isDisabled(),false);await buyVan.click();let s2=await state(p2);assert.equal(s2.midgame.van.owned,true);assert.ok(s2.cash<120000);
+  await openBaseSurface(p2,'crew');const hire=p2.locator('#hireWorker');assert.equal(await hire.isDisabled(),false);await hire.click();s2=await state(p2);assert.equal(s2.midgame.worker.hired,true);await openBaseSurface(p2,'crew');const assign=p2.locator('[data-worker-zone="z1"]');assert.equal(await assign.isDisabled(),false);await assign.click();s2=await state(p2);assert.equal(s2.midgame.worker.assignment,'z1');
   await p2.reload();await p2.waitForSelector('#garage');s2=await state(p2);assert.equal(s2.saveVersion,10);assert.equal(s2.midgame.van.owned,true);assert.equal(s2.midgame.worker.assignment,'z1');await c2.close();
 
   const now=Date.now(),c3=await browser.newContext();const mid3=emptyMid(now-2*3600000);mid3.van.owned=true;mid3.worker={hired:true,assignment:'z1',lastTick:now-2*3600000};mid3.mastery.z1=100;mid3.discoveredComponents=['bearing'];
