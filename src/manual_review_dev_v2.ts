@@ -32,16 +32,20 @@ function blockUnloadOverwrite(){
   };
 }
 
-function mutateSave(mutator:(save:any)=>void){
-  const save=currentSave();
-  if(!save)return;
-  mutator(save);
+function persistAndReload(save:any){
   save.v=10;
   save.lastSeen=now();
   const result=writeResilientSave(localStorage,SAVE_KEY,JSON.stringify(save));
   if(!result.ok){console.error('DEV save mutation failed',result);return}
   blockUnloadOverwrite();
   location.reload();
+}
+
+function mutateSave(mutator:(save:any)=>void){
+  const save=currentSave();
+  if(!save)return;
+  mutator(save);
+  persistAndReload(save);
 }
 
 function resetReviewSave(){
@@ -139,19 +143,73 @@ function resetCounters(save:any){
   if(save.packD)save.packD.recoveryPity=0;if(save.packE)save.packE.portPowerPity=0;
 }
 
+function liveQueueActions(state:any){
+  return (state?.scheduler?.actions??[]).filter((action:any)=>action?.status!=='completed'&&action?.status!=='cancelled');
+}
+
+function remainingQueueDurationMs(action:any){
+  const duration=Math.max(1,Number(action?.durationMs??1));
+  if(action?.kind==='process_batch'||action?.kind==='industrial_batch'){
+    return duration*Math.max(0,Number(action?.requestedCount??1)-Number(action?.completedCount??0));
+  }
+  return duration;
+}
+
+/**
+ * DEV-only deterministic queue completion. Unlike the old +24h control this
+ * finishes the actual accepted work and then rebases the scheduler clock back
+ * to real wall-clock time, so newly queued work never inherits a future epoch.
+ */
+function finishWorkshopQueue(){
+  const api=gameApi();const state=api?.getState?.();if(!state)return;
+  const actions=liveQueueActions(state),scheduler=state.scheduler??{};
+  const t=now();
+  const baseline=Math.max(t,Number(scheduler.lastAdvancedAt??0),...actions.map((action:any)=>Number(action?.createdAt??0)));
+  const totalMs=actions.reduce((sum:number,action:any)=>sum+remainingQueueDurationMs(action),0);
+  if(actions.length&&typeof api.advanceWorkshopTo==='function')api.advanceWorkshopTo(baseline+Math.max(60_000,totalMs+60_000));
+
+  // Persist the real completion effects first (levels, machines, outputs), then
+  // repair the scheduler epoch in the serialized save before reload.
+  platformApi()?.forceSave?.();
+  const raw=localStorage.getItem(SAVE_KEY);if(!raw)return;
+  let save:any;try{save=JSON.parse(raw)}catch{return}
+  const savedScheduler=ensureObject(save,'scheduler');
+  savedScheduler.lastAdvancedAt=t;
+  for(const action of savedScheduler.actions??[]){
+    if(action?.status==='completed'||action?.status==='cancelled')continue;
+    if(Number(action?.createdAt??0)>t)action.createdAt=t;
+    // This is only a safety rebase for an unexpected still-live action. Under
+    // normal accepted/reserved queue semantics the large deterministic advance
+    // above removes every terminal action before this point.
+    if(action?.current&&Number(action.current.startedAt)>t){
+      const duration=Math.max(1,Number(action?.durationMs??(action.current.endsAt-action.current.startedAt)??1));
+      action.current={startedAt:t,endsAt:t+duration};
+    }
+  }
+  sessionStorage.setItem('__salvage_dev_queue_finish__',JSON.stringify({finished:actions.length,at:t}));
+  persistAndReload(save);
+}
+
 function augmentPanel(){
   const panel=document.querySelector<HTMLElement>('#hfDevPanel');if(!panel||panel.dataset.devV2==='1')return;
   const grids=panel.querySelectorAll<HTMLElement>('.hfDevGrid');
   grids[0]?.insertAdjacentHTML('beforeend','<button data-dev="level16">Уровень 16</button><button data-dev="level30">Уровень 30</button>');
   grids[1]?.insertAdjacentHTML('beforeend','<button data-zone-dev="z8">К старту Z8</button><button data-dev="plantReady">Plant ready</button>');
   const resourceButton=panel.querySelector<HTMLElement>('[data-dev="resources"]');if(resourceButton)resourceButton.textContent='+100k ₽ + все ресурсы';
+  const queueButton=panel.querySelector<HTMLButtonElement>('[data-dev="queue24"]');
+  if(queueButton){
+    queueButton.dataset.dev='queueFinish';
+    queueButton.textContent='✓ Завершить всю очередь';
+    queueButton.title='Мгновенно завершает все принятые разработки и производство в Workshop Queue и чинит часы очереди после старого +24ч.';
+  }
+  const resetQueue=panel.querySelector<HTMLButtonElement>('[data-dev="queueReset"]');if(resetQueue)resetQueue.textContent='Удалить очередь без завершения';
   panel.dataset.devV2='1';
 }
 
 function handleDevClick(event:MouseEvent){
   const target=event.target as HTMLElement;const control=target.closest<HTMLElement>('#hfDevPanel [data-dev],#hfDevPanel [data-zone-dev]');if(!control)return;
   const action=control.dataset.dev,zone=control.dataset.zoneDev;
-  if(action==='snapshot'||action==='queue24')return;
+  if(action==='snapshot')return;
   event.preventDefault();event.stopImmediatePropagation();
   if(zone){mutateSave(save=>zonePreset(save,zone));return}
   if(action==='resources'){mutateSave(grantAllResources);return}
@@ -160,6 +218,7 @@ function handleDevClick(event:MouseEvent){
   }
   if(action==='unlockAll'){mutateSave(unlockAll);return}
   if(action==='plantReady'){mutateSave(plantReady);return}
+  if(action==='queueFinish'||action==='queue24'){finishWorkshopQueue();return}
   if(action==='queueReset'){mutateSave(save=>{save.scheduler=save.scheduler??{};save.scheduler.actions=[];save.scheduler.lastAdvancedAt=now()});return}
   if(action==='counters'){mutateSave(resetCounters);return}
   if(action==='reset'&&confirm('Сбросить только локальный review-save?')){resetReviewSave();return}
@@ -169,4 +228,4 @@ document.addEventListener('click',handleDevClick,true);
 new MutationObserver(augmentPanel).observe(document.documentElement,{subtree:true,childList:true});
 augmentPanel();
 
-Object.assign(globalThis,{__SALVAGE_DEV_V2__:{grantAllResources,zonePreset,plantReady,unlockAll,getState:()=>gameApi()?.getState?.()}});
+Object.assign(globalThis,{__SALVAGE_DEV_V2__:{grantAllResources,zonePreset,plantReady,unlockAll,finishWorkshopQueue,getState:()=>gameApi()?.getState?.()}});
