@@ -23,21 +23,21 @@ try{
   const garageMarkup=await page.locator('#baseStageSceneV2').innerHTML();
   assert.match(garageMarkup,/Личный гараж/,'fresh base must visibly be a compact personal Garage');
 
-  // Use the real DEV save mutation/reload path. V4 preset intentionally drops
-  // the derived workforce snapshot so boot migration rebuilds it from Save V10.
+  // Use the real DEV save mutation/reload path. Open-all now persists a canonical
+  // Workforce V3 review snapshot instead of relying on numbered legacy slots.
   await page.click('#hfDevToggle');await page.waitForSelector('#hfDevPanel:not([hidden])');
   await Promise.all([page.waitForLoadState('load'),page.click('[data-dev="unlockAll"]')]);
   await waitGame(page);
-  await page.waitForFunction(()=>{const s=(globalThis as any).__SALVAGE_TEST__.getState();return s.level===50&&s.workforceV3?.workers?.length>=4&&s.workforceV3?.fleet?.length>=3});
+  await page.waitForFunction(()=>{const s=(globalThis as any).__SALVAGE_TEST__.getState();return s.level===50&&s.workforceV3?.workers?.length>=3&&s.workforceV3?.fleet?.length>=3});
   let s=await page.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.getState());
   assert.equal(s.level,50,'DEV open-all must target extended progression');
   assert.equal(s.talents.length,40,'DEV open-all must unlock the real 40-node Talent V4 tree');
-  assert.ok(s.workforceV3.workers.length>=4,'legacy workers must migrate into generic roster');
+  assert.ok(s.workforceV3.workers.length>=3,'open-all must expose a mature generic roster');
   assert.ok(s.workforceV3.fleet.some((v:any)=>v.type==='van')&&s.workforceV3.fleet.some((v:any)=>v.type==='truck')&&s.workforceV3.fleet.some((v:any)=>v.type==='recovery_rig'));
 
   await page.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.forceGarage());await page.waitForSelector('#garageScreen:not([hidden])');
   await openBaseSurface(page,'crew');await page.waitForSelector('#workforceV3Root');
-  assert.ok(await page.locator('.v3WorkerCard').count()>=4,'Crew page must render one generic roster, not four pack-specific panels');
+  assert.ok(await page.locator('.v3WorkerCard').count()>=3,'Crew page must render one generic roster, not pack-specific worker panels');
   await openBaseSurface(page,'logistics');await page.waitForSelector('#fleetV3Root');
   assert.ok(await page.locator('.v3VehicleCard').count()>=3,'Fleet page must expose distinct owned assets');
   const buyVan=page.locator('[data-v3-buy-vehicle="van"]');assert.equal(await buyVan.count(),1,'owned Van must expose additional Van acquisition');
@@ -86,7 +86,7 @@ try{
   const operatorText=await page.locator(`[data-worker-card="${operatorWorkerId}"] .v3OperatorBlock`).innerText();assert.match(operatorText,/Работает: Линии Processing Plant/);assert.match(operatorText,/% быстрее/);
 
   // Standing buyer: partial 10kg delivery persists instead of rotating contract away.
-  await openBaseSurface(page,'contracts');await page.waitForSelector('#contractBoardV3Root');
+  await openBaseSurface(page,'contracts');await page.waitForSelector('.contractV3');
   assert.ok(await page.locator('.standingBuyer').count()>=4,'standing buyers remain permanently visible');
   assert.ok(await page.locator('.specialOrder').count()>=1,'late state must expose high-margin special orders');
   s=await page.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.getState());const beforeMetal=s.storage.metal,beforeCash=s.cash;
@@ -94,7 +94,8 @@ try{
   await page.waitForFunction(()=>Number((globalThis as any).__SALVAGE_TEST__.getState().contract?.standingProgress?.standing_metal)>=9.99);
   s=await page.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.getState());
   assert.ok(s.storage.metal<=beforeMetal-9.99&&s.cash>beforeCash,'partial standing delivery must consume real inventory and pay real cash');
-  await page.waitForFunction(()=>document.querySelector('[data-standing-card="standing_metal"]')?.textContent?.includes('10 / 24'));
+  await page.waitForFunction(()=>document.querySelector('[data-standing-buyer="standing_metal"]')?.textContent?.includes('14 / 24'));
+  assert.match(await page.locator('[data-standing-buyer="standing_metal"]').innerText(),/До партии\s*14 \/ 24 кг/,'standing buyer must remain visible with persisted partial progress');
   const specialText=(await page.locator('.specialOrder').allInnerTexts()).join('\n');assert.doesNotMatch(specialText,/СПЕЦЗАКАЗ · RAW/,'special orders must not be duplicate bulk raw drains');
 
   // Persist a pure Hangar state and open it in another tab before the first page
@@ -127,6 +128,6 @@ try{
   await offlinePage.waitForSelector('#offlineScreen:not([hidden])');await offlinePage.waitForSelector('.offlineRoutesV3 li');
   const offlineText=await offlinePage.locator('.offlineRoutesV3').innerText();assert.match(offlineText,/кг\/ч/);assert.match(offlineText,/\+\d/,'offline report must show real persisted route gain');
 
-  console.log('Core Rebuild V1 browser proof: Talent V4 + generic roster/fleet + route delta + real Operator production + standing contracts + Hangar scene + real offline report: PASS');
+  console.log('Core Rebuild V1 browser proof: Talent V4 + canonical generic roster/fleet + route delta + real Operator production + Contract V3 + Hangar scene + real offline report: PASS');
   await context.close();
 }finally{await browser.close();await stopServer()}
