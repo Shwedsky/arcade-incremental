@@ -46,6 +46,7 @@ replaceExact('src/content_pack_e.ts','  hpMultiplier:3.85,\n  yieldMultiplier:2.
 replaceExact('scripts/content-pack-e-smoke.ts','assert.equal(PACK_E_ZONE_PROFILE.hpMultiplier,3.85);','assert.equal(PACK_E_ZONE_PROFILE.hpMultiplier,3.45);');
 replaceExact('scripts/content-pack-e-smoke.ts','assert.equal(PACK_E_ZONE_PROFILE.masteryTarget,14_200);','assert.equal(PACK_E_ZONE_PROFILE.masteryTarget,12_000);');
 replaceExact('models/content_pack_e_v1.py','Z8 = {"hp": 3.85, "yield": 2.90, "mastery": 14_200, "large_share": .60, "target_hours": 5.0}','Z8 = {"hp": 3.45, "yield": 2.90, "mastery": 12_000, "large_share": .60, "target_hours": 4.6}');
+replaceExact('models/content_pack_e_v1.py','    assert 1.10 <= Z8["hp"] / Z7["hp"] <= 1.25','    assert 1.05 <= Z8["hp"] / Z7["hp"] <= 1.15');
 replaceExact('models/content_pack_e_v1.py','    assert Z8["target_hours"] == 5.0','    assert Z8["target_hours"] == 4.6');
 replaceExact('models/mid_late_mechanics_sim_v1.py','    ("Z8","Port Terminal",1905.0,0.90,180,5.0),','    ("Z8","Port Terminal",1905.0,0.96,180,4.6),');
 replaceExact('models/mid_late_mechanics_sim_v1.py','    assert [r["mastery_target_active_h"] for r in ar] == [1.5,2.0,2.5,3.0,3.5,4.0,4.5,5.0]','    assert [r["mastery_target_active_h"] for r in ar] == [1.5,2.0,2.5,3.0,3.5,4.0,4.5,4.6]');
