@@ -17,6 +17,7 @@
     "smoke:contract-board-v3": "tsx scripts/contract-board-v3-smoke.ts",
     "smoke:progression-v2": "tsx scripts/progression-expansion-v2-smoke.ts",
     "smoke:business-stage": "tsx scripts/business-stage-smoke.ts",
+    "smoke:industrial-chain-v1": "tsx scripts/industrial-chain-v1-smoke.ts",
     "smoke:packe": "tsx scripts/content-pack-e-smoke.ts",
     "smoke:browser": "tsx scripts/browser-smoke.ts",
     "smoke:midgame": "tsx scripts/midgame-smoke.ts",
