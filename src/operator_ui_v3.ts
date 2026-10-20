@@ -1,4 +1,5 @@
 import './operator_ui_v3.css';
+import './contract_ui_v3.ts';
 
 const api=()=> (globalThis as any).__SALVAGE_TEST__;
 const pct=(factor:number)=>`${Math.round((1-factor)*100)}% быстрее`;
