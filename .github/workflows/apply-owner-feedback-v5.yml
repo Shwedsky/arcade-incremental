@@ -31,7 +31,7 @@ jobs:
       - name: Z8 domain proof
         run: npm run smoke:packe
       - name: Late-game structural proof
-        run: python models/content_pack_e_v1.py && python models/mid_late_mechanics_sim_v1.py --check
+        run: python models/content_pack_e_v1.py && python models/mid_late_mechanics_sim_v1.py --check --out /tmp/mid-late-proofs
       - name: Commit runtime changes
         run: |
           git diff --check
