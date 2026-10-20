@@ -77,11 +77,13 @@ try{
   await Promise.all([page.waitForLoadState('load'),page.click('[data-dev="plantReady"]')]);
   await page.waitForFunction(()=>(globalThis as any).__SALVAGE_TEST__?.getState()?.midgame?.mastery?.z8===100);
   s=await page.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.getState());
-  assert.equal(s.packD.crew4.hired,true,'Plant-ready must include worker #4');
+  assert.ok(s.workforceV3.workers.length>=3,'Plant-ready must migrate into a mature generic roster');
+  assert.ok(s.talents.includes('automation_6'),'Plant-ready must legally unlock the Dispatcher / Operator role');
+  const productionView=await page.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.getProductionV3View());assert.equal(productionView.unlocked,true,'Plant-ready must expose Operator through the real Talent V4 runtime');
   assert.equal(s.packE.portPowerDiscovered,true);assert.ok(s.packE.portPowerAssemblies>=1);
   await page.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.forceGarage());await page.waitForSelector('#garageScreen:not([hidden])');await openBaseSurface(page,'logistics');
   assert.equal(await page.locator('#acquireProcessingPlant').isDisabled(),false,'Plant-ready must actually make Plant purchasable');
 
-  console.log('Manual Review DEV V2 durable grants + queue instant-finish/clock repair + Z8 + Plant-ready: PASS');
+  console.log('Manual Review DEV V2 durable grants + queue instant-finish/clock repair + Z8 + generic Plant-ready: PASS');
   await context.close();
 }finally{await browser.close();await stopServer()}
