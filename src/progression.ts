@@ -173,9 +173,9 @@ export interface RuntimeEffects {
 
 export function deriveEffects(unlocked: ReadonlySet<TalentId>): RuntimeEffects {
   const has = (id: TalentId) => unlocked.has(id);
-  const saleMultiplier=has('trade_7')?1.18:has('trade_5')?1.14:has('trade_1')?1.08:1;
-  const shopPriceMultiplier=has('trade_7')?.86:has('trade_2')?.92:1;
-  const offlineEfficiency=has('automation_8')?.75:has('automation_7')?.65:has('automation_6')?.55:has('automation_4')?.45:has('automation_1')?.30:.20;
+  const saleMultiplier=has('trade_7') ? 1.18 : has('trade_5') ? 1.14 : has('trade_1') ? 1.08 : 1;
+  const shopPriceMultiplier=has('trade_7') ? .86 : has('trade_2') ? .92 : 1;
+  const offlineEfficiency=has('automation_8') ? .75 : has('automation_7') ? .65 : has('automation_6') ? .55 : has('automation_4') ? .45 : has('automation_1') ? .30 : .20;
   const offlineCapHours=has('automation_8')?12:has('automation_7')?10:has('automation_5')?6:has('automation_2')?4:2;
   return {
     dpsMultiplier: 1 + (has('salvage_1') ? .12 : 0) + (has('salvage_2') ? .12 : 0),
