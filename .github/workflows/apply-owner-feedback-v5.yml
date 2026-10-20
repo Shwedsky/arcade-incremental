@@ -1,0 +1,42 @@
+name: apply-owner-feedback-v5
+
+on:
+  push:
+    branches:
+      - feature/p0-p1-business-stage-base-shell-v1
+    paths:
+      - scripts/apply-owner-feedback-v5.mjs
+      - .github/workflows/apply-owner-feedback-v5.yml
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/p0-p1-business-stage-base-shell-v1
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Apply guarded owner feedback patch
+        run: node scripts/apply-owner-feedback-v5.mjs
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Typecheck and build before push
+        run: npm run build
+      - name: Z8 domain proof
+        run: npm run smoke:packe
+      - name: Late-game structural proof
+        run: python models/content_pack_e_v1.py && python models/mid_late_mechanics_sim_v1.py --check
+      - name: Commit runtime changes
+        run: |
+          git diff --check
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/main.ts src/manual_review_dev_v2.ts src/content_pack_e.ts scripts/content-pack-e-smoke.ts models/content_pack_e_v1.py models/mid_late_mechanics_sim_v1.py
+          git commit -m "feat: apply owner feedback gameplay and review fixes"
+          git push origin HEAD:feature/p0-p1-business-stage-base-shell-v1
