@@ -27,8 +27,8 @@ Available surfaces are unlocked by business stage; the UI does not invent a new 
 
 ### Growth surfaces
 
-- **Логистика** — appears in Equipped Garage, before the Van is owned, because this surface must contain the first transport acquisition and then grow into vehicles/routes;
-- **Персонал** — appears once the business enters the workforce stage and there is a real worker-management loop.
+- **Логистика** — appears in Equipped Garage, before the Van is owned, because this surface contains the first transport acquisition and then grows into vehicles/routes;
+- **Персонал** — also appears in Equipped Garage before the first hire, because the recruitment action itself must live on the Crew surface.
 
 A system's purchase/unlock entry point must never be hidden behind the stage that the purchase itself creates.
 
@@ -40,14 +40,16 @@ A system's purchase/unlock entry point must never be hidden behind the stage tha
 Player meaning: personal workshop.
 
 ### Equipped Garage
-`Обзор / Производство / Склад / Логистика / Контракты / Развитие`
+`Обзор / Производство / Склад / Персонал / Логистика / Контракты / Развитие`
 
-Logistics first acts as the place where the player acquires the first Van and learns the transport layer.
+Crew and Logistics begin as first-entry growth surfaces:
+- Crew exposes the first worker recruitment when its economic gate is met;
+- Logistics exposes the first Van acquisition and teaches the transport layer.
 
-Player meaning: working recycling garage that is beginning to outgrow hand-cart-only logistics.
+Player meaning: working recycling garage that is beginning to outgrow one-person / hand-cart-only operation.
 
 ### Workforce Garage
-Adds **Персонал** while retaining Logistics.
+Keeps the same navigation grammar, but the surfaces now contain real owned workers/routes/assets rather than only acquisition entry points.
 
 Player meaning: first small employer and first passive supply route.
 
@@ -106,8 +108,8 @@ Business scale must reduce micro per unit:
 
 Base Shell V1 passes when automated browser review proves:
 - Starter Garage hides Crew/Logistics;
-- Equipped Garage exposes Logistics while Crew remains hidden;
-- Workforce stage exposes Crew and Logistics;
+- Equipped Garage exposes Crew and Logistics before first worker/Van ownership;
+- Workforce stage keeps Crew and Logistics while stage identity changes after actual ownership;
 - Hangar and Plant derive the correct stage from owned infrastructure;
 - Production, Storage, Contracts and Development remain reachable;
 - existing element IDs remain in the document and interactive;
