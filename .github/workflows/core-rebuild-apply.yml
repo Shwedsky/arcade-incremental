@@ -26,14 +26,15 @@ jobs:
           node scripts/apply-core-runtime-v3-stage2.mjs
           node scripts/apply-core-runtime-v3-stage3.mjs
           node scripts/apply-core-dev-v4.mjs
+          node scripts/apply-industrial-chain-v1.mjs
       - name: Commit generated patches when needed
         run: |
-          if git diff --quiet -- src/main.ts src/manual_review_dev_v2.ts; then
+          if git diff --quiet -- src/main.ts src/manual_review_dev_v2.ts src/content_pack_c.ts src/content_pack_d.ts src/content_pack_e.ts src/contract_board_v2.ts; then
             echo "Core integration already current"
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+Shwedsky@users.noreply.github.com"
-          git add src/main.ts src/manual_review_dev_v2.ts
-          git commit -m "fix: sync core rebuild runtime and dev presets"
+          git add src/main.ts src/manual_review_dev_v2.ts src/content_pack_c.ts src/content_pack_d.ts src/content_pack_e.ts src/contract_board_v2.ts
+          git commit -m "refactor: simplify industrial chain v1"
           git push origin HEAD:feature/p0-p1-business-stage-base-shell-v1
