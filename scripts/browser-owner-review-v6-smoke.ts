@@ -26,23 +26,24 @@ async function mutateSave(page:any,mutatorSource:string){
 
 await waitServer();const browser=await chromium.launch({headless:true});
 try{
-  const context=await browser.newContext({viewport:{width:1440,height:1000}}),page=await context.newPage();
+  const context=await browser.newContext({viewport:{width:1440,height:1000}}),page=await context.newPage();page.setDefaultTimeout(10_000);
+  console.log('V6 browser: boot and unlock');
   await page.goto(`${ORIGIN}/?seed=owner-review-v6`);await waitGame(page);await unlockAll(page);
 
-  // One click must complete a standing delivery and immediately acknowledge it.
+  console.log('V6 browser: standing order');
   await openBaseSurface(page,'contracts');await page.waitForSelector('.contractV3');
   const standing=page.locator('.standingBuyer.ready [data-standing-submit]').first();assert.equal(await standing.count(),1,'mature state needs a ready standing buyer');
   let before=await state(page);const standingCash=before.cash;await standing.click();
   await page.waitForFunction((cash)=>((globalThis as any).__SALVAGE_TEST__.getState().cash)>cash,standingCash);
   assert.match(await page.locator('#ownerV6Notice').innerText(),/Отгружено|покупател|получено/i,'first standing-order click must show feedback');
 
-  // Same guarantee for special orders: one physical click -> state mutation -> feedback.
+  console.log('V6 browser: special order');
   await page.waitForSelector('.specialOrder.ready [data-special-submit]');
   const special=page.locator('.specialOrder.ready [data-special-submit]').first();before=await state(page);const specialCash=before.cash;await special.click();
   await page.waitForFunction((cash)=>((globalThis as any).__SALVAGE_TEST__.getState().cash)>cash,specialCash);
   assert.match(await page.locator('#ownerV6Notice').innerText(),/Спецзаказ.*сдан|заказ.*сдан/i,'first special-order click must show feedback');
 
-  // Current mature UI must not expose the major implementation-English labels the owner reported.
+  console.log('V6 browser: localization sweep');
   const banned=/Processing Plant|Industrial Workshop|Salvage Yard|Recovery Rig|Workshop Queue|Production Cells|Refining Cell|Fabrication Cell|Heavy Assembly Cell|\bOPERATOR\b|\bOperator\b|\bScavenger\b|Truck conversion|Plant-линии|HEAVY BAY|\bTier (?:I|II|III)\b/;
   for(const surface of ['overview','production','storage','contracts','crew','logistics'] as const){
     await openBaseSurface(page,surface);await page.evaluate(()=>(globalThis as any).__SALVAGE_OWNER_V6__.refresh());await page.waitForTimeout(50);
@@ -53,13 +54,13 @@ try{
   assert.doesNotMatch(await page.locator('#talentScreen').innerText(),banned,'talent UI must be player-facing Russian');
   await page.click('#talentsClose');
 
-  // Plant diagram must explain what its bars/blocks mean instead of leaving anonymous stripes.
+  console.log('V6 browser: plant clarity');
   await page.evaluate(()=>(globalThis as any).__SALVAGE_BASE_SHELL__.open('overview'));await page.waitForSelector('[data-base-pane="overview"]:not([hidden])');
   await page.evaluate(()=>(globalThis as any).__SALVAGE_OWNER_V6__.refresh());
   assert.ok(await page.locator('#baseStageSceneV2.stage-plant .ownerPlantLegend').count(),'plant scene needs an explicit legend');
   assert.equal(await page.locator('#baseStageSceneV2.stage-plant .ownerPlantLineStatus').count(),2,'both plant lines need explicit state labels');
 
-  // Training with insufficient cash remains clickable and explains exactly why it failed.
+  console.log('V6 browser: insufficient training feedback');
   await mutateSave(page,`save=>{save.cash=0}`);
   await openBaseSurface(page,'crew');let s=await state(page);const worker=s.workforceV3.workers.find((w:any)=>w.rank<5);assert.ok(worker,'fixture needs a trainable worker');
   const train=page.locator(`[data-v3-train="${worker.id}"]`);assert.equal(await train.isDisabled(),false,'training must not silently dead-end behind a disabled button');
@@ -67,7 +68,7 @@ try{
   assert.match(await page.locator('#ownerV6Notice').innerText(),/Не хватает .*₽.*обучен|обучен.*Не хватает .*₽/i);
   s=await state(page);assert.equal(s.workforceV3.workers.find((w:any)=>w.id===worker.id).rank,rankBefore,'failed training must not change rank');
 
-  // Hangar acquisition is an Overview milestone with explicit requirements; Logistics no longer owns the purchase.
+  console.log('V6 browser: Hangar Overview gate');
   await mutateSave(page,`save=>{
     save.cash=1_000_000;
     save.packB.hangarOwned=false;
