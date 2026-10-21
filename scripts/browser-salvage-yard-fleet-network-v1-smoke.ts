@@ -24,13 +24,14 @@ try{
   save.xp=Math.max(Number(save.xp??0),80_000);
   save.packB.hangarOwned=true;save.packC.salvageYardOwned=true;save.packD.industrialWorkshopOwned=false;save.packE.processingPlantOwned=false;
   save.midgame.mastery={...(save.midgame?.mastery??{}),z1:100,z2:100,z3:100,z4:100};
-  save.workforceV3={version:3,nextWorkerSerial:4,nextVehicleSerial:3,nextRouteSerial:3,lastSimulatedAt:now,workers:[
+  save.workforceV3={version:3,nextWorkerSerial:4,nextVehicleSerial:4,nextRouteSerial:3,lastSimulatedAt:now,workers:[
     {id:'worker-1',name:'Илья',rank:2,role:'scavenger',status:'route',routeId:'route-1',productionCellId:null,hiredAt:now-50_000},
     {id:'worker-2',name:'Марина',rank:2,role:'logistician',status:'route',routeId:'route-2',productionCellId:null,hiredAt:now-40_000},
     {id:'worker-3',name:'Олег',rank:1,role:'scavenger',status:'idle',routeId:null,productionCellId:null,hiredAt:now-30_000}
   ],fleet:[
     {id:'vehicle-1',type:'van',name:'Фургон #1',capacityKg:400,routeId:'route-1',acquiredAt:now-45_000},
-    {id:'vehicle-2',type:'truck',name:'Грузовик #1',capacityKg:1000,routeId:'route-2',acquiredAt:now-35_000}
+    {id:'vehicle-2',type:'truck',name:'Грузовик #1',capacityKg:1000,routeId:'route-2',acquiredAt:now-35_000},
+    {id:'vehicle-3',type:'recovery_rig',name:'Recovery Rig #1',capacityKg:1800,routeId:null,acquiredAt:now-25_000}
   ],routes:[
     {id:'route-1',zone:'z1',workerIds:['worker-1'],vehicleId:'vehicle-1',startedAt:now,shiftEndsAt:now+8*3_600_000,deliveredKg:75},
     {id:'route-2',zone:'z4',workerIds:['worker-2'],vehicleId:'vehicle-2',startedAt:now,shiftEndsAt:now+2*3_600_000,deliveredKg:120}
@@ -46,13 +47,20 @@ try{
   const network=await page.locator('#fleetNetworkV1Root').innerText();
   assert.match(network,/Сеть снабжения/);assert.match(network,/Маршруты\s*2/i);assert.match(network,/Илья/);assert.match(network,/Марина/);assert.match(network,/Фургон #1/);assert.match(network,/Грузовик #1/);
   assert.match(network,/Транспорт заполнится раньше конца смены/,'long Van shift should expose the real capacity bottleneck');
+  const constrained=page.locator('[data-network-route="route-1"]');assert.match(await constrained.innerText(),/До заполнения:/);assert.equal(await constrained.locator('[data-network-route-vehicle="route-1"] option[value="vehicle-3"]').count(),1,'free larger Rig must be offered as causal remediation');
 
   await page.click('[data-base-surface="overview"]');await page.waitForSelector('#baseStageSceneV2.stage-yard');await page.waitForSelector('[data-yard-network-scene]');
   assert.equal(await page.locator('.yardRouteLane').count(),2,'Yard scene must visibly show both active route lanes');
   const yard=await page.locator('[data-yard-network-scene]').innerText();assert.match(yard,/Фургон #1/);assert.match(yard,/Грузовик #1/);
 
-  // Remove one route using the old individual Crew UI: the network must follow canonical state immediately.
-  await page.click('[data-base-surface="crew"]');await page.waitForSelector('[data-v3-unassign="route-1"]');await page.click('[data-v3-unassign="route-1"]');
+  // P4-C: fix the real capacity bottleneck from the network card itself.
+  await page.click('[data-base-surface="logistics"]');await page.selectOption('[data-network-route-vehicle="route-1"]','vehicle-3');await page.click('[data-network-reassign-route="route-1"]');
+  await page.waitForFunction(()=>{const wf=(globalThis as any).__SALVAGE_TEST__.getState().workforceV3;const worker=wf.workers.find((w:any)=>w.id==='worker-1'),van=wf.fleet.find((v:any)=>v.id==='vehicle-1'),rig=wf.fleet.find((v:any)=>v.id==='vehicle-3');return worker?.routeId&&worker.routeId!=='route-1'&&van?.routeId===null&&rig?.routeId===worker.routeId&&wf.routes.length===2});
+  await page.waitForFunction(()=>Array.from(document.querySelectorAll<HTMLElement>('[data-network-route]')).some(card=>card.textContent?.includes('Илья')&&card.textContent?.includes('Recovery Rig #1')&&card.textContent?.includes('Поток сбалансирован')));
+  const improvedCard=page.locator('[data-network-route]').filter({hasText:'Илья'});assert.match(await improvedCard.innerText(),/Recovery Rig #1/);assert.doesNotMatch(await improvedCard.innerText(),/Транспорт заполнится раньше конца смены/);
+
+  // Remove the improved route using the individual Crew UI: network must still follow canonical state immediately.
+  await page.click('[data-base-surface="crew"]');const workerOne=page.locator('[data-worker-card="worker-1"]');await workerOne.locator('[data-v3-unassign]').click();
   await page.waitForFunction(()=>((globalThis as any).__SALVAGE_TEST__.getState().workforceV3.routes??[]).length===1);
   await page.click('[data-base-surface="logistics"]');await page.waitForFunction(()=>document.querySelectorAll('[data-network-route]').length===1);
   const after=await page.locator('#fleetNetworkV1Root').innerText();assert.match(after,/Маршруты\s*1/i);
@@ -78,5 +86,5 @@ try{
   await page.click('[data-base-surface="overview"]');await page.waitForFunction(()=>document.querySelectorAll('.yardRouteLane').length===3);
 
   await context.close();
-  console.log('P4 Salvage Yard / Fleet Network V1 live network + canonical group dispatch browser acceptance: PASS');
+  console.log('P4 Salvage Yard / Fleet Network V1 live network + bottleneck remediation + canonical group dispatch browser acceptance: PASS');
 }finally{await browser.close();await stop(proc)}
