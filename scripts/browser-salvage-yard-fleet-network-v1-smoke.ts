@@ -104,27 +104,31 @@ try{
   assert.deepEqual(afterReload,beforeReload,'all canonical Yard routes and assignments must survive Save V10 reload');
   await page.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.forceGarage());await page.waitForSelector('#garageScreen:not([hidden])');await page.click('[data-base-surface="logistics"]');await page.waitForSelector('#fleetNetworkV1Root');assert.equal(await page.locator('[data-network-route]').count(),3);
 
-  // Fill Yard receiving storage, then run the standard startup offline pipeline one hour later.
-  await page.evaluate((key)=>{const raw=localStorage.getItem(key);if(!raw)throw new Error('missing P4 offline save');const save=JSON.parse(raw),past=Date.now()-3_600_000;save.lastSeen=past;save.storage={...(save.storage??{}),metal:30_000,copper:0,plastic:0};save.workforceV3.lastSimulatedAt=past;for(const route of save.workforceV3.routes){route.startedAt=past;route.shiftEndsAt=past+2*3_600_000;route.deliveredKg=0}localStorage.setItem(key,JSON.stringify(save))},SAVE_KEY);
-  await page.reload();await page.waitForFunction(()=>(globalThis as any).__SALVAGE_TEST__?.getState()?.workforceV3?.routes?.length===3);await page.waitForSelector('#offlineScreen:not([hidden])');await page.waitForTimeout(1400);
-  const offlineDiagnostic=await page.evaluate((key)=>{const runtime=(globalThis as any).__SALVAGE_TEST__?.getState?.(),raw=localStorage.getItem(key),saved=raw?JSON.parse(raw):null,screen=document.querySelector<HTMLElement>('#offlineScreen'),loot=document.querySelector<HTMLElement>('#offlineLoot');return{rows:document.querySelectorAll('.offlineRoutesV3 li').length,offlineHidden:screen?.hidden??null,offlineHtml:(loot?.innerHTML??'').slice(0,1200),businessStage:runtime?.businessStage??null,runtimeStorage:runtime?.storage??null,runtimeLastSimulatedAt:runtime?.workforceV3?.lastSimulatedAt??null,runtimeRoutes:(runtime?.workforceV3?.routes??[]).map((r:any)=>({id:r.id,deliveredKg:r.deliveredKg,startedAt:r.startedAt,shiftEndsAt:r.shiftEndsAt})),savedStorage:saved?.storage??null,savedLastSeen:saved?.lastSeen??null,savedLastSimulatedAt:saved?.workforceV3?.lastSimulatedAt??null,savedRoutes:(saved?.workforceV3?.routes??[]).map((r:any)=>({id:r.id,deliveredKg:r.deliveredKg,startedAt:r.startedAt,shiftEndsAt:r.shiftEndsAt}))}},SAVE_KEY);
-  if(offlineDiagnostic.rows<3)throw new Error(`P4 offline diagnostic: ${JSON.stringify(offlineDiagnostic)}`);
-  await page.waitForSelector('[data-offline-storage-stop]');
-  assert.ok(await page.locator('.offlineRoutesV3 li').count()>=3,'offline return report must expose every persisted Yard route');
-  const offlineText=await page.locator('#offlineLoot').innerText();assert.match(offlineText,/кг\/ч/);assert.match(offlineText,/склад базы заполнен/i,'offline report must name the actual base-storage stop');
-  const stoppedLoads=await page.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.getState().workforceV3.routes.map((route:any)=>route.deliveredKg));assert.ok(stoppedLoads.every((load:number)=>load<=.001),`full base storage must stop passive route delivery, got ${stoppedLoads.join(', ')}`);
-  await page.click('#offlineClose');
+  // Build the full-storage offline fixture outside the live page so its autosave cannot overwrite the scenario before navigation.
+  await page.evaluate(()=>(globalThis as any).__SALVAGE_PLATFORM__.forceSave());
+  const offlineRaw=await page.evaluate(key=>localStorage.getItem(key),SAVE_KEY);assert.ok(offlineRaw,'P4 offline fixture must exist');
+  const offlineSave=JSON.parse(offlineRaw!),past=Date.now()-3_600_000;
+  offlineSave.lastSeen=past;offlineSave.storage={...(offlineSave.storage??{}),metal:30_000,copper:0,plastic:0};offlineSave.workforceV3.lastSimulatedAt=past;
+  for(const route of offlineSave.workforceV3.routes){route.startedAt=past;route.shiftEndsAt=past+2*3_600_000;route.deliveredKg=0}
+  await context.close();
 
-  await page.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.forceGarage());await page.waitForSelector('#garageScreen:not([hidden])');await page.click('[data-base-surface="logistics"]');await page.waitForSelector('[data-base-storage-root="logistics"] [data-base-storage-pressure].full');
-  const fullStorage=await page.locator('[data-base-storage-root="logistics"]').innerText();assert.match(fullStorage,/ПРИЁМ ОСТАНОВЛЕН/);assert.match(fullStorage,/30[\s\u00a0]?000 кг/);
-  await page.waitForFunction(()=>Array.from(document.querySelectorAll<HTMLElement>('[data-network-route]')).some(card=>card.textContent?.includes('Склад базы заполнен')));
-  await page.click('[data-base-surface="storage"]');await page.waitForSelector('[data-base-storage-root="storage"] [data-base-storage-pressure].full');
+  const offlineContext=await browser.newContext({viewport:{width:1440,height:1000},storageState:{cookies:[],origins:[{origin:ORIGIN,localStorage:[{name:SAVE_KEY,value:JSON.stringify(offlineSave)}]}]}}),offlinePage=await offlineContext.newPage();
+  await offlinePage.goto(`${ORIGIN}/?seed=p4-yard-offline`);await offlinePage.waitForFunction(()=>(globalThis as any).__SALVAGE_TEST__?.getState()?.workforceV3?.routes?.length===3);await offlinePage.waitForSelector('#offlineScreen:not([hidden])');await offlinePage.waitForSelector('.offlineRoutesV3 li');await offlinePage.waitForSelector('[data-offline-storage-stop]');
+  assert.ok(await offlinePage.locator('.offlineRoutesV3 li').count()>=3,'offline return report must expose every persisted Yard route');
+  const offlineText=await offlinePage.locator('#offlineLoot').innerText();assert.match(offlineText,/кг\/ч/);assert.match(offlineText,/склад базы заполнен/i,'offline report must name the actual base-storage stop');
+  const stoppedLoads=await offlinePage.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.getState().workforceV3.routes.map((route:any)=>route.deliveredKg));assert.ok(stoppedLoads.every((load:number)=>load<=.001),`full base storage must stop passive route delivery, got ${stoppedLoads.join(', ')}`);
+  await offlinePage.click('#offlineClose');
+
+  await offlinePage.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.forceGarage());await offlinePage.waitForSelector('#garageScreen:not([hidden])');await offlinePage.click('[data-base-surface="logistics"]');await offlinePage.waitForSelector('[data-base-storage-root="logistics"] [data-base-storage-pressure].full');
+  const fullStorage=await offlinePage.locator('[data-base-storage-root="logistics"]').innerText();assert.match(fullStorage,/ПРИЁМ ОСТАНОВЛЕН/);assert.match(fullStorage,/30[\s\u00a0]?000 кг/);
+  await offlinePage.waitForFunction(()=>Array.from(document.querySelectorAll<HTMLElement>('[data-network-route]')).some(card=>card.textContent?.includes('Склад базы заполнен')));
+  await offlinePage.click('[data-base-surface="storage"]');await offlinePage.waitForSelector('[data-base-storage-root="storage"] [data-base-storage-pressure].full');
 
   // Same network management and storage pressure must remain usable at a phone-sized viewport.
-  await page.setViewportSize({width:390,height:844});await page.click('[data-base-surface="logistics"]');await page.waitForSelector('#fleetNetworkV1Root');
-  const mobileNetwork=await page.locator('#fleetNetworkV1Root').boundingBox(),mobileDispatch=await page.locator('[data-crew-dispatch]').boundingBox(),mobileStorage=await page.locator('[data-base-storage-root="logistics"]').boundingBox();assert.ok(mobileNetwork&&mobileNetwork.width<=390,'Fleet Network must fit mobile viewport');assert.ok(mobileDispatch&&mobileDispatch.width<=mobileNetwork!.width,'group dispatch must stay inside network panel on mobile');assert.ok(mobileStorage&&mobileStorage.width<=390,'base storage pressure must fit mobile viewport');assert.equal(await page.locator('[data-network-route]').count(),3);
-  await page.click('[data-base-surface="overview"]');await page.waitForSelector('#baseStageSceneV2.stage-yard');assert.equal(await page.locator('[data-yard-network-scene]').isVisible(),true,'mobile Yard must retain visible network activity');
+  await offlinePage.setViewportSize({width:390,height:844});await offlinePage.click('[data-base-surface="logistics"]');await offlinePage.waitForSelector('#fleetNetworkV1Root');
+  const mobileNetwork=await offlinePage.locator('#fleetNetworkV1Root').boundingBox(),mobileDispatch=await offlinePage.locator('[data-crew-dispatch]').boundingBox(),mobileStorage=await offlinePage.locator('[data-base-storage-root="logistics"]').boundingBox();assert.ok(mobileNetwork&&mobileNetwork.width<=390,'Fleet Network must fit mobile viewport');assert.ok(mobileDispatch&&mobileDispatch.width<=mobileNetwork!.width,'group dispatch must stay inside network panel on mobile');assert.ok(mobileStorage&&mobileStorage.width<=390,'base storage pressure must fit mobile viewport');assert.equal(await offlinePage.locator('[data-network-route]').count(),3);
+  await offlinePage.click('[data-base-surface="overview"]');await offlinePage.waitForSelector('#baseStageSceneV2.stage-yard');assert.equal(await offlinePage.locator('[data-yard-network-scene]').isVisible(),true,'mobile Yard must retain visible network activity');
 
-  await context.close();
+  await offlineContext.close();
   console.log('P4 Salvage Yard / Fleet Network V1 A-D browser acceptance: Yard structure + presets + stable UI + causal remediation + real storage stop + Save V10 offline + mobile PASS');
 }finally{await browser.close();await stop(proc)}
