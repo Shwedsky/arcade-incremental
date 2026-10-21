@@ -1,7 +1,7 @@
 import './base_storage_v1.css';
 import {baseStoragePressureV1,type BaseStoragePressureV1} from './base_storage_v1.ts';
 import type {BusinessStageId} from './business_stage.ts';
-import {ZONE_DEFS} from './midgame.ts';
+import {ZONE_DEFS,type ZoneId} from './midgame.ts';
 
 const api=()=> (globalThis as any).__SALVAGE_TEST__;
 const stageRank:Record<BusinessStageId,number>={starter_garage:0,equipped_garage:1,workforce_garage:2,hangar:3,salvage_yard:4,industrial_workshop:5,processing_plant:6};
@@ -37,7 +37,7 @@ function ensureOfflineRouteList(s:any){
   let list=document.querySelector<HTMLElement>('.offlineRoutesV3');if(list)return list;
   const screen=document.querySelector<HTMLElement>('#offlineScreen'),loot=document.querySelector<HTMLElement>('#offlineLoot'),routes=s?.workforceV3?.routes??[];if(!screen||screen.hidden||!loot||!routes.length)return null;
   const heading=document.createElement('h3');heading.textContent='Маршруты';list=document.createElement('ul');list.className='offlineRoutesV3';
-  list.innerHTML=routes.map((route:any)=>{const projection=api()?.projectGenericRoute?.(route.id),workers=(route.workerIds??[]).map((id:string)=>s.workforceV3.workers.find((worker:any)=>worker.id===id)?.name).filter(Boolean),vehicle=route.vehicleId?s.workforceV3.fleet.find((item:any)=>item.id===route.vehicleId):null,zone=ZONE_DEFS[route.zone]?.name??String(route.zone).toUpperCase();return`<li><b>${workers.join(', ')||'Без рабочего'}</b> · ${zone} · ${vehicle?.name??projection?.vehicleName??'без транспорта'}<br><span>${Math.max(0,Number(projection?.kgPerHour??0)).toFixed(0)} кг/ч · +0.0 кг · остановка: склад базы заполнен</span></li>`}).join('');
+  list.innerHTML=routes.map((route:any)=>{const projection=api()?.projectGenericRoute?.(route.id),workers=(route.workerIds??[]).map((id:string)=>s.workforceV3.workers.find((worker:any)=>worker.id===id)?.name).filter(Boolean),vehicle=route.vehicleId?s.workforceV3.fleet.find((item:any)=>item.id===route.vehicleId):null,zoneId=route.zone as ZoneId,zone=ZONE_DEFS[zoneId]?.name??String(route.zone).toUpperCase();return`<li><b>${workers.join(', ')||'Без рабочего'}</b> · ${zone} · ${vehicle?.name??projection?.vehicleName??'без транспорта'}<br><span>${Math.max(0,Number(projection?.kgPerHour??0)).toFixed(0)} кг/ч · +0.0 кг · остановка: склад базы заполнен</span></li>`}).join('');
   loot.append(heading,list);return list;
 }
 function patchOfflineStorageStop(p:BaseStoragePressureV1,s:any){
