@@ -17,6 +17,8 @@ function workerRoute(wf:WorkforceFleetV3State,workerId:string){return wf.routes.
 function vehicleLabel(type:VehicleTypeV3){return VEHICLE_SPECS[type].label}
 function canBuyType(stage:BusinessStageId,type:VehicleTypeV3){return stageRank[stage]>=stageRank[VEHICLE_SPECS[type].minStage]}
 function masteredZones(s:any):ZoneId[]{return (Object.keys(ZONE_DEFS) as ZoneId[]).filter(id=>(s.midgame?.mastery?.[id]??0)>=99.999)}
+function notifyBusinessChange(){window.dispatchEvent(new CustomEvent('salvage:business-state-changed'))}
+function afterAction(){window.setTimeout(()=>{render();notifyBusinessChange()},0)}
 
 function siblingRoot(panel:HTMLElement,id:string,className:string){
   let root=document.querySelector<HTMLElement>(`#${id}`);
@@ -76,13 +78,13 @@ function structuralSignature(s:any){const wf=workforce(s);return JSON.stringify(
 function render(){const s=state();if(!s?.workforceV3)return;const garage=document.querySelector<HTMLElement>('#garageScreen');if(!garage||garage.hidden)return;const sig=structuralSignature(s),crewRoot=document.querySelector('#workforceV3Root'),fleetRoot=document.querySelector('#fleetV3Root');if(sig!==lastSignature||!crewRoot||!fleetRoot){lastSignature=sig;renderCrew(s);renderFleet(s)}updateLiveMetrics(s)}
 
 addEventListener('click',event=>{const target=event.target as HTMLElement;
-  if(target.closest('[data-v3-hire]')){api()?.hireGenericWorker?.();setTimeout(render,0);return}
-  const train=target.closest<HTMLElement>('[data-v3-train]');if(train?.dataset.v3Train){api()?.trainGenericWorker?.(train.dataset.v3Train);setTimeout(render,0);return}
-  const unassign=target.closest<HTMLElement>('[data-v3-unassign]');if(unassign?.dataset.v3Unassign){api()?.unassignGenericRoute?.(unassign.dataset.v3Unassign);setTimeout(render,0);return}
-  const role=target.closest<HTMLElement>('[data-v3-role]');if(role?.dataset.worker&&role.dataset.v3Role){api()?.setGenericWorkerRole?.(role.dataset.worker,role.dataset.v3Role);setTimeout(render,0);return}
-  const assign=target.closest<HTMLElement>('[data-v3-assign]');if(assign?.dataset.v3Assign){const workerId=assign.dataset.v3Assign,zone=document.querySelector<HTMLSelectElement>(`[data-v3-zone="${workerId}"]`)?.value as ZoneId|undefined,vehicle=document.querySelector<HTMLSelectElement>(`[data-v3-vehicle="${workerId}"]`)?.value||null;if(zone)api()?.assignGenericRoute?.(workerId,zone,vehicle);setTimeout(render,0);return}
-  const buy=target.closest<HTMLElement>('[data-v3-buy-vehicle]');if(buy?.dataset.v3BuyVehicle){api()?.acquireGenericVehicle?.(buy.dataset.v3BuyVehicle);setTimeout(render,0);return}
-  const sell=target.closest<HTMLElement>('[data-v3-sell-vehicle]');if(sell?.dataset.v3SellVehicle){const s=state(),vehicle=s?.workforceV3?.fleet?.find((v:any)=>v.id===sell.dataset.v3SellVehicle);if(vehicle&&confirm(`Продать ${vehicle.name} за ${money(vehicleSellRefund(vehicle.type))}?`)){api()?.sellGenericVehicle?.(vehicle.id);setTimeout(render,0)}return}
+  if(target.closest('[data-v3-hire]')){api()?.hireGenericWorker?.();afterAction();return}
+  const train=target.closest<HTMLElement>('[data-v3-train]');if(train?.dataset.v3Train){api()?.trainGenericWorker?.(train.dataset.v3Train);afterAction();return}
+  const unassign=target.closest<HTMLElement>('[data-v3-unassign]');if(unassign?.dataset.v3Unassign){api()?.unassignGenericRoute?.(unassign.dataset.v3Unassign);afterAction();return}
+  const role=target.closest<HTMLElement>('[data-v3-role]');if(role?.dataset.worker&&role.dataset.v3Role){api()?.setGenericWorkerRole?.(role.dataset.worker,role.dataset.v3Role);afterAction();return}
+  const assign=target.closest<HTMLElement>('[data-v3-assign]');if(assign?.dataset.v3Assign){const workerId=assign.dataset.v3Assign,zone=document.querySelector<HTMLSelectElement>(`[data-v3-zone="${workerId}"]`)?.value as ZoneId|undefined,vehicle=document.querySelector<HTMLSelectElement>(`[data-v3-vehicle="${workerId}"]`)?.value||null;if(zone)api()?.assignGenericRoute?.(workerId,zone,vehicle);afterAction();return}
+  const buy=target.closest<HTMLElement>('[data-v3-buy-vehicle]');if(buy?.dataset.v3BuyVehicle){api()?.acquireGenericVehicle?.(buy.dataset.v3BuyVehicle);afterAction();return}
+  const sell=target.closest<HTMLElement>('[data-v3-sell-vehicle]');if(sell?.dataset.v3SellVehicle){const s=state(),vehicle=s?.workforceV3?.fleet?.find((v:any)=>v.id===sell.dataset.v3SellVehicle);if(vehicle&&confirm(`Продать ${vehicle.name} за ${money(vehicleSellRefund(vehicle.type))}?`)){api()?.sellGenericVehicle?.(vehicle.id);afterAction()}return}
 },true);
 
 setInterval(render,500);

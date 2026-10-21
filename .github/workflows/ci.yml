@@ -94,6 +94,8 @@ jobs:
         run: npm run smoke:browser:manual-review-dev-v2
       - name: Base Shell stage-aware browser proof
         run: npm run smoke:browser:base-shell-v1
+      - name: Hangar Transformation V1 browser acceptance
+        run: npm run smoke:browser:hangar-transformation-v1
       - name: Human Feedback V2 compatibility proof
         run: npm run smoke:browser:human-feedback-v2
       - name: Human Feedback V3 compatibility proof
