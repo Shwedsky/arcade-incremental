@@ -28,24 +28,28 @@ assert.ok(state.cells.refining.job&&state.cells.fabrication.job,'refining and fa
 const heavyBlocked=startProductionCellV1(state,'heavy_assembly',stock,{role:'technician',rank:3},now);
 assert.equal(heavyBlocked.ok,false);assert.equal(heavyBlocked.reason,'missing_input');assert.equal(heavyBlocked.missing?.structuralProfile,1);
 stock.structuralProfile=10;
-const heavy=startProductionCellV1(state,'heavy_assembly',stock,{role:'technician',rank:3,workerId:'w-tech',workerName:'Техник'},now);
+const heavy=startProductionCellV1(state,'heavy_assembly',stock,{role:'technician',rank:3,workerId:'w-tech',workerName:'Техник'},now,{kind:'recovery_rig',vehicleId:'rig-1',vehicleName:'Recovery Rig #1',durationFactor:.85});
 assert.equal(heavy.ok,true);assert.equal(stock.structuralProfile,0);assert.equal(stock.reinforcedAlloy,12);
 
 // Role effects must be measurable and cell-specific rather than cosmetic labels.
 const baseFab=PRODUCTION_PLANS_V1.drive_module.baseDurationSec;
 assert.ok((fabrication.job!.endsAt-fabrication.job!.startedAt)/1000<baseFab,'Operator must reduce real fabrication duration');
-assert.ok((heavy.job!.endsAt-heavy.job!.startedAt)/1000<PRODUCTION_PLANS_V1.hydraulic_power.baseDurationSec,'Technician must reduce real heavy assembly duration');
+const technicianOnly=PRODUCTION_PLANS_V1.hydraulic_power.baseDurationSec*productionStaffingEffectV1('heavy_assembly','technician',3);
+const heavySeconds=(heavy.job!.endsAt-heavy.job!.startedAt)/1000;
+assert.ok(heavySeconds<technicianOnly*.9,'Recovery Rig support must materially improve heavy assembly beyond Technician alone');
+assert.equal(heavy.job!.support.kind,'recovery_rig');assert.equal(heavy.job!.support.vehicleId,'rig-1');assert.equal(heavy.job!.support.durationFactor,.85);
 assert.ok(productionStaffingEffectV1('refining','logistician',3)<1,'Logistician must improve real refining handling time');
 assert.equal(productionStaffingEffectV1('refining','technician',5),1,'Technician must not receive a fake refining bonus');
 
 // Busy cells cannot start a second job, even if enough stock remains.
 assert.deepEqual(startProductionCellV1(state,'refining',stock,{role:'operator',rank:5},now),{ok:false,reason:'busy'});
 
-// Save normalization must preserve active jobs and selected plans.
+// Save normalization must preserve active jobs, staffing and heavy support snapshots.
 const restored=normalizeProductionCellsV1(JSON.parse(JSON.stringify(state)));
 assert.equal(restored.cells.refining.job?.id,state.cells.refining.job?.id);
 assert.equal(restored.cells.fabrication.job?.staffing.workerId,'w-op');
 assert.equal(restored.cells.heavy_assembly.job?.staffing.role,'technician');
+assert.equal(restored.cells.heavy_assembly.job?.support.kind,'recovery_rig');assert.equal(restored.cells.heavy_assembly.job?.support.vehicleName,'Recovery Rig #1');
 
 // Projection names the real input bottleneck when idle.
 const blockedState=createDefaultProductionCellsV1(),empty=emptyIndustrialStockV1();
@@ -63,4 +67,4 @@ assert.equal(state.cells.refining.completedCycles,1);assert.equal(state.cells.fa
 const snapshot=JSON.stringify(stock),second=advanceProductionCellsV1(state,stock,finishAt+60_000);
 assert.equal(second.length,0,'completed jobs must not complete twice');assert.equal(JSON.stringify(stock),snapshot,'second advance must not duplicate outputs');
 
-console.log('Production Cells V1 domain: 3 cells + parallel commit + no double-spend + staffing effects + exactly-once completion: PASS');
+console.log('Production Cells V1 domain: 3 cells + parallel commit + no double-spend + staffing effects + Recovery Rig heavy support + exactly-once completion: PASS');
