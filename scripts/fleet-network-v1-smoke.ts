@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {createDefaultWorkforceFleetV3,hireWorkerV3,acquireVehicleV3,createOrAssignRouteV3,projectRouteV3} from '../src/workforce_fleet_v3.ts';
-import {deriveFleetNetworkV1} from '../src/fleet_network_v1.ts';
+import {deriveFleetNetworkV1,previewCrewDispatchV1} from '../src/fleet_network_v1.ts';
 
 const now=1_800_000_000_000;
 const state=createDefaultWorkforceFleetV3(now);
@@ -25,4 +25,19 @@ assert.equal(network.routes.find(route=>route.routeId===r1!.id)?.bottleneck,'cap
 assert.equal(network.routes.find(route=>route.routeId===r2!.id)?.bottleneck,'none','short Truck shift should stay balanced');
 assert.equal(network.summary.constrainedRouteCount,1);
 assert.ok(network.routes.every(route=>route.workerNames.length===1));
-console.log('Fleet Network V1 multi-route read model + capacity bottleneck: PASS');
+
+// Group-dispatch preview must not mutate canonical state and must expose workers without transport.
+const dispatch=createDefaultWorkforceFleetV3(now);
+for(let i=0;i<3;i++)assert.ok(hireWorkerV3(dispatch,'salvage_yard',now+i));
+dispatch.workers[0].rank=3;dispatch.workers[1].rank=2;
+const rig=acquireVehicleV3(dispatch,'salvage_yard','recovery_rig',now+20);assert.ok(rig);
+const before=JSON.stringify(dispatch);
+const preview=previewCrewDispatchV1(dispatch,{workerIds:[dispatch.workers[2].id,dispatch.workers[0].id],vehicleIds:[rig!.id],zone:'z3',shiftHours:4,now});
+assert.equal(preview.routeCount,2,'one group action should preview two canonical routes');
+assert.equal(preview.workerIds[0],dispatch.workers[0].id,'strongest selected worker should receive the first/largest selected vehicle');
+assert.equal(preview.vehicleIds.length,1);
+assert.equal(preview.unservedWorkerCount,1,'second selected worker must be explicit about lacking a vehicle');
+assert.ok(preview.totalKgPerHour>0);
+assert.equal(JSON.stringify(dispatch),before,'preview must never mutate canonical Workforce/Fleet V3 state');
+
+console.log('Fleet Network V1 multi-route read model + capacity bottleneck + group dispatch preview: PASS');
