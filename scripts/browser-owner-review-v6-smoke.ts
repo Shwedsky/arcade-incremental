@@ -11,10 +11,16 @@ const server=spawn(process.execPath,[viteBin,'preview','--host','127.0.0.1','--p
 let output='';server.stdout.on('data',b=>output+=String(b));server.stderr.on('data',b=>output+=String(b));
 async function waitServer(){for(let i=0;i<80;i++){try{const r=await fetch(ORIGIN);if(r.ok)return}catch{}await new Promise(r=>setTimeout(r,125))}throw new Error(`server did not start\n${output}`)}
 async function stopServer(){if(server.exitCode!==null)return;server.kill('SIGTERM');await Promise.race([once(server,'exit'),new Promise(r=>setTimeout(r,1500))]);if(server.exitCode===null)server.kill('SIGKILL')}
-async function waitGame(page:any){await page.waitForFunction(()=>(globalThis as any).__SALVAGE_TEST__?.getState()?.saveVersion===10);if(await page.locator('#offlineScreen').isVisible())await page.click('#offlineClose');await page.waitForFunction(()=>(globalThis as any).__SALVAGE_OWNER_V6__?.refresh)}
+async function waitGame(page:any){await page.waitForFunction(()=>(globalThis as any).__SALVAGE_TEST__?.getState()?.saveVersion===10,{timeout:20_000});if(await page.locator('#offlineScreen').isVisible())await page.click('#offlineClose');await page.waitForFunction(()=>(globalThis as any).__SALVAGE_OWNER_V6__?.refresh,{timeout:20_000})}
 async function state(page:any){return page.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.getState())}
 async function forceGarage(page:any){const hidden=await page.locator('#garageScreen').getAttribute('hidden');if(hidden!==null)await page.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.forceGarage());await page.waitForSelector('#garageScreen:not([hidden])');await page.evaluate(()=>(globalThis as any).__SALVAGE_OWNER_V6__.refresh())}
-async function unlockAll(page:any){await forceGarage(page);await page.click('#hfDevToggle');await page.waitForSelector('#hfDevPanel:not([hidden])');await Promise.all([page.waitForLoadState('load'),page.click('[data-dev="unlockAll"]')]);await waitGame(page);await page.waitForFunction(()=>{const s=(globalThis as any).__SALVAGE_TEST__.getState();return s.level===50&&s.packE?.processingPlantOwned&&s.workforceV3?.workers?.length>=3});await forceGarage(page)}
+async function unlockAll(page:any){
+  await forceGarage(page);await page.click('#hfDevToggle');await page.waitForSelector('#hfDevPanel:not([hidden])');
+  const mainFrame=page.mainFrame();const navigated=page.waitForEvent('framenavigated',(frame:any)=>frame===mainFrame,{timeout:20_000});
+  await page.click('[data-dev="unlockAll"]');await navigated;await page.waitForLoadState('load');await waitGame(page);
+  await page.waitForFunction(()=>{const s=(globalThis as any).__SALVAGE_TEST__.getState();return s.level===50&&s.packE?.processingPlantOwned&&s.workforceV3?.workers?.length>=3},{timeout:20_000});
+  await forceGarage(page)
+}
 async function mutateSave(page:any,mutatorSource:string){
   await page.evaluate(({key,source})=>{
     (globalThis as any).__SALVAGE_PLATFORM__.forceSave();
@@ -27,6 +33,7 @@ async function mutateSave(page:any,mutatorSource:string){
 await waitServer();const browser=await chromium.launch({headless:true});
 try{
   const context=await browser.newContext({viewport:{width:1440,height:1000}}),page=await context.newPage();page.setDefaultTimeout(10_000);
+  page.on('pageerror',(error:any)=>console.error('PAGE ERROR:',error));
   console.log('V6 browser: boot and unlock');
   await page.goto(`${ORIGIN}/?seed=owner-review-v6`);await waitGame(page);await unlockAll(page);
 
