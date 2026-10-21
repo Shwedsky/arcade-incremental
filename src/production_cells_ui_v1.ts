@@ -13,9 +13,9 @@ const api=()=> (globalThis as any).__SALVAGE_TEST__ as RuntimeApi|undefined;
 const CELL_IDS:ProductionCellIdV1[]=['refining','fabrication','heavy_assembly'];
 const ROLE_OPTIONS:ProductionStaffRoleV1[]=['operator','technician','logistician','scavenger'];
 const CELL_TITLES:Record<ProductionCellIdV1,{eyebrow:string;title:string;purpose:string}>={
-  refining:{eyebrow:'01 · ПОДГОТОВКА МАТЕРИАЛА',title:'Refining Cell',purpose:'Превращает промышленное сплав-сырьё в усиленный сплав для дорогих сборок.'},
-  fabrication:{eyebrow:'02 · МОДУЛЬНАЯ СБОРКА',title:'Fabrication Cell',purpose:'Собирает привод, управление и конструкционные секции для заказов и тяжёлых изделий.'},
-  heavy_assembly:{eyebrow:'03 · ТЯЖЁЛАЯ СБОРКА',title:'Heavy Assembly Cell',purpose:'Выпускает силовые модули и тяжёлые рамы — конечный промышленный продукт этого этапа.'}
+  refining:{eyebrow:'01 · ПОДГОТОВКА МАТЕРИАЛА',title:'Участок подготовки сырья',purpose:'Превращает промышленное сплав-сырьё в усиленный сплав для дорогих сборок.'},
+  fabrication:{eyebrow:'02 · МОДУЛЬНАЯ СБОРКА',title:'Сборочный участок',purpose:'Собирает привод, управление и конструкционные секции для заказов и тяжёлых изделий.'},
+  heavy_assembly:{eyebrow:'03 · ТЯЖЁЛАЯ СБОРКА',title:'Участок тяжёлой сборки',purpose:'Выпускает силовые модули и тяжёлые рамы — конечный промышленный продукт этого этапа.'}
 };
 const STOCK_LABELS:Record<IndustrialStockKeyV1,string>={
   alloyScrap:'Сплав-сырьё',reinforcedAlloy:'Усиленный сплав',structuralProfile:'Конструкционный профиль',cleanCopper:'Чистая медь',
@@ -87,7 +87,7 @@ function cellMarkup(cell:any,stock:Record<string,number>,state:any){
 function summaryMarkup(view:any){
   const running=(view.cells??[]).filter((cell:any)=>cell.status==='running').length,blocked=(view.cells??[]).filter((cell:any)=>cell.status==='blocked').length;
   const outputs=(view.cells??[]).reduce((sum:number,cell:any)=>sum+Number(cell.job?1:0),0);
-  return `<section class="pcSummary"><div><small>INDUSTRIAL WORKSHOP · PRODUCTION CELLS V1</small><h2>Производственный диспетчер</h2><p>Три понятные ячейки вместо россыпи промышленных кнопок. Выбери план, назначь человека и запускай параллельные цепочки.</p></div><div class="pcSummaryMetrics"><span><small>Ячейки</small><b>3</b></span><span><small>Работают</small><b>${running}</b></span><span><small>Заблокированы</small><b>${blocked}</b></span><span><small>Активных циклов</small><b>${outputs}</b></span></div></section>`;
+  return `<section class="pcSummary"><div><small>ПРОМЫШЛЕННАЯ МАСТЕРСКАЯ · 3 ПРОИЗВОДСТВЕННЫХ УЧАСТКА</small><h2>Производственный диспетчер</h2><p>Три понятных участка вместо россыпи промышленных кнопок. Выбери план, назначь человека и запускай параллельные цепочки.</p></div><div class="pcSummaryMetrics"><span><small>Участки</small><b>3</b></span><span><small>Работают</small><b>${running}</b></span><span><small>Заблокированы</small><b>${blocked}</b></span><span><small>Активных циклов</small><b>${outputs}</b></span></div></section>`;
 }
 
 function ensureRoot(){
@@ -102,7 +102,7 @@ function renderManagement(){
   const industrial=!!state?.packD?.industrialWorkshopOwned;
   root.hidden=!industrial;if(!industrial)return;
   const signature=JSON.stringify({cells:view?.cells,stock:view?.stock,workers:state?.workforceV3?.workers});if(root.dataset.signature===signature)return;root.dataset.signature=signature;
-  root.innerHTML=`${summaryMarkup(view)}<div class="productionCellGrid">${CELL_IDS.map(id=>cellMarkup(view.cells.find((cell:any)=>cell.id===id),view.stock,state)).join('')}</div><section class="pcSupport"><b>Вспомогательная мастерская</b><span>Старые станки и Workshop Queue ниже остаются обслуживающим контуром. Основное промышленное решение теперь принимается в Production Cells.</span></section>`;
+  root.innerHTML=`${summaryMarkup(view)}<div class="productionCellGrid">${CELL_IDS.map(id=>cellMarkup(view.cells.find((cell:any)=>cell.id===id),view.stock,state)).join('')}</div><section class="pcSupport"><b>Вспомогательная мастерская</b><span>Старые станки и очередь мастерской ниже остаются обслуживающим контуром. Основные производственные решения теперь принимаются на этих трёх участках.</span></section>`;
 }
 
 function sceneCell(cell:any){
@@ -117,7 +117,7 @@ function renderIndustrialScene(){
   if(scene.dataset.p5Signature===signature&&scene.querySelector('[data-industrial-workshop-live]'))return;
   scene.dataset.p5Signature=signature;
   const running=view.cells.filter((cell:any)=>cell.status==='running').length;
-  scene.innerHTML=`<div class="baseSceneLabel"><b>Industrial Workshop · Производственный цех</b><span>${running}/3 ячеек работают · ${(state.workforceV3?.workers??[]).filter((w:any)=>w.status==='production').length} сотруд. в производстве</span></div><div class="industrialWorkshopLive" data-industrial-workshop-live><div class="industrialRoof"><i></i><i></i><i></i><span>МОСТОВОЙ КРАН · HEAVY BAY</span></div><div class="industrialInputStage"><b>ВХОДЯЩИЙ МАТЕРИАЛ</b><span>профиль · сплав-сырьё · восстановленные узлы</span><i></i><i></i><i></i></div><div class="industrialLiveGrid">${CELL_IDS.map(id=>sceneCell(view.cells.find((cell:any)=>cell.id===id))).join('')}</div><div class="industrialOutputStage"><b>ГОТОВАЯ ПРОДУКЦИЯ</b><span>модули · силовые сборки · тяжёлые рамы</span><i></i><i></i></div><div class="industrialHeavyGate"><b>HEAVY GATE</b><span>Recovery Rig · тяжёлая логистика</span></div></div>`;
+  scene.innerHTML=`<div class="baseSceneLabel"><b>Промышленная мастерская · Производственный цех</b><span>${running}/3 участков работают · ${(state.workforceV3?.workers??[]).filter((w:any)=>w.status==='production').length} сотруд. в производстве</span></div><div class="industrialWorkshopLive" data-industrial-workshop-live><div class="industrialRoof"><i></i><i></i><i></i><span>МОСТОВОЙ КРАН · ЗОНА ТЯЖЁЛОЙ СБОРКИ</span></div><div class="industrialInputStage"><b>ВХОДЯЩИЙ МАТЕРИАЛ</b><span>профиль · сплав-сырьё · восстановленные узлы</span><i></i><i></i><i></i></div><div class="industrialLiveGrid">${CELL_IDS.map(id=>sceneCell(view.cells.find((cell:any)=>cell.id===id))).join('')}</div><div class="industrialOutputStage"><b>ГОТОВАЯ ПРОДУКЦИЯ</b><span>модули · силовые сборки · тяжёлые рамы</span><i></i><i></i></div><div class="industrialHeavyGate"><b>ТЯЖЁЛЫЙ ШЛЮЗ</b><span>Тяжёлая эвакуационная платформа · тяжёлая логистика</span></div></div>`;
 }
 
 addEventListener('change',event=>{
