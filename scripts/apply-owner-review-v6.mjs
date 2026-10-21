@@ -43,12 +43,12 @@ rex('src/main.ts',/function trainGenericWorker\(workerId:string\)\{[^\n]*\}/,`fu
 }`,'trainGenericWorker');
 rex('src/main.ts',/function gainXp\(amount:number,pos\?:Vec2\)\{[^\n]*\}/,`function gainXp(amount:number,pos?:Vec2){const before=level();xp+=amount;const after=level();if(pos)texts.push({x:pos.x,y:pos.y-48,text:formatXpGain(amount),color:'#9ce7ff',life:1.2});if(after>before)showToast(\`Уровень \${after}! +1 очко мастерства\`);renderProgress()}`,'gainXp');
 for(const [a,b] of [
-['COMBO ×','СЕРИЯ ×'],['MIDGAME PROOF','ТЕКУЩАЯ ЦЕЛЬ'],['Basic Route Kit','Базовый маршрутный комплект'],['Benchmark','Эталонный темп'],
-['Scavenger','Сборщик'],['Recovery Rig','Тяжёлая эвакуационная платформа'],['Recovery Assembly','Тяжёлая восстановленная сборка'],
+['COMBO ×','СЕРИЯ ×'],['MIDGAME PROOF','ТЕКУЩАЯ ЦЕЛЬ'],['Basic Route Kit','Базовый маршрутный комплект'],
+['Recovery Rig','Тяжёлая эвакуационная платформа'],['Recovery Assembly','Тяжёлая восстановленная сборка'],
 ['Processing Plant','Перерабатывающий завод'],['Industrial Workshop','Промышленная мастерская'],['Salvage Yard','Площадка разборки'],
 ['Plant-линии','Заводские линии'],['Workshop Queue','Очередь мастерской'],['Hydraulic Power','Гидравлический силовой модуль'],
 ['Heavy Frame','Тяжёлая рама'],['Drive Module','Приводной модуль'],['Control Module','Модуль управления'],['Structural Frame','Конструкционная секция'],
-['Truck conversion','Переоборудование грузовика'],['Operator','Оператор'],['Tier III','Этап III'],['Tier II','Этап II'],['Tier I','Этап I']
+['Truck conversion','Переоборудование грузовика'],['Tier III','Этап III'],['Tier II','Этап II'],['Tier I','Этап I']
 ])all('src/main.ts',a,b);
 all('src/main.ts','seed ${baseSeed} · поле ${trip}','генерация ${baseSeed} · поле ${trip}');
 
@@ -108,7 +108,11 @@ rex('src/contract_ui_v3.ts',/document\.addEventListener\('click',event=>\{[\s\S]
   if(special?.dataset.specialSubmit){
     event.preventDefault();event.stopImmediatePropagation();
     const data=snapshot(),entry=data?.view?.specials?.find((x:any)=>x.def.id===special.dataset.specialSubmit);
-    if(!entry||!data||!specialReady(entry,data)){notify('Спецзаказ пока нельзя сдать: проверь свободные товары.');render(true);return}
+    if(!entry||!data){notify('Спецзаказ не найден: список заказов обновился.');render(true);return}
+    if(!specialReady(entry,data)){
+      const missing=(entry.needs??[]).map((need:any)=>({need,owned:effectiveNeedOwned(need,data)})).filter((row:any)=>row.owned+1e-9<Number(row.need.amount));
+      notify(\`Спецзаказ пока нельзя сдать: \${missing.map((row:any)=>\`${row.need.label} \${qty(row.owned)} / \${qty(row.need.amount)}\`).join(', ')||'свободные товары изменились'}\`);render(true);return
+    }
     special.disabled=true;special.textContent='Сдаём…';const ok=api()?.submitSpecialV3?.(special.dataset.specialSubmit);
     if(ok)notify(\`Спецзаказ «\${entry.def.name}» сдан. Награда начислена.\`,'ok');else notify('Спецзаказ не сдан: состояние товаров изменилось.');
     render(true);requestAnimationFrame(()=>render(true));return
