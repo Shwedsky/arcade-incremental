@@ -69,7 +69,10 @@ function ensureNotice(){
   return node;
 }
 function showNotice(text:string,tone:NoticeTone='warn'){
-  const node=ensureNotice();node.textContent=text;node.dataset.tone=tone;node.classList.add('show');
+  const node=ensureNotice();
+  if(node.textContent!==text)node.textContent=text;
+  if(node.dataset.tone!==tone)node.dataset.tone=tone;
+  node.classList.add('show');
   if(noticeTimer)window.clearTimeout(noticeTimer);
   noticeTimer=window.setTimeout(()=>node.classList.remove('show'),3200);
 }
@@ -106,8 +109,8 @@ function hangarRequirements(state:RuntimeState){
 
 function hideLegacyHangarAcquisition(){
   const button=document.querySelector<HTMLButtonElement>('#acquireHangar');if(!button)return;
-  button.hidden=true;
-  const previous=button.previousElementSibling as HTMLElement|null;if(previous?.tagName==='P')previous.hidden=true;
+  if(!button.hidden)button.hidden=true;
+  const previous=button.previousElementSibling as HTMLElement|null;if(previous?.tagName==='P'&&!previous.hidden)previous.hidden=true;
   const card=button.closest<HTMLElement>('.milestoneCard');if(card&&!card.querySelector('.ownerHangarMovedHint')){
     const hint=document.createElement('p');hint.className='ownerHangarMovedHint';hint.textContent='Переход в ангар теперь находится во вкладке «Обзор». Здесь остаётся подготовка материалов и модулей.';card.append(hint);
   }
@@ -135,9 +138,11 @@ function renderHangarMilestone(state:RuntimeState){
   })}
 }
 
+function setTextIfChanged(node:HTMLElement|null,text:string){if(node&&node.textContent!==text)node.textContent=text}
+
 function enhancePlantScene(state:RuntimeState){
   const scene=document.querySelector<HTMLElement>('#baseStageSceneV2.stage-plant');if(!scene)return;
-  const title=scene.querySelector<HTMLElement>('.baseSceneLabel b');if(title)title.textContent='Перерабатывающий завод';
+  setTextIfChanged(scene.querySelector<HTMLElement>('.baseSceneLabel b'),'Перерабатывающий завод');
   const warehouse=scene.querySelector<HTMLElement>('.plantWarehouse');
   if(warehouse&&!warehouse.querySelector('.ownerWarehouseHelp')){
     const help=document.createElement('small');help.className='ownerWarehouseHelp';help.textContent='Входящий запас сырья для производственных линий';warehouse.append(help);
@@ -147,9 +152,9 @@ function enhancePlantScene(state:RuntimeState){
   lines.forEach((line,index)=>{
     const job=jobs[index],busy=!!job;
     let status=line.querySelector<HTMLElement>('.ownerPlantLineStatus');if(!status){status=document.createElement('span');status.className='ownerPlantLineStatus';line.append(status)}
-    status.classList.toggle('busy',busy);status.textContent=busy?'РАБОТАЕТ':'СВОБОДНА';
+    status.classList.toggle('busy',busy);setTextIfChanged(status,busy?'РАБОТАЕТ':'СВОБОДНА');
     let help=line.querySelector<HTMLElement>('.ownerPlantLineHelp');if(!help){help=document.createElement('small');help.className='ownerPlantLineHelp';line.append(help)}
-    help.textContent=busy?'Идёт обработка партии':'Готова принять следующую партию';
+    setTextIfChanged(help,busy?'Идёт обработка партии':'Готова принять следующую партию');
   });
   let legend=scene.querySelector<HTMLElement>('.ownerPlantLegend');
   if(!legend){legend=document.createElement('div');legend.className='ownerPlantLegend';legend.innerHTML='<span><b>Склад</b> — входящий запас сырья</span><span><b>Линии</b> — занятость переработки</span><span><b>Доки</b> — места входящей и исходящей логистики</span>';scene.append(legend)}
