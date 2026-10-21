@@ -1,3 +1,4 @@
+import './salvage_yard_visual_v1.css';
 import './fleet_network_ui_v1.ts';
 import type {FleetVehicleV3,VehicleTypeV3,WorkforceFleetV3State} from './workforce_fleet_v3.ts';
 
