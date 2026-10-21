@@ -11,6 +11,7 @@ const GROUP_SHIFT_HOURS=2;
 
 type NetworkView=ReturnType<typeof deriveFleetNetworkV1>;
 type NetworkRoute=NetworkView['routes'][number];
+type CrewPreset='top2'|'balanced'|'all'|'clear';
 
 function runtime(){try{return api()?.getState?.()}catch{return null}}
 function enabledStage(stage:string):stage is BusinessStageId{return stage in stageRank&&stageRank[stage as BusinessStageId]>=stageRank.salvage_yard}
@@ -60,7 +61,8 @@ function crewDispatchMarkup(s:any){
   const workerChoices=idle.map((worker:any)=>`<label><input type="checkbox" data-crew-worker="${worker.id}"><span><b>${worker.name}</b><small>${worker.role==='logistician'?'Логист':'Сборщик'} · ранг ${worker.rank}</small></span></label>`).join('');
   const vehicleChoices=free.map((vehicle:any)=>`<label><input type="checkbox" data-crew-vehicle="${vehicle.id}"><span><b>${vehicleIcon(vehicle.type)} ${vehicle.name}</b><small>${vehicle.capacityKg} кг</small></span></label>`).join('');
   return`<section class="crewDispatchV1" data-crew-dispatch>
-    <header><div><small>ГРУППОВОЙ ВЫЕЗД</small><b>Отправить несколько бригад одной командой</b><p>Выбери свободных людей, освоенную зону и транспорт. Машины распределяются от самой вместительной к самой сильной бригаде; лишние люди выйдут без машины. Стандартная смена — ${GROUP_SHIFT_HOURS} часа.</p></div></header>
+    <header><div><small>ГРУППОВОЙ ВЫЕЗД</small><b>Отправить несколько бригад одной командой</b><p>Выбери готовую схему или собери группу вручную. Машины распределяются от самой вместительной к самой сильной бригаде; лишние люди выйдут без машины. Стандартная смена — ${GROUP_SHIFT_HOURS} часа.</p></div></header>
+    <div class="crewDispatchPresets" data-crew-presets><small>БЫСТРЫЕ СОСТАВЫ</small><button data-crew-preset="top2">2 лучших</button><button data-crew-preset="balanced">Сборщик + логист</button><button data-crew-preset="all">Все свободные</button><button data-crew-preset="clear">Сброс</button></div>
     <div class="crewDispatchGrid">
       <div><small>1 · ЛЮДИ</small><div class="crewDispatchChoices" data-crew-workers>${workerChoices||'<em>Нет свободных сборщиков/логистов</em>'}</div></div>
       <div><small>2 · ЗОНА</small><label class="crewDispatchSelect">Освоенная зона<select data-crew-zone>${zones.map(id=>`<option value="${id}">${ZONE_DEFS[id].name}</option>`).join('')}</select></label><div class="crewDispatchFixedShift"><small>СМЕНА</small><b>${GROUP_SHIFT_HOURS} часа</b><span>тот же runtime-контракт, что у обычного назначения</span></div></div>
@@ -80,6 +82,20 @@ function updateCrewPreview(s:any){
   if(kg)kg.textContent=`${preview.totalKgPerHour.toFixed(0)} кг/ч`;
   if(detail)detail.textContent=`${preview.routeCount} маршрут. · машин ${Math.min(preview.workerIds.length,preview.vehicleIds.length)}${preview.unservedWorkerCount?` · без транспорта ${preview.unservedWorkerCount}`:''}${preview.constrainedRouteCount?` · ограничений ${preview.constrainedRouteCount}`:''}`;
   if(button)button.disabled=preview.routeCount===0;
+}
+
+function applyCrewPreset(s:any,preset:CrewPreset){
+  const idle=(s?.workforceV3?.workers??[]).filter((worker:any)=>worker.status==='idle'&&['scavenger','logistician'].includes(worker.role)).sort((a:any,b:any)=>Number(b.rank)-Number(a.rank));
+  let ids:string[]=[];
+  if(preset==='top2')ids=idle.slice(0,2).map((worker:any)=>worker.id);
+  else if(preset==='all')ids=idle.map((worker:any)=>worker.id);
+  else if(preset==='balanced'){
+    const scavenger=idle.find((worker:any)=>worker.role==='scavenger'),logistician=idle.find((worker:any)=>worker.role==='logistician');
+    ids=[scavenger?.id,logistician?.id].filter((id):id is string=>!!id);
+    if(ids.length<2)ids=idle.slice(0,2).map((worker:any)=>worker.id);
+  }
+  document.querySelectorAll<HTMLInputElement>('[data-crew-worker]').forEach(input=>{input.checked=ids.includes(String(input.dataset.crewWorker??''))});
+  updateCrewPreview(s);
 }
 
 function patchLiveMetrics(view:NetworkView){
@@ -133,7 +149,9 @@ function requestRefresh(){lastSignature='';queueMicrotask(refreshFleetNetworkV1)
 
 addEventListener('change',event=>{const target=event.target as HTMLElement;if(target.closest('[data-crew-dispatch]')){const s=runtime();if(s)updateCrewPreview(s)}},true);
 addEventListener('click',event=>{
-  const target=event.target as HTMLElement,reassign=target.closest<HTMLElement>('[data-network-reassign-route]');
+  const target=event.target as HTMLElement,preset=target.closest<HTMLElement>('[data-crew-preset]');
+  if(preset?.dataset.crewPreset){const s=runtime();if(s)applyCrewPreset(s,preset.dataset.crewPreset as CrewPreset);return}
+  const reassign=target.closest<HTMLElement>('[data-network-reassign-route]');
   if(reassign?.dataset.networkReassignRoute&&reassign.dataset.networkWorker&&reassign.dataset.networkZone){
     const routeId=reassign.dataset.networkReassignRoute,vehicleId=document.querySelector<HTMLSelectElement>(`[data-network-route-vehicle="${routeId}"]`)?.value;
     if(vehicleId&&api()?.assignGenericRoute?.(reassign.dataset.networkWorker,reassign.dataset.networkZone,vehicleId)){window.dispatchEvent(new CustomEvent('salvage:business-state-changed'));requestRefresh()}return;
