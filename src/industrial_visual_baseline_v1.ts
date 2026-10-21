@@ -6,9 +6,9 @@ type RuntimeState=Record<string,any>;
 const api=()=> (globalThis as any).__SALVAGE_TEST__??null;
 const CELL_IDS:ProductionCellId[]=['refining','fabrication','heavy_assembly'];
 const CELL_META:Record<ProductionCellId,{title:string;short:string;role:string}>={
-  refining:{title:'Подготовка сырья',short:'Сырьё',role:'Сортировка и переработка лома'},
-  fabrication:{title:'Сборка компонентов',short:'Сборка',role:'Детали, модули и узлы'},
-  heavy_assembly:{title:'Тяжёлая сборка',short:'Тяжёлая',role:'Крупные узлы и тяжёлые рамы'}
+  refining:{title:'Участок подготовки сырья',short:'Сырьё',role:'Сортировка и переработка лома'},
+  fabrication:{title:'Сборочный участок',short:'Сборка',role:'Детали, модули и узлы'},
+  heavy_assembly:{title:'Участок тяжёлой сборки',short:'Тяжёлая',role:'Крупные узлы и тяжёлые рамы'}
 };
 const ROLE_LABELS:Record<string,string>={operator:'Оператор',technician:'Техник',logistician:'Логист',scavenger:'Сборщик',none:'Без специалиста'};
 const STATUS_LABELS:Record<string,string>={running:'РАБОТАЕТ',ready:'ГОТОВ К ЗАПУСКУ',blocked:'НЕТ ВХОДОВ',idle:'ПРОСТОЙ'};
