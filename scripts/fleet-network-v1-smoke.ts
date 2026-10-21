@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
-import {createDefaultWorkforceFleetV3,hireWorkerV3,acquireVehicleV3,createOrAssignRouteV3,projectRouteV3} from '../src/workforce_fleet_v3.ts';
+import {createDefaultWorkforceFleetV3,hireWorkerV3,acquireVehicleV3,createOrAssignRouteV3,projectRouteV3,simulateWorkforceV3} from '../src/workforce_fleet_v3.ts';
 import {deriveFleetNetworkV1,previewCrewDispatchV1} from '../src/fleet_network_v1.ts';
+import {baseStoragePressureV1} from '../src/base_storage_v1.ts';
 
 const now=1_800_000_000_000;
 const state=createDefaultWorkforceFleetV3(now);
@@ -40,4 +41,23 @@ assert.equal(preview.unservedWorkerCount,1,'second selected worker must be expli
 assert.ok(preview.totalKgPerHour>0);
 assert.equal(JSON.stringify(dispatch),before,'preview must never mutate canonical Workforce/Fleet V3 state');
 
-console.log('Fleet Network V1 multi-route read model + capacity bottleneck + group dispatch preview: PASS');
+// P4-C: base storage is a real shared throughput budget, not an explanatory warning.
+const storagePressure=baseStoragePressureV1('salvage_yard',{metal:29_975,copper:0,plastic:0},network.summary.totalKgPerHour);
+assert.equal(storagePressure.capacityKg,30_000);
+assert.equal(storagePressure.freeKg,25);
+assert.equal(storagePressure.nearFull,true);
+assert.ok(storagePressure.hoursToFull!==null&&storagePressure.hoursToFull<.1,'25 kg of free Yard storage should fill quickly under a live network');
+
+const storageLimited=createDefaultWorkforceFleetV3(now);
+for(let i=0;i<2;i++)assert.ok(hireWorkerV3(storageLimited,'salvage_yard',now+i));
+const storageVan=acquireVehicleV3(storageLimited,'salvage_yard','van',now+30),storageTruck=acquireVehicleV3(storageLimited,'salvage_yard','truck',now+31);assert.ok(storageVan&&storageTruck);
+const sr1=createOrAssignRouteV3(storageLimited,{workerId:storageLimited.workers[0].id,zone:'z1',vehicleId:storageVan!.id,shiftHours:2,now});
+const sr2=createOrAssignRouteV3(storageLimited,{workerId:storageLimited.workers[1].id,zone:'z4',vehicleId:storageTruck!.id,shiftHours:2,now});assert.ok(sr1&&sr2);
+const storageRun=simulateWorkforceV3(storageLimited,{stage:'salvage_yard',now:now+3_600_000,offline:true,offlineCapHours:12,workerOutputMultiplier:1,workerShiftMultiplier:1,baseStorageFreeKg:25});
+const accepted=storageRun.reports.reduce((sum,report)=>sum+report.gainedKg,0);
+assert.ok(accepted<=25.0001&&accepted>=24.99,`shared base storage must accept only its free 25 kg, got ${accepted}`);
+assert.ok(storageRun.reports.some(report=>report.stopReason==='base_storage_full'),'at least one simultaneous route must explicitly stop on base storage');
+const fullProjection=projectRouteV3(storageLimited,sr2!,{stage:'salvage_yard',now:now+3_600_000,offline:false,offlineCapHours:0,workerOutputMultiplier:1,workerShiftMultiplier:1,baseStorageFreeKg:0});
+assert.equal(fullProjection.bottleneck,'base_storage','a full base must become the visible route bottleneck');
+
+console.log('Fleet Network V1 multi-route + capacity + crew preview + real base-storage pressure: PASS');
