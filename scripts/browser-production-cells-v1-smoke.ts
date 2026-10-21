@@ -24,7 +24,7 @@ const save={
 const proc=server();await waitServer();const browser=await chromium.launch({headless:true});
 try{
   const context=await browser.newContext({viewport:{width:1440,height:1000}});
-  await context.addInitScript(({key,value})=>{localStorage.setItem(key,JSON.stringify(value))},{key:SAVE_KEY,value:save});
+  await context.addInitScript(({key,value})=>{if(!localStorage.getItem(key))localStorage.setItem(key,JSON.stringify(value))},{key:SAVE_KEY,value:save});
   const page=await context.newPage();await page.goto(`${ORIGIN}/?seed=p5-production-cells`);await page.waitForFunction(()=>(globalThis as any).__SALVAGE_TEST__?.getState()?.businessStage==='industrial_workshop');
   const offline=page.locator('#offlineScreen');if(await offline.isVisible())await page.click('#offlineClose');
   await page.click('#garage');await page.waitForSelector('#garageScreen:not([hidden])');await page.waitForSelector('#baseShellNav');
