@@ -1,0 +1,45 @@
+name: owner-review-v6-apply-once
+
+on:
+  push:
+    branches:
+      - feature/industrial-workshop-production-cells-v1
+    paths:
+      - scripts/apply-owner-review-v6.mjs
+      - .github/workflows/owner-review-v6-apply-once.yml
+
+permissions:
+  contents: write
+
+jobs:
+  apply-and-verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/industrial-workshop-production-cells-v1
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Apply Owner Review V6 patch
+        run: node scripts/apply-owner-review-v6.mjs
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Typecheck and build
+        run: npm run build
+      - name: Owner Review V6 domain acceptance
+        run: npm run smoke:owner-review-v6
+      - name: Install browser
+        run: npx playwright install --with-deps chromium
+      - name: Owner Review V6 browser acceptance
+        run: npm run smoke:browser:owner-review-v6
+      - name: Persist verified corrective pass
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm scripts/apply-owner-review-v6.mjs .github/workflows/owner-review-v6-apply-once.yml
+          git add -A
+          git commit -m "fix: owner review v6 corrective pass"
+          git push origin HEAD:feature/industrial-workshop-production-cells-v1
