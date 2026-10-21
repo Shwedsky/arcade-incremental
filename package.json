@@ -13,6 +13,7 @@
     "smoke:reservations": "tsx scripts/resource-reservation-smoke.ts",
     "smoke:worker-economy-v2": "tsx scripts/worker-economy-v2-smoke.ts",
     "smoke:workforce-fleet-v3": "tsx scripts/workforce-fleet-v3-smoke.ts",
+    "smoke:fleet-network-v1": "tsx scripts/fleet-network-v1-smoke.ts",
     "smoke:contract-board-v2": "tsx scripts/contract-board-v2-smoke.ts",
     "smoke:contract-board-v3": "tsx scripts/contract-board-v3-smoke.ts",
     "smoke:progression-v2": "tsx scripts/progression-expansion-v2-smoke.ts",
