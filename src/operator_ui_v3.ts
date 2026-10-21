@@ -4,6 +4,7 @@ import './talent_impact_ui_v4.ts';
 import './production_cells_ui_v1.ts';
 import './production_heavy_support_ui_v1.ts';
 import './industrial_visual_baseline_v1.ts';
+import './industrial_visual_art_v1.css';
 import './production_resource_lock_v1.ts';
 import './owner_review_v6.ts';
 
@@ -24,10 +25,10 @@ function render(){
     if(!view.cells?.length)continue;
     const activeCell=view.cells.find((cell:any)=>cell.operatorId===worker.id);
     const wrapper=document.createElement('div');wrapper.className=`v3OperatorBlock ${activeCell?'active':''}`;
-    if(!view.unlocked){wrapper.innerHTML='<small>OPERATOR</small><p>Откроется талантом «Диспетчер». Роль появится только там, где реально ускоряет производство.</p>';card.append(wrapper);continue}
+    if(!view.unlocked){wrapper.innerHTML='<small>ОПЕРАТОР</small><p>Откроется талантом «Диспетчер». Роль появится только там, где реально ускоряет производство.</p>';card.append(wrapper);continue}
     const options=view.cells.map((cell:any)=>`<option value="${cell.id}" ${activeCell?.id===cell.id?'selected':''}>${cell.label}</option>`).join('');
     const selected=activeCell??view.cells[0];
-    wrapper.innerHTML=`<div class="opHead"><div><small>OPERATOR</small><b>${activeCell?`Работает: ${activeCell.label}`:'Производственное назначение'}</b></div>${activeCell?`<strong>${pct(activeCell.speedFactor)}</strong>`:''}</div>${activeCell?`<div class="opLive"><span>Участок <b>${activeCell.status}</b></span><span>Осталось <b>${time(activeCell.remainingSec)}</b></span><span>Эффект <b>${pct(activeCell.speedFactor)}</b></span></div>`:'<p>Оператор ускоряет реальный цикл выбранной ячейки. Назначение снимает рабочего с маршрута.</p>'}<div class="opAssign"><select data-op-cell="${worker.id}">${options}</select><button data-op-assign="${worker.id}">${activeCell?'Сменить участок':'Назначить Operator'}</button></div>`;
+    wrapper.innerHTML=`<div class="opHead"><div><small>ОПЕРАТОР</small><b>${activeCell?`Работает: ${activeCell.label}`:'Производственное назначение'}</b></div>${activeCell?`<strong>${pct(activeCell.speedFactor)}</strong>`:''}</div>${activeCell?`<div class="opLive"><span>Участок <b>${activeCell.status}</b></span><span>Осталось <b>${time(activeCell.remainingSec)}</b></span><span>Эффект <b>${pct(activeCell.speedFactor)}</b></span></div>`:'<p>Оператор ускоряет реальный цикл выбранного участка. Назначение снимает рабочего с маршрута.</p>'}<div class="opAssign"><select data-op-cell="${worker.id}">${options}</select><button data-op-assign="${worker.id}">${activeCell?'Сменить участок':'Назначить оператора'}</button></div>`;
     card.append(wrapper);
   }
 }
