@@ -101,7 +101,7 @@ function placeScene(box:HTMLElement,scene:HTMLElement){
   if(scene.parentElement!==box){const header=box.querySelector<HTMLElement>(':scope > header');header?.insertAdjacentElement('afterend',scene)}
 }
 
-function render(){
+export function refreshBaseStageVisualV2(){
   const runtime=api();if(!runtime?.getState)return;const s=runtime.getState();
   const box=document.querySelector<HTMLElement>('.garageBox');if(!box)return;
   const stage=stageOf(s);box.dataset.visualStage=stage;
@@ -112,6 +112,8 @@ function render(){
   if(scene.dataset.signature===signature)return;scene.dataset.signature=signature;scene.className=`baseStageSceneV2 stage-${stage}`;scene.innerHTML=sceneMarkup(stage,s);
 }
 
-const observer=new MutationObserver(()=>queueMicrotask(render));
-function boot(){const garage=document.querySelector('#garageScreen');if(!garage){setTimeout(boot,100);return}observer.observe(garage,{childList:true,subtree:true,attributes:true,attributeFilter:['hidden']});render();setInterval(render,1000)}
+const visualApi={refresh:refreshBaseStageVisualV2};
+Object.assign(globalThis,{__SALVAGE_BASE_VISUAL__:visualApi});
+const observer=new MutationObserver(()=>queueMicrotask(refreshBaseStageVisualV2));
+function boot(){const garage=document.querySelector('#garageScreen');if(!garage){setTimeout(boot,100);return}observer.observe(garage,{childList:true,subtree:true,attributes:true,attributeFilter:['hidden']});refreshBaseStageVisualV2();setInterval(refreshBaseStageVisualV2,1000)}
 boot();
