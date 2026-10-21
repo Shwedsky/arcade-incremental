@@ -1,7 +1,7 @@
 import {createOrAssignRouteV3,normalizeWorkforceFleetV3,projectRouteV3,type RouteProjectionV3,type WorkforceFleetV3State} from './workforce_fleet_v3.ts';
 import type {ZoneId} from './midgame.ts';
 
-export type FleetNetworkBottleneckV1='none'|'no_worker'|'no_vehicle'|'capacity'|'shift';
+export type FleetNetworkBottleneckV1='none'|'no_worker'|'no_vehicle'|'capacity'|'shift'|'base_storage';
 
 export interface FleetNetworkRouteV1{
   routeId:string;
@@ -120,5 +120,6 @@ export const fleetNetworkBottleneckLabelV1=(value:FleetNetworkBottleneckV1)=>({
   no_worker:'Нет рабочей бригады',
   no_vehicle:'Нет транспорта — малая партия',
   capacity:'Транспорт заполнится раньше конца смены',
-  shift:'Смена закончится раньше загрузки'
+  shift:'Смена закончится раньше загрузки',
+  base_storage:'Склад базы заполнен — приём маршрутов остановлен'
 }[value]);
