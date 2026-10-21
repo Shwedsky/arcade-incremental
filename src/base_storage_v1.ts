@@ -12,6 +12,7 @@ export const BASE_STORAGE_CAPACITY_KG:Record<BusinessStageId,number>={
   industrial_workshop:60_000,
   processing_plant:150_000
 };
+const STAGE_RANK:Record<BusinessStageId,number>={starter_garage:0,equipped_garage:1,workforce_garage:2,hangar:3,salvage_yard:4,industrial_workshop:5,processing_plant:6};
 
 export interface BaseStoragePressureV1{
   capacityKg:number;
@@ -24,6 +25,7 @@ export interface BaseStoragePressureV1{
 }
 
 export function baseStorageCapacityKg(stage:BusinessStageId):number{return BASE_STORAGE_CAPACITY_KG[stage]}
+export function baseStorageNetworkEnabled(stage:BusinessStageId):boolean{return STAGE_RANK[stage]>=STAGE_RANK.salvage_yard}
 
 export function rawStorageKg(storage:RawStorageV1|undefined):number{
   if(!storage)return 0;
@@ -36,6 +38,7 @@ export function baseStoragePressureV1(stage:BusinessStageId,storage:RawStorageV1
 }
 
 export function runtimeBaseStorageFreeKg(stage:BusinessStageId):number{
+  if(!baseStorageNetworkEnabled(stage))return Infinity;
   try{
     const state=(globalThis as any).__SALVAGE_TEST__?.getState?.();
     if(!state?.storage)return Infinity;
