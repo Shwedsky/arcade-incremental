@@ -24,6 +24,10 @@ async function unlockAll(page:any){
 async function mutateSave(page:any,mutatorSource:string){
   await page.evaluate(({key,source})=>{
     (globalThis as any).__SALVAGE_PLATFORM__.forceSave();
+    // Stop runtime autosave/render intervals before editing the persisted fixture.
+    // Otherwise a live in-memory state can race this localStorage mutation between
+    // evaluate() and reload() and silently restore the pre-mutation cash/state.
+    for(let i=1;i<2000;i++)clearInterval(i);
     const raw=localStorage.getItem(key);if(!raw)throw new Error('save missing');
     const save=JSON.parse(raw);const mutator=(0,eval)(`(${source})`);mutator(save);save.lastSeen=Date.now();localStorage.setItem(key,JSON.stringify(save));
   },{key:SAVE_KEY,source:mutatorSource});
@@ -88,7 +92,7 @@ try{
 
   console.log('V6 browser: insufficient training feedback');
   await mutateSave(page,`save=>{save.cash=0}`);
-  await openBaseSurface(page,'crew');let s=await state(page);const worker=s.workforceV3.workers.find((w:any)=>w.rank<5);assert.ok(worker,'fixture needs a trainable worker');
+  await openBaseSurface(page,'crew');let s=await state(page);assert.equal(s.cash,0,'insufficient-training fixture must boot with zero cash');const worker=s.workforceV3.workers.find((w:any)=>w.rank<5);assert.ok(worker,'fixture needs a trainable worker');
   const train=page.locator(`[data-v3-train="${worker.id}"]`);assert.equal(await train.isDisabled(),false,'training must not silently dead-end behind a disabled button');
   const rankBefore=worker.rank;await train.click();await page.waitForSelector('#ownerV6Notice.show');
   assert.match(await page.locator('#ownerV6Notice').innerText(),/Не хватает .*₽.*обучен|обучен.*Не хватает .*₽/i);
