@@ -70,6 +70,15 @@ function dispatchCards(s:RuntimeState,n=5){
   }).join('');
 }
 
+function yardCrewCards(s:RuntimeState,n=8){
+  const roster=canonicalWorkers(s);
+  return Array.from({length:n},(_,i)=>{
+    const worker=roster[i];
+    if(!worker)return`<i class="yardCrewSlot open"><b>+</b><span>место</span></i>`;
+    return`<i class="yardCrewSlot ${worker.status}"><b>${worker.name}</b><span>${roleLabel(worker.role)} · ${statusLabel(worker.status)}</span></i>`;
+  }).join('');
+}
+
 function hangarSignature(s:RuntimeState){
   const workers=canonicalWorkers(s).map(worker=>`${worker.id}:${worker.rank}:${worker.role}:${worker.status}`).join('|');
   const fleet=canonicalFleet(s).map(vehicle=>`${vehicle.id}:${vehicle.type}:${vehicle.routeId??'-'}`).join('|');
@@ -90,7 +99,17 @@ function sceneMarkup(stage:Stage,s:RuntimeState){
       <div class="hangarExpansion"><b>ЗОНА РАСШИРЕНИЯ</b><span>следующий предел бизнеса — Yard</span></div>
       ${workers(s,8)}
     </div>`;
-  if(stage==='yard')return`<div class="baseSceneLabel"><b>Salvage Yard</b><span>Сеть снабжения · ${wc} раб. · ${vc} транспорт</span></div><div class="yardSky"><div class="yardCrane">┐<i></i></div></div><div class="yardGround"><div class="scrapPile a"></div><div class="scrapPile b"></div><div class="yardBays">${bays(s,5,'Стоянка')}</div><div class="yardStaging">ТЯЖЁЛЫЙ ЛОМ</div>${workers(s,8)}</div>`;
+  if(stage==='yard')return`
+    <div class="baseSceneLabel"><b>Salvage Yard · Сеть</b><span>${wc}/8 сотрудников · ${vc}/7 транспорт</span></div>
+    <div class="yardSky"><div class="yardCrane">┐<i></i></div><div class="yardFloodlights"><i></i><i></i><i></i></div></div>
+    <div class="yardGround yardNetworkBase">
+      <section class="yardBulkField"><header><b>BULK SCRAP FIELD</b><span>массовый входящий лом</span></header><div class="scrapPile a"></div><div class="scrapPile b"></div><div class="scrapPile c"></div><div class="yardBulkBins"><i>FE</i><i>CU</i><i>PL</i></div></section>
+      <section class="yardRecovered"><header><b>RECOVERED OBJECTS</b><span>крупные находки / тяжёлый лом</span></header><div class="yardRecoveredObjects"><i class="obj-engine">⚙</i><i class="obj-frame">▱</i><i class="obj-machine">▣</i></div></section>
+      <section class="yardCrewMuster"><header><b>CREW MUSTER</b><span>${wc}/8</span></header><div class="yardCrewGrid">${yardCrewCards(s,8)}</div></section>
+      <section class="yardVehicleApron"><header><b>FLEET APRON</b><span>${vc}/7</span></header><div class="yardBays">${bays(s,7,'Стоянка')}</div></section>
+      <div class="yardGate"><b>ВЪЕЗД / ОТГРУЗКА</b><span>маршрутный поток</span></div>
+      <div class="yardStaging">ТЯЖЁЛЫЙ ЛОМ · STAGING</div>${workers(s,8)}
+    </div>`;
   if(stage==='industrial')return`<div class="baseSceneLabel"><b>Industrial Workshop</b><span>Производственные ячейки · ${wc} раб.</span></div><div class="industrialHall"><div class="overheadCrane"></div><div class="productionCells">${Array.from({length:4},(_,i)=>`<div><b>ЯЧЕЙКА ${i+1}</b><span>${i<2?'⚙ ACTIVE':'READY'}</span><i></i></div>`).join('')}</div><div class="industrialBays">${bays(s,4,'Ворота')}</div>${workers(s,10)}</div>`;
   return`<div class="baseSceneLabel"><b>Processing Plant</b><span>Завод · линии + склад + входящая логистика</span></div><div class="plantScene"><div class="plantStacks"><i></i><i></i><i></i></div><div class="plantWarehouse">СКЛАД<br><strong>150 000 кг</strong></div><div class="plantLines"><div>ЛИНИЯ 1<i></i></div><div>ЛИНИЯ 2<i></i></div></div><div class="plantDock">${bays(s,5,'Док')}</div>${workers(s,12)}</div>`;
 }
@@ -108,7 +127,8 @@ export function refreshBaseStageVisualV2(){
   let scene=box.querySelector<HTMLElement>('#baseStageSceneV2');
   if(!scene){scene=document.createElement('section');scene.id='baseStageSceneV2';scene.className='baseStageSceneV2';const header=box.querySelector<HTMLElement>(':scope > header');header?.insertAdjacentElement('afterend',scene)}
   placeScene(box,scene);
-  const signature=stage==='hangar'?`${stage}:${hangarSignature(s)}`:`${stage}:${workerCount(s)}:${vehicleCount(s)}:${machineCount(s)}:${s?.packE?.production?.length??0}`;
+  const liveStage=stage==='hangar'||stage==='yard';
+  const signature=liveStage?`${stage}:${hangarSignature(s)}`:`${stage}:${workerCount(s)}:${vehicleCount(s)}:${machineCount(s)}:${s?.packE?.production?.length??0}`;
   if(scene.dataset.signature===signature)return;scene.dataset.signature=signature;scene.className=`baseStageSceneV2 stage-${stage}`;scene.innerHTML=sceneMarkup(stage,s);
 }
 
