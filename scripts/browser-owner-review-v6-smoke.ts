@@ -44,13 +44,32 @@ try{
   await page.waitForFunction((cash)=>((globalThis as any).__SALVAGE_TEST__.getState().cash)>cash,standingCash);
   assert.match(await page.locator('#ownerV6Notice').innerText(),/Отгружено|покупател|получено/i,'first standing-order click must show feedback');
 
-  // Replenish through the legal DEV fixture so the special-order assertion is independent
-  // from whichever resource the standing buyer just consumed.
-  console.log('V6 browser: refresh mature fixture for special order');
-  await unlockAll(page);await openBaseSurface(page,'contracts');await page.waitForSelector('.contractV3');
+  // Special orders must be tested with a stable inventory. A persisted workshop queue
+  // can legitimately reserve the same items after a reload, so clear that independent
+  // system here and keep generous stock. The click itself still goes through real UI.
+  console.log('V6 browser: stable special-order fixture');
+  await mutateSave(page,`save=>{
+    save.cash=Math.max(Number(save.cash??0),10_000_000);
+    save.scheduler={...(save.scheduler??{}),actions:[],lastAdvancedAt:Date.now()};
+    save.storage={...(save.storage??{}),metal:10000,copper:5000,plastic:5000};
+    save.components={...(save.components??{}),bearing:100,motor:100,hydraulic:100,electronics:100};
+    save.processed={...(save.processed??{}),briquette:5000,cleanCopper:2500,granulate:2500};
+    save.midgame.midComponents={...(save.midgame?.midComponents??{}),pump:100,compressor:100};
+    save.packB.materials={...(save.packB?.materials??{}),aluminiumScrap:5000,steelBlank:1000,aluminiumBillet:0};
+    save.packB.industrial={...(save.packB?.industrial??{}),gearbox:100,generator:100};
+    save.packB.modules={...(save.packB?.modules??{}),drive:100,control:100,structural:100};
+    save.packC.materials={...(save.packC?.materials??{}),alloyScrap:5000,alloyBillet:1000};
+    save.packC.industrial={...(save.packC?.industrial??{}),industrialController:100,heavyHydraulicCylinder:100};
+    save.packC.modules={...(save.packC?.modules??{}),hydraulicPower:100,heavyFrame:100};
+  }`);
+  await openBaseSurface(page,'contracts');await page.waitForSelector('.contractV3');
   console.log('V6 browser: special order');
   await page.waitForSelector('.specialOrder.ready [data-special-submit]');
-  const special=page.locator('.specialOrder.ready [data-special-submit]').first();before=await state(page);const specialCash=before.cash;await special.click();
+  const special=page.locator('.specialOrder.ready [data-special-submit]').first();
+  const specialId=await special.getAttribute('data-special-submit');assert.ok(specialId,'special fixture needs an id');
+  // Require the exact same card to remain ready across one refresh interval before click.
+  await page.waitForTimeout(350);assert.equal(await page.locator(`[data-special-submit="${specialId}"]:not(:disabled)`).count(),1,'special order readiness must not be stale');
+  before=await state(page);const specialCash=before.cash;await page.locator(`[data-special-submit="${specialId}"]`).click();
   await page.waitForFunction((cash)=>((globalThis as any).__SALVAGE_TEST__.getState().cash)>cash,specialCash);
   assert.match(await page.locator('#ownerV6Notice').innerText(),/Спецзаказ.*сдан|заказ.*сдан/i,'first special-order click must show feedback');
 
