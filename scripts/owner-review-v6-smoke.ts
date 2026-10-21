@@ -21,7 +21,8 @@ assert.ok(nextWorkerHireCost(state)<=220_000,'late worker hire must never explod
 
 assert.equal(formatXpGain(3.9000000000000004),'+3.9 XP');
 assert.equal(formatXpGain(4),'+4 XP');
-assert.equal(formatXpGain(12.049999999999),'+12.1 XP');
+assert.equal(formatXpGain(12.049999999999),'+12 XP');
+assert.equal(formatXpGain(12.050000000001),'+12.1 XP');
 assert.equal(formatUiNumber(0.30000000000000004,1),'0.3');
 
 console.log('Owner Review V6 domain acceptance: hire bands + bounded late cost + XP formatting: PASS');
