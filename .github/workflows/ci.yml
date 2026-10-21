@@ -34,6 +34,8 @@ jobs:
         run: npm run smoke:workforce-fleet-v3
       - name: Fleet Network V1 multi-route domain smoke
         run: npm run smoke:fleet-network-v1
+      - name: Production Cells V1 parallel domain smoke
+        run: npm run smoke:production-cells-v1
       - name: Contract Board V2 legacy domain smoke
         run: npm run smoke:contract-board-v2
       - name: Contract Board V3 standing + special domain smoke
