@@ -1,4 +1,4 @@
-import type {RouteProjectionV3,WorkforceFleetV3State} from './workforce_fleet_v3.ts';
+import {createOrAssignRouteV3,normalizeWorkforceFleetV3,projectRouteV3,type RouteProjectionV3,type WorkforceFleetV3State} from './workforce_fleet_v3.ts';
 import type {ZoneId} from './midgame.ts';
 
 export type FleetNetworkBottleneckV1='none'|'no_worker'|'no_vehicle'|'capacity'|'shift';
@@ -34,6 +34,16 @@ export interface FleetNetworkSummaryV1{
 export interface FleetNetworkViewV1{
   routes:FleetNetworkRouteV1[];
   summary:FleetNetworkSummaryV1;
+}
+
+export interface CrewDispatchPreviewV1{
+  workerIds:string[];
+  vehicleIds:string[];
+  zone:ZoneId;
+  routeCount:number;
+  totalKgPerHour:number;
+  constrainedRouteCount:number;
+  unservedWorkerCount:number;
 }
 
 export type FleetProjectionProviderV1=(routeId:string)=>RouteProjectionV3|null|undefined;
@@ -77,6 +87,26 @@ export function deriveFleetNetworkV1(state:WorkforceFleetV3State,project:FleetPr
       totalValuePerHour:routes.reduce((sum,route)=>sum+route.valuePerHour,0),
       constrainedRouteCount:routes.filter(route=>route.bottleneck!=='none').length
     }
+  };
+}
+
+export function previewCrewDispatchV1(state:WorkforceFleetV3State,args:{workerIds:string[];vehicleIds:string[];zone:ZoneId;shiftHours?:number;now?:number}):CrewDispatchPreviewV1{
+  const now=args.now??Date.now(),clone=normalizeWorkforceFleetV3(state,now);
+  const workers=args.workerIds.map(id=>clone.workers.find(worker=>worker.id===id)).filter(worker=>worker&&worker.status==='idle'&&['scavenger','logistician'].includes(worker.role)).sort((a,b)=>Number(b!.rank)-Number(a!.rank));
+  const vehicles=args.vehicleIds.map(id=>clone.fleet.find(vehicle=>vehicle.id===id)).filter(vehicle=>vehicle&&!vehicle.routeId).sort((a,b)=>Number(b!.capacityKg)-Number(a!.capacityKg));
+  const projections:RouteProjectionV3[]=[];
+  workers.forEach((worker,index)=>{
+    const route=createOrAssignRouteV3(clone,{workerId:worker!.id,zone:args.zone,vehicleId:vehicles[index]?.id??null,shiftHours:args.shiftHours??2,now});
+    if(route)projections.push(projectRouteV3(clone,route,{stage:'salvage_yard',now,offline:false,offlineCapHours:0,workerOutputMultiplier:1,workerShiftMultiplier:1}));
+  });
+  return{
+    workerIds:workers.map(worker=>worker!.id),
+    vehicleIds:vehicles.map(vehicle=>vehicle!.id),
+    zone:args.zone,
+    routeCount:projections.length,
+    totalKgPerHour:projections.reduce((sum,projection)=>sum+projection.kgPerHour,0),
+    constrainedRouteCount:projections.filter(projection=>projection.bottleneck!=='none').length,
+    unservedWorkerCount:Math.max(0,workers.length-vehicles.length)
   };
 }
 
