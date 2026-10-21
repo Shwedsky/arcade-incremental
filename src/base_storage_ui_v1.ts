@@ -1,6 +1,7 @@
 import './base_storage_v1.css';
 import {baseStoragePressureV1,type BaseStoragePressureV1} from './base_storage_v1.ts';
 import type {BusinessStageId} from './business_stage.ts';
+import {ZONE_DEFS} from './midgame.ts';
 
 const api=()=> (globalThis as any).__SALVAGE_TEST__;
 const stageRank:Record<BusinessStageId,number>={starter_garage:0,equipped_garage:1,workforce_garage:2,hangar:3,salvage_yard:4,industrial_workshop:5,processing_plant:6};
@@ -32,8 +33,15 @@ function ensureRoot(pane:HTMLElement,kind:'logistics'|'storage'){
 }
 function renderRoot(root:HTMLElement,p:BaseStoragePressureV1,compact=false){const signature=`${p.full}:${p.nearFull}:${Math.floor(p.storedKg)}:${Math.floor(p.capacityKg)}:${p.hoursToFull===null?'n':Math.floor(p.hoursToFull*10)}`;if(root.dataset.signature===signature)return;root.dataset.signature=signature;root.innerHTML=markup(p,compact)}
 function patchCrewStorageLabel(p:BaseStoragePressureV1){if(!p.full)return;document.querySelectorAll<HTMLElement>('[data-v3-metric="bottleneck"]').forEach(node=>{if(node.textContent?.trim()==='base_storage'){node.textContent='склад базы заполнен — приём маршрутов остановлен';node.className='warn'}})}
-function patchOfflineStorageStop(p:BaseStoragePressureV1){
-  if(!p.full)return;const list=document.querySelector<HTMLElement>('.offlineRoutesV3');if(!list)return;
+function ensureOfflineRouteList(s:any){
+  let list=document.querySelector<HTMLElement>('.offlineRoutesV3');if(list)return list;
+  const screen=document.querySelector<HTMLElement>('#offlineScreen'),loot=document.querySelector<HTMLElement>('#offlineLoot'),routes=s?.workforceV3?.routes??[];if(!screen||screen.hidden||!loot||!routes.length)return null;
+  const heading=document.createElement('h3');heading.textContent='Маршруты';list=document.createElement('ul');list.className='offlineRoutesV3';
+  list.innerHTML=routes.map((route:any)=>{const projection=api()?.projectGenericRoute?.(route.id),workers=(route.workerIds??[]).map((id:string)=>s.workforceV3.workers.find((worker:any)=>worker.id===id)?.name).filter(Boolean),vehicle=route.vehicleId?s.workforceV3.fleet.find((item:any)=>item.id===route.vehicleId):null,zone=ZONE_DEFS[route.zone]?.name??String(route.zone).toUpperCase();return`<li><b>${workers.join(', ')||'Без рабочего'}</b> · ${zone} · ${vehicle?.name??projection?.vehicleName??'без транспорта'}<br><span>${Math.max(0,Number(projection?.kgPerHour??0)).toFixed(0)} кг/ч · +0.0 кг · остановка: склад базы заполнен</span></li>`}).join('');
+  loot.append(heading,list);return list;
+}
+function patchOfflineStorageStop(p:BaseStoragePressureV1,s:any){
+  if(!p.full)return;const list=ensureOfflineRouteList(s);if(!list)return;
   list.querySelectorAll<HTMLElement>('li span').forEach(span=>{if(span.textContent?.includes('маршрут продолжает работу'))span.textContent=span.textContent.replace('маршрут продолжает работу','остановка: склад базы заполнен')});
   let note=list.parentElement?.querySelector<HTMLElement>('[data-offline-storage-stop]');if(!note&&list.parentElement){note=document.createElement('p');note.dataset.offlineStorageStop='1';note.className='offlineStorageStopV1';list.before(note)}
   if(note)note.textContent=`Приёмный склад: ${kg(p.storedKg)} / ${kg(p.capacityKg)} кг · автоматические маршруты остановлены до освобождения места.`;
@@ -45,7 +53,7 @@ export function refreshBaseStoragePressureV1(){
   const p=pressure(s),logistics=document.querySelector<HTMLElement>('[data-base-pane="logistics"]'),storage=document.querySelector<HTMLElement>('[data-base-pane="storage"]');
   if(logistics)renderRoot(ensureRoot(logistics,'logistics'),p,false);
   if(storage)renderRoot(ensureRoot(storage,'storage'),p,true);
-  patchCrewStorageLabel(p);patchOfflineStorageStop(p);
+  patchCrewStorageLabel(p);patchOfflineStorageStop(p,s);
 }
 
 addEventListener('salvage:business-state-changed',()=>setTimeout(refreshBaseStoragePressureV1,0));
