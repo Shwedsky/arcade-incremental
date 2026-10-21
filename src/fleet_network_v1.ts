@@ -16,6 +16,7 @@ export interface FleetNetworkRouteV1{
   capacityKg:number;
   deliveredKg:number;
   loadRatio:number;
+  hoursToCapacity:number|null;
   shiftRemainingHours:number;
   bottleneck:FleetNetworkBottleneckV1;
 }
@@ -55,6 +56,9 @@ export function deriveFleetNetworkV1(state:WorkforceFleetV3State,project:FleetPr
     const vehicle=route.vehicleId?state.fleet.find(item=>item.id===route.vehicleId):undefined;
     const capacityKg=Math.max(1,Number(projection?.capacityKg??vehicle?.capacityKg??150));
     const deliveredKg=Math.max(0,Number(route.deliveredKg)||0);
+    const kgPerHour=Math.max(0,Number(projection?.kgPerHour)||0);
+    const capacityRemainingKg=Math.max(0,capacityKg-deliveredKg);
+    const hoursToCapacity=kgPerHour>0?capacityRemainingKg/kgPerHour:null;
     const bottleneck=(projection?.bottleneck??(!workers.length?'no_worker':!vehicle?'no_vehicle':'none')) as FleetNetworkBottleneckV1;
     return{
       routeId:route.id,
@@ -64,11 +68,12 @@ export function deriveFleetNetworkV1(state:WorkforceFleetV3State,project:FleetPr
       vehicleId:route.vehicleId,
       vehicleName:projection?.vehicleName??vehicle?.name??null,
       vehicleType:vehicle?.type??null,
-      kgPerHour:Math.max(0,Number(projection?.kgPerHour)||0),
+      kgPerHour,
       valuePerHour:Math.max(0,Number(projection?.valuePerHour)||0),
       capacityKg,
       deliveredKg,
       loadRatio:Math.min(1,deliveredKg/capacityKg),
+      hoursToCapacity,
       shiftRemainingHours:Math.max(0,(route.shiftEndsAt-now)/3_600_000),
       bottleneck
     } satisfies FleetNetworkRouteV1;
