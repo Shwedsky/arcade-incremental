@@ -41,11 +41,11 @@ try{
   const p1=await c1.newPage();await p1.goto(`${ORIGIN}/?seed=packb-migrate`);await p1.waitForSelector('#garage');
   const s1=await state(p1);assert.equal(s1.saveVersion,10);assert.equal(s1.packB.hangarOwned,false);assert.equal(s1.packB.truck.owned,false);assert.equal(s1.packD.recoveryRig.owned,false);assert.equal(s1.midgame.mastery.z3,100);assert.equal(s1.midgame.mastery.z4,0);await c1.close();
 
-  // 2. Full production path: Z4 -> Hangar milestone reveal -> Truck -> second generic roster worker.
+  // 2. Full production path: Z4 -> owner-facing Hangar milestone -> Truck -> second generic roster worker.
   const c2=await browser.newContext();await withSave(c2,baseV5());const p2=await c2.newPage();await p2.goto(`${ORIGIN}/?seed=packb-main`);await p2.waitForSelector('#garage');
   await p2.click('#garage');await p2.waitForSelector('#garageScreen:not([hidden])');
   await p2.click('#zonesGarage');await p2.waitForSelector('#zoneScreen:not([hidden])');assert.equal(await p2.locator('[data-zone="z4"]').count(),1);assert.equal(await p2.locator('[data-zone="z4"] button').isDisabled(),false);await p2.click('#zoneClose');
-  await openBaseSurface(p2,'logistics');const hangar=p2.locator('#acquireHangar');assert.equal(await hangar.isDisabled(),false);await hangar.click();let s2=await state(p2);assert.equal(s2.packB.hangarOwned,true);
+  await openBaseSurface(p2,'overview');await p2.evaluate(()=>(globalThis as any).__SALVAGE_OWNER_V6__?.refresh?.());await p2.waitForSelector('#ownerHangarMilestone [data-owner-acquire-hangar]');const hangar=p2.locator('#ownerHangarMilestone [data-owner-acquire-hangar]');assert.equal(await hangar.isDisabled(),false);await hangar.click();let s2=await state(p2);assert.equal(s2.packB.hangarOwned,true);
   await p2.waitForFunction(()=>(globalThis as any).__SALVAGE_BASE_SHELL__?.getStage?.()==='hangar');
   await p2.waitForFunction(()=>(globalThis as any).__SALVAGE_BASE_SHELL__?.getActiveSurface?.()==='overview');
   await p2.waitForSelector('#hangarMilestoneV1.show');await p2.waitForSelector('#baseStageSceneV2.stage-hangar');await p2.waitForSelector('[data-hangar-ops]');
@@ -64,5 +64,5 @@ try{
   // 4. Pack B and generic route state survive normal Save V10 reload.
   await p2.reload();await p2.waitForSelector('#garage');s2=await state(p2);assert.equal(s2.saveVersion,10);assert.equal(s2.packB.hangarOwned,true);assert.equal(s2.packB.truck.owned,true);assert.equal(s2.workforceV3.routes.find((r:any)=>r.workerIds.includes(worker2Id))?.zone,'z1');assert.equal(s2.talents.includes('salvage_8'),true);await c2.close();
 
-  console.log('browser Content Pack B proof / generic roster / automatic Hangar milestone transformation: PASS');
+  console.log('browser Content Pack B proof / generic roster / owner-facing Hangar milestone transformation: PASS');
 }finally{await browser.close();await stopServer()}
