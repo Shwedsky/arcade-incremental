@@ -7,6 +7,7 @@ const api=()=> (globalThis as any).__SALVAGE_TEST__;
 const stageRank:Record<BusinessStageId,number>={starter_garage:0,equipped_garage:1,workforce_garage:2,hangar:3,salvage_yard:4,industrial_workshop:5,processing_plant:6};
 const money=(value:number)=>`${Math.round(value).toLocaleString('ru-RU')} ₽`;
 const vehicleIcon=(type:string|null)=>type==='truck'?'🚚':type==='recovery_rig'?'🚛':'🚐';
+const GROUP_SHIFT_HOURS=2;
 
 function runtime(){try{return api()?.getState?.()}catch{return null}}
 function enabledStage(stage:string):stage is BusinessStageId{return stage in stageRank&&stageRank[stage as BusinessStageId]>=stageRank.salvage_yard}
@@ -44,10 +45,10 @@ function crewDispatchMarkup(s:any){
   const workerChoices=idle.map((worker:any)=>`<label><input type="checkbox" data-crew-worker="${worker.id}"><span><b>${worker.name}</b><small>${worker.role==='logistician'?'Логист':'Сборщик'} · ранг ${worker.rank}</small></span></label>`).join('');
   const vehicleChoices=free.map((vehicle:any)=>`<label><input type="checkbox" data-crew-vehicle="${vehicle.id}"><span><b>${vehicleIcon(vehicle.type)} ${vehicle.name}</b><small>${vehicle.capacityKg} кг</small></span></label>`).join('');
   return`<section class="crewDispatchV1" data-crew-dispatch>
-    <header><div><small>ГРУППОВОЙ ВЫЕЗД</small><b>Отправить несколько бригад одной командой</b><p>Выбери свободных людей, освоенную зону и транспорт. Машины распределяются от самой вместительной к самой сильной бригаде; лишние люди выйдут без машины.</p></div></header>
+    <header><div><small>ГРУППОВОЙ ВЫЕЗД</small><b>Отправить несколько бригад одной командой</b><p>Выбери свободных людей, освоенную зону и транспорт. Машины распределяются от самой вместительной к самой сильной бригаде; лишние люди выйдут без машины. Стандартная смена — ${GROUP_SHIFT_HOURS} часа.</p></div></header>
     <div class="crewDispatchGrid">
       <div><small>1 · ЛЮДИ</small><div class="crewDispatchChoices" data-crew-workers>${workerChoices||'<em>Нет свободных сборщиков/логистов</em>'}</div></div>
-      <div><small>2 · ЗОНА И СМЕНА</small><label class="crewDispatchSelect">Зона<select data-crew-zone>${zones.map(id=>`<option value="${id}">${ZONE_DEFS[id].name}</option>`).join('')}</select></label><label class="crewDispatchSelect">Смена<select data-crew-shift><option value="2">2 часа</option><option value="4">4 часа</option><option value="8">8 часов</option></select></label></div>
+      <div><small>2 · ЗОНА</small><label class="crewDispatchSelect">Освоенная зона<select data-crew-zone>${zones.map(id=>`<option value="${id}">${ZONE_DEFS[id].name}</option>`).join('')}</select></label><div class="crewDispatchFixedShift"><small>СМЕНА</small><b>${GROUP_SHIFT_HOURS} часа</b><span>тот же runtime-контракт, что у обычного назначения</span></div></div>
       <div><small>3 · ТРАНСПОРТ</small><div class="crewDispatchChoices" data-crew-vehicles>${vehicleChoices||'<em>Свободного транспорта нет</em>'}</div></div>
     </div>
     <div class="crewDispatchFooter"><div><small>БАЗОВЫЙ ПРОГНОЗ</small><b data-crew-preview-kg>0 кг/ч</b><span data-crew-preview-detail>Выбери хотя бы одного сотрудника</span></div><button data-crew-dispatch-go disabled>Отправить группу</button></div>
@@ -75,10 +76,10 @@ function renderNetwork(s:any){
 function selectedIds(selector:string){return Array.from(document.querySelectorAll<HTMLInputElement>(selector)).filter(input=>input.checked).map(input=>String(input.dataset.crewWorker??input.dataset.crewVehicle??''));}
 function updateCrewPreview(s:any){
   const panel=document.querySelector<HTMLElement>('[data-crew-dispatch]');if(!panel||!s?.workforceV3)return;
-  const workerIds=selectedIds('[data-crew-worker]'),vehicleIds=selectedIds('[data-crew-vehicle]'),zone=panel.querySelector<HTMLSelectElement>('[data-crew-zone]')?.value as ZoneId|undefined,shiftHours=Number(panel.querySelector<HTMLSelectElement>('[data-crew-shift]')?.value??2);
+  const workerIds=selectedIds('[data-crew-worker]'),vehicleIds=selectedIds('[data-crew-vehicle]'),zone=panel.querySelector<HTMLSelectElement>('[data-crew-zone]')?.value as ZoneId|undefined;
   const kg=panel.querySelector<HTMLElement>('[data-crew-preview-kg]'),detail=panel.querySelector<HTMLElement>('[data-crew-preview-detail]'),button=panel.querySelector<HTMLButtonElement>('[data-crew-dispatch-go]');
   if(!zone||!workerIds.length){if(kg)kg.textContent='0 кг/ч';if(detail)detail.textContent='Выбери хотя бы одного сотрудника';if(button)button.disabled=true;return}
-  const preview=previewCrewDispatchV1(s.workforceV3,{workerIds,vehicleIds,zone,shiftHours,now:Date.now()});
+  const preview=previewCrewDispatchV1(s.workforceV3,{workerIds,vehicleIds,zone,shiftHours:GROUP_SHIFT_HOURS,now:Date.now()});
   if(kg)kg.textContent=`${preview.totalKgPerHour.toFixed(0)} кг/ч`;
   if(detail)detail.textContent=`${preview.routeCount} маршрут. · машин ${Math.min(preview.workerIds.length,preview.vehicleIds.length)}${preview.unservedWorkerCount?` · без транспорта ${preview.unservedWorkerCount}`:''}${preview.constrainedRouteCount?` · ограничений ${preview.constrainedRouteCount}`:''}`;
   if(button)button.disabled=preview.routeCount===0;
@@ -115,7 +116,6 @@ addEventListener('click',event=>{
   const target=event.target as HTMLElement;if(!target.closest('[data-crew-dispatch-go]'))return;
   const s=runtime(),panel=document.querySelector<HTMLElement>('[data-crew-dispatch]');if(!s?.workforceV3||!panel)return;
   const zone=panel.querySelector<HTMLSelectElement>('[data-crew-zone]')?.value as ZoneId|undefined;if(!zone)return;
-  const shiftHours=Number(panel.querySelector<HTMLSelectElement>('[data-crew-shift]')?.value??2);
   const selectedWorkers=selectedIds('[data-crew-worker]').map(id=>s.workforceV3.workers.find((worker:any)=>worker.id===id)).filter(Boolean).sort((a:any,b:any)=>Number(b.rank)-Number(a.rank));
   const selectedVehicles=selectedIds('[data-crew-vehicle]').map(id=>s.workforceV3.fleet.find((vehicle:any)=>vehicle.id===id)).filter((vehicle:any)=>vehicle&&!vehicle.routeId).sort((a:any,b:any)=>Number(b.capacityKg)-Number(a.capacityKg));
   let dispatched=0;selectedWorkers.forEach((worker:any,index:number)=>{if(api()?.assignGenericRoute?.(worker.id,zone,selectedVehicles[index]?.id??null))dispatched++});
