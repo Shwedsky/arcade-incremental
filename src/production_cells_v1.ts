@@ -212,7 +212,7 @@ export function startProductionCellV1(
   const plan=PRODUCTION_PLANS_V1[cell.selectedPlanId],missing=missingInputsV1(stock,plan.inputs);
   if(Object.keys(missing).length)return{ok:false,reason:'missing_input',missing};
   for(const [key,amount] of Object.entries(plan.inputs) as [IndustrialStockKeyV1,number][])stock[key]=Math.max(0,stock[key]-amount);
-  const role=(staffing.role??'none') as ProductionStaffRoleV1,rank=Math.max(0,Math.min(5,Math.floor(Number(staffing.rank)||0));
+  const role=(staffing.role??'none') as ProductionStaffRoleV1,rank=Math.max(0,Math.min(5,Math.floor(Number(staffing.rank)||0)));
   const durationFactor=productionStaffingEffectV1(cellId,role,rank||1),durationMs=Math.max(1000,Math.round(plan.baseDurationSec*durationFactor*1000));
   const job:ProductionCellJobV1={
     id:`pcv1-${state.nextJobSerial++}`,planId:plan.id,startedAt:now,endsAt:now+durationMs,
