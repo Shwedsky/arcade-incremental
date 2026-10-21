@@ -35,6 +35,13 @@ export interface ProductionStaffSnapshotV1{
   durationFactor:number;
 }
 
+export interface ProductionSupportSnapshotV1{
+  vehicleId:string|null;
+  vehicleName:string|null;
+  kind:'none'|'recovery_rig';
+  durationFactor:number;
+}
+
 export interface ProductionCellJobV1{
   id:string;
   planId:ProductionPlanIdV1;
@@ -43,6 +50,7 @@ export interface ProductionCellJobV1{
   inputs:IndustrialStockDeltaV1;
   outputs:IndustrialStockDeltaV1;
   staffing:ProductionStaffSnapshotV1;
+  support:ProductionSupportSnapshotV1;
 }
 
 export interface ProductionCellRuntimeV1{
@@ -154,6 +162,11 @@ function normalizeDelta(value:IndustrialStockDeltaV1|undefined):IndustrialStockD
   return result;
 }
 
+function normalizeSupport(value:Partial<ProductionSupportSnapshotV1>|undefined):ProductionSupportSnapshotV1{
+  const kind=value?.kind==='recovery_rig'?'recovery_rig':'none';
+  return{vehicleId:typeof value?.vehicleId==='string'?value.vehicleId:null,vehicleName:typeof value?.vehicleName==='string'?value.vehicleName:null,kind,durationFactor:Math.max(.7,Math.min(1,Number(value?.durationFactor)||1))};
+}
+
 function normalizeJob(value:ProductionCellJobV1|null|undefined,cellId:ProductionCellIdV1):ProductionCellJobV1|null{
   if(!value)return null;
   const planId=validPlanForCell(cellId,value.planId),plan=PRODUCTION_PLANS_V1[planId];
@@ -167,7 +180,8 @@ function normalizeJob(value:ProductionCellJobV1|null|undefined,cellId:Production
       workerName:typeof value.staffing?.workerName==='string'?value.staffing.workerName:null,
       role,rank:Math.max(0,Math.min(5,Math.floor(Number(value.staffing?.rank)||0))),
       durationFactor:Math.max(.5,Math.min(1.25,Number(value.staffing?.durationFactor)||1))
-    }
+    },
+    support:normalizeSupport(value.support)
   };
 }
 
@@ -206,18 +220,19 @@ export function missingInputsV1(stock:IndustrialStockV1,inputs:IndustrialStockDe
 
 export function startProductionCellV1(
   state:ProductionCellsV1State,cellId:ProductionCellIdV1,stock:IndustrialStockV1,
-  staffing:Partial<ProductionStaffSnapshotV1>={},now=Date.now()
+  staffing:Partial<ProductionStaffSnapshotV1>={},now=Date.now(),support:Partial<ProductionSupportSnapshotV1>={}
 ):ProductionStartResultV1{
   const cell=state.cells[cellId];if(cell.job)return{ok:false,reason:'busy'};
   const plan=PRODUCTION_PLANS_V1[cell.selectedPlanId],missing=missingInputsV1(stock,plan.inputs);
   if(Object.keys(missing).length)return{ok:false,reason:'missing_input',missing};
   for(const [key,amount] of Object.entries(plan.inputs) as [IndustrialStockKeyV1,number][])stock[key]=Math.max(0,stock[key]-amount);
   const role=(staffing.role??'none') as ProductionStaffRoleV1,rank=Math.max(0,Math.min(5,Math.floor(Number(staffing.rank)||0)));
-  const durationFactor=productionStaffingEffectV1(cellId,role,rank||1),durationMs=Math.max(1000,Math.round(plan.baseDurationSec*durationFactor*1000));
+  const durationFactor=productionStaffingEffectV1(cellId,role,rank||1),supportSnapshot=cellId==='heavy_assembly'?normalizeSupport(support):normalizeSupport(undefined);
+  const durationMs=Math.max(1000,Math.round(plan.baseDurationSec*durationFactor*supportSnapshot.durationFactor*1000));
   const job:ProductionCellJobV1={
     id:`pcv1-${state.nextJobSerial++}`,planId:plan.id,startedAt:now,endsAt:now+durationMs,
     inputs:{...plan.inputs},outputs:{...plan.outputs},
-    staffing:{workerId:staffing.workerId??null,workerName:staffing.workerName??null,role,rank,durationFactor}
+    staffing:{workerId:staffing.workerId??null,workerName:staffing.workerName??null,role,rank,durationFactor},support:supportSnapshot
   };
   cell.job=job;return{ok:true,job};
 }
