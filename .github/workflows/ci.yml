@@ -40,6 +40,8 @@ jobs:
         run: npm run smoke:visual-baseline-v1
       - name: Field Visual Baseline V1 structural contract
         run: npm run smoke:field-visual-baseline-v1
+      - name: Stage Visual Consistency V1 structural contract
+        run: npm run smoke:stage-visual-consistency-v1
       - name: Contract Board V2 legacy domain smoke
         run: npm run smoke:contract-board-v2
       - name: Contract Board V3 standing + special domain smoke
