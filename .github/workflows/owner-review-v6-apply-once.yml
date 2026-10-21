@@ -9,6 +9,7 @@ on:
       - scripts/prepare-owner-review-v6-patcher.mjs
       - scripts/owner-review-v6-smoke.ts
       - scripts/browser-owner-review-v6-smoke.ts
+      - src/owner_review_v6.ts
       - .github/workflows/owner-review-v6-apply-once.yml
 
 permissions:
