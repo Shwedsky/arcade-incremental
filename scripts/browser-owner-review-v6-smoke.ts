@@ -25,7 +25,7 @@ async function mutateSave(page:any,mutatorSource:string){
   await page.evaluate(({key,source})=>{
     (globalThis as any).__SALVAGE_PLATFORM__.forceSave();
     const raw=localStorage.getItem(key);if(!raw)throw new Error('save missing');
-    const save=JSON.parse(raw);(0,eval)(`(${source})(save)`);save.lastSeen=Date.now();localStorage.setItem(key,JSON.stringify(save));
+    const save=JSON.parse(raw);const mutator=(0,eval)(`(${source})`);mutator(save);save.lastSeen=Date.now();localStorage.setItem(key,JSON.stringify(save));
   },{key:SAVE_KEY,source:mutatorSource});
   await page.reload();await waitGame(page);await forceGarage(page);
 }
@@ -44,9 +44,6 @@ try{
   await page.waitForFunction((cash)=>((globalThis as any).__SALVAGE_TEST__.getState().cash)>cash,standingCash);
   assert.match(await page.locator('#ownerV6Notice').innerText(),/Отгружено|покупател|получено/i,'first standing-order click must show feedback');
 
-  // Special orders must be tested with a stable inventory. A persisted workshop queue
-  // can legitimately reserve the same items after a reload, so clear that independent
-  // system here and keep generous stock. The click itself still goes through real UI.
   console.log('V6 browser: stable special-order fixture');
   await mutateSave(page,`save=>{
     save.cash=Math.max(Number(save.cash??0),10_000_000);
@@ -67,7 +64,6 @@ try{
   await page.waitForSelector('.specialOrder.ready [data-special-submit]');
   const special=page.locator('.specialOrder.ready [data-special-submit]').first();
   const specialId=await special.getAttribute('data-special-submit');assert.ok(specialId,'special fixture needs an id');
-  // Require the exact same card to remain ready across one refresh interval before click.
   await page.waitForTimeout(350);assert.equal(await page.locator(`[data-special-submit="${specialId}"]:not(:disabled)`).count(),1,'special order readiness must not be stale');
   before=await state(page);const specialCash=before.cash;await page.locator(`[data-special-submit="${specialId}"]`).click();
   await page.waitForFunction((cash)=>((globalThis as any).__SALVAGE_TEST__.getState().cash)>cash,specialCash);
