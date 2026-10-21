@@ -7,6 +7,8 @@ on:
     paths:
       - scripts/apply-owner-review-v6.mjs
       - scripts/prepare-owner-review-v6-patcher.mjs
+      - scripts/owner-review-v6-smoke.ts
+      - scripts/browser-owner-review-v6-smoke.ts
       - .github/workflows/owner-review-v6-apply-once.yml
 
 permissions:
