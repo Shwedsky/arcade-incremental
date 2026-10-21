@@ -25,9 +25,10 @@ const STOCK_LABELS:Record<IndustrialStockKeyV1,string>={
 };
 const ROLE_LABELS:Record<ProductionStaffRoleV1,string>={none:'Без специалиста',operator:'Оператор',technician:'Техник',logistician:'Логист',scavenger:'Сборщик'};
 
-const esc=(value:unknown)=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char] as string));
+const esc=(value:unknown)=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[char] as string));
 const num=(value:number)=>Number.isInteger(value)?String(value):value.toFixed(1);
 const duration=(sec:number)=>sec>=3600?`${(sec/3600).toFixed(1)} ч`:sec>=60?`${Math.ceil(sec/60)} мин`:`${Math.ceil(sec)} сек`;
+const rigName=(value?:string|null)=>value?.replace(/Recovery Rig/g,'Тяжёлая эвакуационная платформа')??'Тяжёлая эвакуационная платформа';
 
 function planOptions(cellId:ProductionCellIdV1,selected:ProductionPlanIdV1){
   return Object.values(PRODUCTION_PLANS_V1).filter(plan=>plan.cellId===cellId).map(plan=>`<option value="${plan.id}" ${plan.id===selected?'selected':''}>${esc(plan.label)}</option>`).join('');
@@ -66,7 +67,21 @@ function workerOptions(state:any,assignedId:string|null){
   return `<option value="">Без назначения</option>${workers.map((worker:any)=>`<option value="${esc(worker.id)}" ${worker.id===assignedId?'selected':''}>${esc(worker.name)} · ур. ${Number(worker.rank??1)} · ${esc(ROLE_LABELS[worker.role as ProductionStaffRoleV1]??worker.role)}</option>`).join('')}`;
 }
 
-function cellMarkup(cell:any,stock:Record<string,number>,state:any){
+function heavySupportMarkup(cell:any,freeSupport:any){
+  if(cell.id!=='heavy_assembly')return'';
+  const jobSupport=cell.job?.support;
+  if(jobSupport?.kind==='recovery_rig'){
+    const gain=Math.round((1-Number(jobSupport.durationFactor??1))*100);
+    return `<div class="pcHeavySupport active"><small>ТЯЖЁЛАЯ ЛОГИСТИКА</small><b>${esc(rigName(jobSupport.vehicleName))} поддержала запуск</b><span>Погрузка и позиционирование тяжёлых узлов: <strong>−${gain}% к циклу</strong>. Бонус закреплён за текущим циклом.</span></div>`;
+  }
+  if(freeSupport?.kind==='recovery_rig'){
+    const gain=Math.round((1-Number(freeSupport.durationFactor??1))*100);
+    return `<div class="pcHeavySupport ready"><small>ТЯЖЁЛАЯ ЛОГИСТИКА</small><b>${esc(rigName(freeSupport.vehicleName))} свободна</b><span>Следующий цикл тяжёлой сборки получит <strong>−${gain}% к времени</strong> за тяжёлую подачу и позиционирование.</span></div>`;
+  }
+  return '<div class="pcHeavySupport unavailable"><small>ТЯЖЁЛАЯ ЛОГИСТИКА</small><b>Тяжёлая эвакуационная платформа недоступна</b><span>Машина на маршруте или ещё не в парке. Тяжёлая сборка работает без бонуса подачи.</span></div>';
+}
+
+function cellMarkup(cell:any,stock:Record<string,number>,state:any,heavySupport:any){
   const id=cell.id as ProductionCellIdV1,meta=CELL_TITLES[id],plan=cell.selectedPlan,job=cell.job,assigned=cell.assignedWorker;
   const assignedWorker=(state?.workforceV3?.workers??[]).find((worker:any)=>worker.id===assigned?.workerId)??null;
   const role=(assigned?.role??assignedWorker?.role??'none') as ProductionStaffRoleV1;
@@ -78,6 +93,7 @@ function cellMarkup(cell:any,stock:Record<string,number>,state:any){
     <div class="pcPlanRow"><label>План<select data-pc-plan="${id}" ${job?'disabled':''}>${planOptions(id,plan.id)}</select></label><div class="pcTiming"><small>Цикл</small><b>${duration(job?Math.max(0,(job.endsAt-job.startedAt)/1000):effect.sec)}</b><span>${job?activeStaff:effect.text}</span></div></div>
     <div class="pcFlow"><section><small>ВХОДЫ</small><div>${stockRows(job?.inputs??plan.inputs,stock,!!job)}</div></section><i>→</i><section><small>ВЫХОД</small><div>${outputRows(job?.outputs??plan.outputs)}</div></section></div>
     <div class="pcStaff"><label>Специалист<select data-pc-worker="${id}" ${job?'disabled':''}>${workerOptions(state,assigned?.workerId??null)}</select></label><label>Роль<select data-pc-role="${id}" ${job?'disabled':''}>${ROLE_OPTIONS.map(item=>`<option value="${item}" ${item===role?'selected':''}>${ROLE_LABELS[item]}</option>`).join('')}</select></label><button class="secondary" data-pc-assign="${id}" ${job?'disabled':''}>Назначить</button></div>
+    ${heavySupportMarkup(cell,heavySupport)}
     <div class="pcBottleneck ${cell.status==='blocked'?'warn':'ok'}"><small>${cell.status==='blocked'?'УЗКОЕ МЕСТО':'СОСТОЯНИЕ'}</small><b>${esc(bottleneckText(cell))}</b></div>
     ${job?`<div class="pcProgress"><i><em style="width:${progress}%"></em></i><span>${progress}% · ${duration(Number(cell.remainingSec??0))}</span></div>`:''}
     <footer><span>${job?'Входы уже списаны и закреплены за этим циклом. Повторно другой ячейкой они не тратятся.':'Запуск сразу фиксирует входы за циклом — скрытого двойного расхода нет.'}</span><button data-pc-start="${id}" ${cell.status!=='ready'?'disabled':''}>${job?'В работе':'Запустить цикл'}</button></footer>
@@ -101,8 +117,8 @@ function renderManagement(){
   const runtime=api(),state=runtime?.getState?.(),view=runtime?.getProductionCellsV1View?.(),root=ensureRoot();if(!root)return;
   const industrial=!!state?.packD?.industrialWorkshopOwned;
   root.hidden=!industrial;if(!industrial)return;
-  const signature=JSON.stringify({cells:view?.cells,stock:view?.stock,workers:state?.workforceV3?.workers});if(root.dataset.signature===signature)return;root.dataset.signature=signature;
-  root.innerHTML=`${summaryMarkup(view)}<div class="productionCellGrid">${CELL_IDS.map(id=>cellMarkup(view.cells.find((cell:any)=>cell.id===id),view.stock,state)).join('')}</div><section class="pcSupport"><b>Вспомогательная мастерская</b><span>Старые станки и очередь мастерской ниже остаются обслуживающим контуром. Основные производственные решения теперь принимаются на этих трёх участках.</span></section>`;
+  const signature=JSON.stringify({cells:view?.cells,stock:view?.stock,workers:state?.workforceV3?.workers,heavySupport:view?.heavySupport});if(root.dataset.signature===signature)return;root.dataset.signature=signature;
+  root.innerHTML=`${summaryMarkup(view)}<div class="productionCellGrid">${CELL_IDS.map(id=>cellMarkup(view.cells.find((cell:any)=>cell.id===id),view.stock,state,view.heavySupport)).join('')}</div><section class="pcSupport"><b>Вспомогательная мастерская</b><span>Старые станки и очередь мастерской ниже остаются обслуживающим контуром. Основные производственные решения теперь принимаются на этих трёх участках.</span></section>`;
 }
 
 function sceneCell(cell:any){
@@ -110,14 +126,25 @@ function sceneCell(cell:any){
   return `<section class="industrialLiveCell ${id} ${cell.status}" data-industrial-scene-cell="${id}"><header><small>${meta.eyebrow}</small><b>${meta.title}</b><span>${cell.status==='running'?'РАБОТАЕТ':cell.status==='ready'?'ГОТОВА':'СТОП'}</span></header><div class="industrialMachine"><i></i><i></i><i></i></div><p>${job?`${esc(job.outputs&&Object.keys(job.outputs).map(key=>STOCK_LABELS[key as IndustrialStockKeyV1]).join(' + '))} · ${duration(Number(cell.remainingSec??0))}`:esc(bottleneckText(cell))}</p></section>`;
 }
 
+function heavyGateMarkup(view:any){
+  const heavy=view.cells?.find((cell:any)=>cell.id==='heavy_assembly'),jobSupport=heavy?.job?.support;
+  const support=jobSupport?.kind==='recovery_rig'?jobSupport:view.heavySupport;
+  if(support?.kind==='recovery_rig'){
+    const gain=Math.round((1-Number(support.durationFactor??1))*100),active=jobSupport?.kind==='recovery_rig';
+    return `<div class="industrialHeavyGate active"><b>ТЯЖЁЛЫЙ ШЛЮЗ · ${esc(rigName(support.vehicleName))}</b><span>${active?'поддержала текущий цикл':'готова к тяжёлой подаче'} · −${gain}%</span></div>`;
+  }
+  return '<div class="industrialHeavyGate"><b>ТЯЖЁЛЫЙ ШЛЮЗ</b><span>Тяжёлая эвакуационная платформа недоступна</span></div>';
+}
+
 function renderIndustrialScene(){
   const runtime=api(),state=runtime?.getState?.(),view=runtime?.getProductionCellsV1View?.();if(!state?.packD?.industrialWorkshopOwned||state?.packE?.processingPlantOwned||!view)return;
   const scene=document.querySelector<HTMLElement>('#baseStageSceneV2.stage-industrial');if(!scene)return;
-  const signature=JSON.stringify({cells:view.cells.map((cell:any)=>({id:cell.id,status:cell.status,plan:cell.selectedPlan?.id,remaining:Math.ceil(Number(cell.remainingSec??0)/5)*5,worker:cell.assignedWorker?.workerId})),workers:state.workforceV3?.workers?.length,fleet:state.workforceV3?.fleet?.length});
+  const heavy=view.cells.find((cell:any)=>cell.id==='heavy_assembly');
+  const signature=JSON.stringify({cells:view.cells.map((cell:any)=>({id:cell.id,status:cell.status,plan:cell.selectedPlan?.id,remaining:Math.ceil(Number(cell.remainingSec??0)/5)*5,worker:cell.assignedWorker?.workerId})),workers:state.workforceV3?.workers?.length,fleet:state.workforceV3?.fleet?.length,heavySupport:view.heavySupport,heavyJobSupport:heavy?.job?.support});
   if(scene.dataset.p5Signature===signature&&scene.querySelector('[data-industrial-workshop-live]'))return;
   scene.dataset.p5Signature=signature;
   const running=view.cells.filter((cell:any)=>cell.status==='running').length;
-  scene.innerHTML=`<div class="baseSceneLabel"><b>Промышленная мастерская · Производственный цех</b><span>${running}/3 участков работают · ${(state.workforceV3?.workers??[]).filter((w:any)=>w.status==='production').length} сотруд. в производстве</span></div><div class="industrialWorkshopLive" data-industrial-workshop-live><div class="industrialRoof"><i></i><i></i><i></i><span>МОСТОВОЙ КРАН · ЗОНА ТЯЖЁЛОЙ СБОРКИ</span></div><div class="industrialInputStage"><b>ВХОДЯЩИЙ МАТЕРИАЛ</b><span>профиль · сплав-сырьё · восстановленные узлы</span><i></i><i></i><i></i></div><div class="industrialLiveGrid">${CELL_IDS.map(id=>sceneCell(view.cells.find((cell:any)=>cell.id===id))).join('')}</div><div class="industrialOutputStage"><b>ГОТОВАЯ ПРОДУКЦИЯ</b><span>модули · силовые сборки · тяжёлые рамы</span><i></i><i></i></div><div class="industrialHeavyGate"><b>ТЯЖЁЛЫЙ ШЛЮЗ</b><span>Тяжёлая эвакуационная платформа · тяжёлая логистика</span></div></div>`;
+  scene.innerHTML=`<div class="baseSceneLabel"><b>Промышленная мастерская · Производственный цех</b><span>${running}/3 участков работают · ${(state.workforceV3?.workers??[]).filter((w:any)=>w.status==='production').length} сотруд. в производстве</span></div><div class="industrialWorkshopLive" data-industrial-workshop-live><div class="industrialRoof"><i></i><i></i><i></i><span>МОСТОВОЙ КРАН · ЗОНА ТЯЖЁЛОЙ СБОРКИ</span></div><div class="industrialInputStage"><b>ВХОДЯЩИЙ МАТЕРИАЛ</b><span>профиль · сплав-сырьё · восстановленные узлы</span><i></i><i></i><i></i></div><div class="industrialLiveGrid">${CELL_IDS.map(id=>sceneCell(view.cells.find((cell:any)=>cell.id===id))).join('')}</div><div class="industrialOutputStage"><b>ГОТОВАЯ ПРОДУКЦИЯ</b><span>модули · силовые сборки · тяжёлые рамы</span><i></i><i></i></div>${heavyGateMarkup(view)}</div>`;
 }
 
 addEventListener('change',event=>{
