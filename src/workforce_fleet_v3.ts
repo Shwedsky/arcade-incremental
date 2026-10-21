@@ -1,6 +1,7 @@
 import type {ResourceKind} from './sim.ts';
 import type {ZoneId} from './midgame.ts';
 import type {BusinessStageId} from './business_stage.ts';
+import {runtimeBaseStorageFreeKg} from './base_storage_v1.ts';
 
 export type WorkerRoleV3='scavenger'|'operator'|'logistician'|'technician';
 export type WorkerStatusV3='idle'|'route'|'production';
@@ -60,6 +61,7 @@ export interface RouteEconomyContextV3{
   workerOutputMultiplier:number;
   workerShiftMultiplier:number;
   benchmarks?:Partial<Record<ZoneId,WorkforceBenchmarkV3>>;
+  baseStorageFreeKg?:number;
 }
 
 export interface RouteProjectionV3{
@@ -71,7 +73,7 @@ export interface RouteProjectionV3{
   valuePerHour:number;
   capacityKg:number;
   shiftHours:number;
-  bottleneck:'none'|'no_worker'|'no_vehicle'|'capacity'|'shift';
+  bottleneck:'none'|'no_worker'|'no_vehicle'|'capacity'|'shift'|'base_storage';
 }
 
 export interface RouteSimulationReportV3 extends RouteProjectionV3{
@@ -79,7 +81,7 @@ export interface RouteSimulationReportV3 extends RouteProjectionV3{
   workedHours:number;
   gained:Record<ResourceKind,number>;
   gainedKg:number;
-  stopReason:'running'|'shift_ended'|'vehicle_full'|'no_worker';
+  stopReason:'running'|'shift_ended'|'vehicle_full'|'base_storage_full'|'no_worker';
 }
 
 export const WORKER_CAPACITY_BY_STAGE:Record<BusinessStageId,number>={
@@ -211,6 +213,7 @@ function benchmarkRates(zone:ZoneId,benchmarks?:Partial<Record<ZoneId,WorkforceB
   const hours=benchmark.durationMs/3600_000;return{metal:benchmark.resources.metal/hours,copper:benchmark.resources.copper/hours,plastic:benchmark.resources.plastic/hours};
 }
 function rankMultiplier(rank:number):number{return 1+(Math.max(1,Math.min(5,rank))-1)*.10}
+function baseStorageFreeKg(ctx:RouteEconomyContextV3):number{return Number.isFinite(ctx.baseStorageFreeKg)?Math.max(0,Number(ctx.baseStorageFreeKg)):runtimeBaseStorageFreeKg(ctx.stage)}
 
 export function projectRouteV3(state:WorkforceFleetV3State,route:RouteV3,ctx:RouteEconomyContextV3):RouteProjectionV3{
   const workers=route.workerIds.map(id=>state.workers.find(item=>item.id===id)).filter(Boolean) as WorkerV3[];
@@ -225,22 +228,24 @@ export function projectRouteV3(state:WorkforceFleetV3State,route:RouteV3,ctx:Rou
   const capacityKg=(vehicle?.capacityKg??150)*(workers.some(worker=>worker.role==='logistician')?1.12:1);
   const rawShift=(route.shiftEndsAt-route.startedAt)/3600_000;
   const shiftHours=Math.max(.25,rawShift)*Math.max(.5,ctx.workerShiftMultiplier);
-  const bottleneck:RouteProjectionV3['bottleneck']=!vehicle&&kgPerHour*shiftHours>150?'no_vehicle':kgPerHour*shiftHours>capacityKg?'capacity':'none';
+  const storageFull=baseStorageFreeKg(ctx)<=.001;
+  const bottleneck:RouteProjectionV3['bottleneck']=storageFull?'base_storage':!vehicle&&kgPerHour*shiftHours>150?'no_vehicle':kgPerHour*shiftHours>capacityKg?'capacity':'none';
   return{routeId:route.id,zone:route.zone,workerNames:workers.map(worker=>worker.name),vehicleName:vehicle?.name??null,kgPerHour,valuePerHour,capacityKg,shiftHours,bottleneck};
 }
 
 export function simulateWorkforceV3(state:WorkforceFleetV3State,ctx:RouteEconomyContextV3):{reports:RouteSimulationReportV3[];total:Record<ResourceKind,number>}{
   const from=state.lastSimulatedAt,to=Math.max(from,ctx.now),elapsedHours=Math.max(0,(to-from)/3600_000),total:Record<ResourceKind,number>={metal:0,copper:0,plastic:0},reports:RouteSimulationReportV3[]=[];
+  let storageRemaining=baseStorageFreeKg(ctx);
   for(const route of state.routes){
-    const projection=projectRouteV3(state,route,ctx),rates=benchmarkRates(route.zone,ctx.benchmarks),baseKg=rates.metal+rates.copper+rates.plastic;
+    const projection=projectRouteV3(state,route,{...ctx,baseStorageFreeKg:storageRemaining}),rates=benchmarkRates(route.zone,ctx.benchmarks),baseKg=rates.metal+rates.copper+rates.plastic;
     if(projection.kgPerHour<=0||baseKg<=0){reports.push({...projection,elapsedHours,workedHours:0,gained:{metal:0,copper:0,plastic:0},gainedKg:0,stopReason:'no_worker'});continue}
-    const offlineLimit=ctx.offline?Math.max(0,ctx.offlineCapHours):Infinity,shiftRemaining=Math.max(0,(route.shiftEndsAt-from)/3600_000)*Math.max(.5,ctx.workerShiftMultiplier),capacityRemaining=Math.max(0,projection.capacityKg-route.deliveredKg),capacityHours=capacityRemaining/projection.kgPerHour;
-    const workedHours=Math.max(0,Math.min(elapsedHours,offlineLimit,shiftRemaining,capacityHours));
+    const offlineLimit=ctx.offline?Math.max(0,ctx.offlineCapHours):Infinity,shiftRemaining=Math.max(0,(route.shiftEndsAt-from)/3600_000)*Math.max(.5,ctx.workerShiftMultiplier),capacityRemaining=Math.max(0,projection.capacityKg-route.deliveredKg),capacityHours=capacityRemaining/projection.kgPerHour,storageHours=storageRemaining/projection.kgPerHour;
+    const workedHours=Math.max(0,Math.min(elapsedHours,offlineLimit,shiftRemaining,capacityHours,storageHours));
     const gainedKg=projection.kgPerHour*workedHours,scale=gainedKg/baseKg;
     const gained={metal:rates.metal*scale,copper:rates.copper*scale,plastic:rates.plastic*scale};
     for(const key of Object.keys(total) as ResourceKind[])total[key]+=gained[key];
-    route.deliveredKg+=gainedKg;
-    const stopReason:RouteSimulationReportV3['stopReason']=workedHours+1e-9<elapsedHours?(capacityHours<=workedHours+1e-9?'vehicle_full':shiftRemaining<=workedHours+1e-9?'shift_ended':'running'):'running';
+    route.deliveredKg+=gainedKg;storageRemaining=Math.max(0,storageRemaining-gainedKg);
+    const stopReason:RouteSimulationReportV3['stopReason']=workedHours+1e-9<elapsedHours?(storageHours<=workedHours+1e-9?'base_storage_full':capacityHours<=workedHours+1e-9?'vehicle_full':shiftRemaining<=workedHours+1e-9?'shift_ended':'running'):'running';
     reports.push({...projection,elapsedHours,workedHours,gained,gainedKg,stopReason});
   }
   state.lastSimulatedAt=to;return{reports,total};

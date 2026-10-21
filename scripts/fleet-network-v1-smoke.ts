@@ -1,0 +1,73 @@
+import assert from 'node:assert/strict';
+import {createDefaultWorkforceFleetV3,hireWorkerV3,acquireVehicleV3,createOrAssignRouteV3,projectRouteV3,simulateWorkforceV3} from '../src/workforce_fleet_v3.ts';
+import {deriveFleetNetworkV1,previewCrewDispatchV1} from '../src/fleet_network_v1.ts';
+import {baseStoragePressureV1,runtimeBaseStorageFreeKg} from '../src/base_storage_v1.ts';
+
+const now=1_800_000_000_000;
+const state=createDefaultWorkforceFleetV3(now);
+for(let i=0;i<3;i++)assert.ok(hireWorkerV3(state,'salvage_yard',now+i));
+const van=acquireVehicleV3(state,'salvage_yard','van',now+10),truck=acquireVehicleV3(state,'salvage_yard','truck',now+11);
+assert.ok(van&&truck,'Yard fleet should own Van + Truck simultaneously');
+const r1=createOrAssignRouteV3(state,{workerId:state.workers[0].id,zone:'z1',vehicleId:van!.id,shiftHours:8,now});
+const r2=createOrAssignRouteV3(state,{workerId:state.workers[1].id,zone:'z4',vehicleId:truck!.id,shiftHours:2,now});
+assert.ok(r1&&r2,'two simultaneous routes should be created');
+const ctx={stage:'salvage_yard' as const,now,offline:false,offlineCapHours:0,workerOutputMultiplier:1,workerShiftMultiplier:1};
+const network=deriveFleetNetworkV1(state,routeId=>{
+  const route=state.routes.find(item=>item.id===routeId);return route?projectRouteV3(state,route,ctx):null;
+},now);
+assert.equal(network.routes.length,2);
+assert.equal(network.summary.routeCount,2);
+assert.equal(network.summary.routedWorkerCount,2);
+assert.equal(network.summary.idleWorkerCount,1);
+assert.equal(network.summary.assignedVehicleCount,2);
+assert.equal(network.summary.freeVehicleCount,0);
+assert.ok(network.summary.totalKgPerHour>300,'network should aggregate both route throughputs');
+assert.equal(network.routes.find(route=>route.routeId===r1!.id)?.bottleneck,'capacity','long Van shift should expose capacity bottleneck');
+assert.equal(network.routes.find(route=>route.routeId===r2!.id)?.bottleneck,'none','short Truck shift should stay balanced');
+assert.equal(network.summary.constrainedRouteCount,1);
+assert.ok(network.routes.every(route=>route.workerNames.length===1));
+
+// Group-dispatch preview must not mutate canonical state and must expose workers without transport.
+const dispatch=createDefaultWorkforceFleetV3(now);
+for(let i=0;i<3;i++)assert.ok(hireWorkerV3(dispatch,'salvage_yard',now+i));
+dispatch.workers[0].rank=3;dispatch.workers[1].rank=2;
+const rig=acquireVehicleV3(dispatch,'salvage_yard','recovery_rig',now+20);assert.ok(rig);
+const before=JSON.stringify(dispatch);
+const preview=previewCrewDispatchV1(dispatch,{workerIds:[dispatch.workers[2].id,dispatch.workers[0].id],vehicleIds:[rig!.id],zone:'z3',shiftHours:4,now});
+assert.equal(preview.routeCount,2,'one group action should preview two canonical routes');
+assert.equal(preview.workerIds[0],dispatch.workers[0].id,'strongest selected worker should receive the first/largest selected vehicle');
+assert.equal(preview.vehicleIds.length,1);
+assert.equal(preview.unservedWorkerCount,1,'second selected worker must be explicit about lacking a vehicle');
+assert.ok(preview.totalKgPerHour>0);
+assert.equal(JSON.stringify(dispatch),before,'preview must never mutate canonical Workforce/Fleet V3 state');
+
+// P4-C: base storage is a real shared throughput budget, not an explanatory warning.
+const storagePressure=baseStoragePressureV1('salvage_yard',{metal:29_975,copper:0,plastic:0},network.summary.totalKgPerHour);
+assert.equal(storagePressure.capacityKg,30_000);
+assert.equal(storagePressure.freeKg,25);
+assert.equal(storagePressure.nearFull,true);
+assert.ok(storagePressure.hoursToFull!==null&&storagePressure.hoursToFull<.1,'25 kg of free Yard storage should fill quickly under a live network');
+
+const storageLimited=createDefaultWorkforceFleetV3(now);
+for(let i=0;i<2;i++)assert.ok(hireWorkerV3(storageLimited,'salvage_yard',now+i));
+const storageVan=acquireVehicleV3(storageLimited,'salvage_yard','van',now+30),storageTruck=acquireVehicleV3(storageLimited,'salvage_yard','truck',now+31);assert.ok(storageVan&&storageTruck);
+const sr1=createOrAssignRouteV3(storageLimited,{workerId:storageLimited.workers[0].id,zone:'z1',vehicleId:storageVan!.id,shiftHours:2,now});
+const sr2=createOrAssignRouteV3(storageLimited,{workerId:storageLimited.workers[1].id,zone:'z4',vehicleId:storageTruck!.id,shiftHours:2,now});assert.ok(sr1&&sr2);
+const storageRun=simulateWorkforceV3(storageLimited,{stage:'salvage_yard',now:now+3_600_000,offline:true,offlineCapHours:12,workerOutputMultiplier:1,workerShiftMultiplier:1,baseStorageFreeKg:25});
+const accepted=storageRun.reports.reduce((sum,report)=>sum+report.gainedKg,0);
+assert.ok(accepted<=25.0001&&accepted>=24.99,`shared base storage must accept only its free 25 kg, got ${accepted}`);
+assert.ok(storageRun.reports.some(report=>report.stopReason==='base_storage_full'),'at least one simultaneous route must explicitly stop on base storage');
+const fullProjection=projectRouteV3(storageLimited,sr2!,{stage:'salvage_yard',now:now+3_600_000,offline:false,offlineCapHours:0,workerOutputMultiplier:1,workerShiftMultiplier:1,baseStorageFreeKg:0});
+assert.equal(fullProjection.bottleneck,'base_storage','a full base must become the visible route bottleneck');
+
+// Startup offline happens before __SALVAGE_TEST__ is installed. Yard must still read Save V10 storage,
+// while earlier business stages remain outside the P4 base-storage enforcement gate.
+const priorLocalStorage=(globalThis as any).localStorage,priorRuntime=(globalThis as any).__SALVAGE_TEST__;
+delete (globalThis as any).__SALVAGE_TEST__;
+(globalThis as any).localStorage={getItem:(key:string)=>key==='arcade-incremental-playable-v0-save-v2'?JSON.stringify({storage:{metal:30_000,copper:0,plastic:0}}):null};
+assert.equal(runtimeBaseStorageFreeKg('salvage_yard'),0,'startup Yard simulation must see a full saved receiving store before runtime API bootstraps');
+assert.equal(runtimeBaseStorageFreeKg('hangar'),Infinity,'P4 storage-stop must not retroactively change Hangar route economy');
+if(priorLocalStorage===undefined)delete (globalThis as any).localStorage;else (globalThis as any).localStorage=priorLocalStorage;
+if(priorRuntime===undefined)delete (globalThis as any).__SALVAGE_TEST__;else (globalThis as any).__SALVAGE_TEST__=priorRuntime;
+
+console.log('Fleet Network V1 multi-route + capacity + crew preview + real base-storage pressure: PASS');
