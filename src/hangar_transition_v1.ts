@@ -1,8 +1,9 @@
+import './hangar_transition_v1.css';
+
 type RuntimeState=Record<string,any>;
 const runtime=()=> (globalThis as any).__SALVAGE_TEST__??null;
 const shell=()=> (globalThis as any).__SALVAGE_BASE_SHELL__??null;
 let previousHangar:boolean|null=null;
-let previousLaterStage:boolean|null=null;
 
 function showMilestone(){
   shell()?.open?.('overview');
@@ -19,7 +20,7 @@ function tick(){
   const hangar=!!state.packB?.hangarOwned;
   const later=!!state.packC?.salvageYardOwned||!!state.packD?.industrialWorkshopOwned||!!state.packE?.processingPlantOwned;
   if(previousHangar===false&&hangar&&!later)showMilestone();
-  previousHangar=hangar;previousLaterStage=later;
+  previousHangar=hangar;
 }
 
 function boot(){
