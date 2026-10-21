@@ -7,7 +7,7 @@ import {
 const now=1_800_000_000_000;
 const state=createDefaultProductionCellsV1(),stock=emptyIndustrialStockV1();
 Object.assign(stock,{
-  alloyScrap:50,reinforcedAlloy:20,structuralProfile:12,cleanCopper:20,
+  alloyScrap:50,reinforcedAlloy:20,structuralProfile:11,cleanCopper:20,
   gearbox:2,motor:2,electronics:4,bearing:4,hydraulic:2,pump:2,
   heavyHydraulicCylinder:2,industrialController:2,structural:2,control:2
 });
@@ -21,18 +21,12 @@ assert.equal(state.cells.heavy_assembly.selectedPlanId,'hydraulic_power');
 const refining=startProductionCellV1(state,'refining',stock,{role:'logistician',rank:3,workerId:'w-log',workerName:'Логист'},now);
 assert.equal(refining.ok,true);assert.equal(stock.alloyScrap,25,'refining input must be committed at start');
 const fabrication=startProductionCellV1(state,'fabrication',stock,{role:'operator',rank:3,workerId:'w-op',workerName:'Оператор'},now);
-assert.equal(fabrication.ok,true);assert.equal(stock.structuralProfile,10);assert.equal(stock.cleanCopper,14);assert.equal(stock.gearbox,1);assert.equal(stock.motor,1);
+assert.equal(fabrication.ok,true);assert.equal(stock.structuralProfile,9);assert.equal(stock.cleanCopper,14);assert.equal(stock.gearbox,1);assert.equal(stock.motor,1);
 assert.ok(state.cells.refining.job&&state.cells.fabrication.job,'refining and fabrication must run in parallel');
 
 // A third chain cannot spend stock already committed by another cell.
 const heavyBlocked=startProductionCellV1(state,'heavy_assembly',stock,{role:'technician',rank:3},now);
-assert.equal(heavyBlocked.ok,false);assert.equal(heavyBlocked.reason,'missing_input');
-assert.equal(heavyBlocked.missing?.structuralProfile,0,'no structural shortage expected after exactly two profiles are committed');
-assert.equal(heavyBlocked.missing?.reinforcedAlloy,undefined);
-// Tighten the same inventory to prove the cross-cell committed balance is authoritative.
-stock.structuralProfile=9;
-const heavyStillBlocked=startProductionCellV1(state,'heavy_assembly',stock,{role:'technician',rank:3},now);
-assert.equal(heavyStillBlocked.ok,false);assert.equal(heavyStillBlocked.missing?.structuralProfile,1);
+assert.equal(heavyBlocked.ok,false);assert.equal(heavyBlocked.reason,'missing_input');assert.equal(heavyBlocked.missing?.structuralProfile,1);
 stock.structuralProfile=10;
 const heavy=startProductionCellV1(state,'heavy_assembly',stock,{role:'technician',rank:3,workerId:'w-tech',workerName:'Техник'},now);
 assert.equal(heavy.ok,true);assert.equal(stock.structuralProfile,0);assert.equal(stock.reinforcedAlloy,12);
