@@ -21,4 +21,17 @@ function render(){
   const gate=document.querySelector<HTMLElement>('.industrialHeavyGate');if(gate){const support=heavy.job?.support?.kind==='recovery_rig'?heavy.job.support:view.heavySupport;gate.classList.toggle('active',support?.kind==='recovery_rig');gate.innerHTML=support?.kind==='recovery_rig'?`<b>ТЯЖЁЛЫЙ ШЛЮЗ · ${rigName(support.vehicleName)}</b><span>${heavy.job?'поддержала текущий цикл':'готова к тяжёлой подаче'} · −${Math.round((1-Number(support.durationFactor??1))*100)}%</span>`:'<b>ТЯЖЁЛЫЙ ШЛЮЗ</b><span>Тяжёлая эвакуационная платформа недоступна</span>'}
 }
 
-setInterval(render,300);queueMicrotask(render);
+let observedProductionRoot:HTMLElement|null=null;
+let observedIndustrialScene:HTMLElement|null=null;
+const productionObserver=new MutationObserver(()=>queueMicrotask(render));
+const sceneObserver=new MutationObserver(()=>queueMicrotask(render));
+
+function ensureObservers(){
+  const productionRoot=document.querySelector<HTMLElement>('#productionCellsV1Root');
+  if(productionRoot!==observedProductionRoot){productionObserver.disconnect();observedProductionRoot=productionRoot;if(productionRoot)productionObserver.observe(productionRoot,{childList:true})}
+  const industrialScene=document.querySelector<HTMLElement>('#baseStageSceneV2.stage-industrial');
+  if(industrialScene!==observedIndustrialScene){sceneObserver.disconnect();observedIndustrialScene=industrialScene;if(industrialScene)sceneObserver.observe(industrialScene,{childList:true})}
+}
+
+function tick(){ensureObservers();render()}
+setInterval(tick,300);queueMicrotask(tick);
