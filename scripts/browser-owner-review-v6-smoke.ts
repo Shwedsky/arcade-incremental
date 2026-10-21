@@ -24,12 +24,15 @@ async function unlockAll(page:any){
 async function mutateSave(page:any,mutatorSource:string){
   await page.evaluate(({key,source})=>{
     (globalThis as any).__SALVAGE_PLATFORM__.forceSave();
-    // Stop runtime autosave/render intervals before editing the persisted fixture.
-    // Otherwise a live in-memory state can race this localStorage mutation between
-    // evaluate() and reload() and silently restore the pre-mutation cash/state.
+    // Freeze the live document before replacing its persisted fixture. Reload
+    // fires the production beforeunload save handler, so temporarily pin writes
+    // to the primary save key as well; the new document gets a fresh prototype.
     for(let i=1;i<2000;i++)clearInterval(i);
     const raw=localStorage.getItem(key);if(!raw)throw new Error('save missing');
-    const save=JSON.parse(raw);const mutator=(0,eval)(`(${source})`);mutator(save);save.lastSeen=Date.now();localStorage.setItem(key,JSON.stringify(save));
+    const save=JSON.parse(raw);const mutator=(0,eval)(`(${source})`);mutator(save);save.lastSeen=Date.now();
+    const nativeSetItem=Storage.prototype.setItem;
+    nativeSetItem.call(localStorage,key,JSON.stringify(save));
+    Storage.prototype.setItem=function(k,v){if(this===localStorage&&k===key)return;return nativeSetItem.call(this,k,v)};
   },{key:SAVE_KEY,source:mutatorSource});
   await page.reload();await waitGame(page);await forceGarage(page);
 }
