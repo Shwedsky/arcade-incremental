@@ -17,6 +17,7 @@
     "smoke:production-cells-v1": "tsx scripts/production-cells-v1-smoke.ts",
     "smoke:visual-baseline-v1": "tsx scripts/visual-baseline-v1-smoke.ts",
     "smoke:field-visual-baseline-v1": "tsx scripts/field-visual-baseline-v1-smoke.ts",
+    "smoke:stage-visual-consistency-v1": "tsx scripts/stage-visual-consistency-v1-smoke.ts",
     "smoke:contract-board-v2": "tsx scripts/contract-board-v2-smoke.ts",
     "smoke:contract-board-v3": "tsx scripts/contract-board-v3-smoke.ts",
     "smoke:progression-v2": "tsx scripts/progression-expansion-v2-smoke.ts",
