@@ -35,6 +35,7 @@
     "smoke:browser:manual-review": "tsx scripts/browser-manual-review-smoke.ts",
     "smoke:browser:manual-review-dev-v2": "tsx scripts/browser-manual-review-dev-v2-smoke.ts",
     "smoke:browser:base-shell-v1": "tsx scripts/browser-base-shell-v1-smoke.ts",
+    "smoke:browser:hangar-transformation-v1": "tsx scripts/browser-hangar-transformation-v1-smoke.ts",
     "smoke:browser:human-feedback-v2": "tsx scripts/browser-human-feedback-v2-smoke.ts",
     "smoke:browser:human-feedback-v3": "tsx scripts/browser-human-feedback-v3-smoke.ts",
     "smoke:browser:worker-economy-v2": "tsx scripts/browser-worker-economy-v2-smoke.ts",
