@@ -18,12 +18,12 @@ function viewFor(s:any):NetworkView{return deriveFleetNetworkV1(s.workforceV3,(r
 function masteredZones(s:any):ZoneId[]{return (Object.keys(ZONE_DEFS) as ZoneId[]).filter(id=>Number(s.midgame?.mastery?.[id]??0)>=99.999)}
 
 function currentNetworkRoot(){return document.querySelector<HTMLElement>('#fleetNetworkV1Root')}
-function currentFleetRoot(){return document.querySelector<HTMLElement>('#fleetV3Root')}
-function rootAttachedToCurrentFleet(){const root=currentNetworkRoot(),fleet=currentFleetRoot();return !!root&&!!fleet&&root.parentElement===fleet.parentElement}
+function logisticsPane(){return document.querySelector<HTMLElement>('[data-base-pane="logistics"]')}
+function rootAttachedToLogisticsPane(){const root=currentNetworkRoot(),pane=logisticsPane();return !!root&&!!pane&&root.parentElement===pane}
 function networkRoot(){
-  const fleet=currentFleetRoot();if(!fleet?.parentElement)return null;
+  const pane=logisticsPane();if(!pane)return null;
   let root=currentNetworkRoot();if(!root){root=document.createElement('section');root.id='fleetNetworkV1Root';root.className='fleetNetworkV1'}
-  if(root.parentElement!==fleet.parentElement||root.nextElementSibling!==fleet)fleet.parentElement.insertBefore(root,fleet);
+  if(root.parentElement!==pane)pane.prepend(root);
   return root;
 }
 
@@ -43,6 +43,7 @@ function routeMarkup(route:NetworkRoute,s:any){
   return`<article class="fleetNetworkRoute ${route.bottleneck!=='none'?'constrained':''}" data-network-route="${route.routeId}">
     <header><div><b>${zone}</b><span>${route.routeId}</span></div><strong>${vehicleIcon(route.vehicleType)} ${vehicle}</strong></header>
     <div class="fleetNetworkCrew">Бригада: <b>${crew}</b></div>
+    <div class="fleetNetworkDestination">Доставка → <b>Склад базы</b></div>
     <div class="fleetNetworkMetrics">
       <span>Поток<b>${route.kgPerHour.toFixed(0)} кг/ч</b></span>
       <span>Стоимость<b>${money(route.valuePerHour)}/ч</b></span>
@@ -93,7 +94,7 @@ function patchLiveMetrics(view:NetworkView){
 function renderNetwork(s:any,view=viewFor(s)){
   const root=networkRoot();if(!root)return false;const summary=view.summary,constrained=summary.constrainedRouteCount>0;
   root.innerHTML=`
-    <div class="fleetNetworkHead"><div><small>FLEET NETWORK V1</small><h2>Сеть снабжения</h2><p>Все освоенные операции в одном месте: кто работает, на чём едет, сколько везёт и что ограничивает поток.</p></div><div class="fleetNetworkHealth ${constrained?'warn':''}">${constrained?`Ограничено маршрутов: ${summary.constrainedRouteCount}`:'Сеть сбалансирована'}</div></div>
+    <div class="fleetNetworkHead"><div><small>FLEET NETWORK V1</small><h2>Сеть снабжения</h2><p>Все освоенные операции в одном месте: кто работает, на чём едет, сколько везёт, куда сдаёт и что ограничивает поток.</p></div><div class="fleetNetworkHealth ${constrained?'warn':''}">${constrained?`Ограничено маршрутов: ${summary.constrainedRouteCount}`:'Сеть сбалансирована'}</div></div>
     ${crewDispatchMarkup(s)}
     <div class="fleetNetworkSummary">
       <article><small>Маршруты</small><b>${summary.routeCount}</b><span>работают одновременно</span></article>
@@ -124,7 +125,7 @@ export function refreshFleetNetworkV1(){
   const s=runtime();if(!s?.workforceV3)return;const stage=String(s.businessStage??'');
   if(!enabledStage(stage)){currentNetworkRoot()?.remove();document.querySelector('[data-yard-network-scene]')?.remove();lastSignature='';return}
   const view=viewFor(s),signature=structuralSignature(s,view,stage);
-  if(signature===lastSignature&&rootAttachedToCurrentFleet()){patchLiveMetrics(view);if(stage==='salvage_yard')renderYardScene(s,view);return}
+  if(signature===lastSignature&&rootAttachedToLogisticsPane()){patchLiveMetrics(view);if(stage==='salvage_yard')renderYardScene(s,view);return}
   if(renderNetwork(s,view)){lastSignature=signature;if(stage==='salvage_yard')renderYardScene(s,view);else document.querySelector('[data-yard-network-scene]')?.remove()}
 }
 
