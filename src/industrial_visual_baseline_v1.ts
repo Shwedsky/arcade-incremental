@@ -86,11 +86,28 @@ function sceneSignature(state:RuntimeState,view:any){
   return JSON.stringify({cells,fleet,raw:Math.round(stockAmount(state)),heavy:view?.heavySupport?.vehicleId??null});
 }
 
+function legacyP5Signature(state:RuntimeState,view:any){
+  const heavy=view?.cells?.find((cell:any)=>cell.id==='heavy_assembly');
+  return JSON.stringify({
+    cells:(view?.cells??[]).map((cell:any)=>({id:cell.id,status:cell.status,plan:cell.selectedPlan?.id,remaining:Math.ceil(Number(cell.remainingSec??0)/5)*5,worker:cell.assignedWorker?.workerId})),
+    workers:state?.workforceV3?.workers?.length,
+    fleet:state?.workforceV3?.fleet?.length,
+    heavySupport:view?.heavySupport,
+    heavyJobSupport:heavy?.job?.support
+  });
+}
+
 export function refreshIndustrialVisualBaselineV1(){
   const runtime=api(),state=runtime?.getState?.() as RuntimeState|undefined,view=runtime?.getProductionCellsV1View?.();
   if(!state?.packD?.industrialWorkshopOwned||state?.packE?.processingPlantOwned||!view)return;
   const scene=document.querySelector<HTMLElement>('#baseStageSceneV2.stage-industrial');if(!scene)return;
-  const signature=sceneSignature(state,view);if(scene.dataset.visualBaselineV1===signature&&scene.querySelector('[data-visual-baseline-v1]'))return;
+  const signature=sceneSignature(state,view);
+  // production_cells_ui_v1 still owns the detailed management screen and keeps a
+  // legacy overview renderer for compatibility. Mirror its signature here so the
+  // old overview renderer sees the new scene as current instead of periodically
+  // replacing it for one frame. Visual Baseline V1 is the sole P5 overview owner.
+  scene.dataset.p5Signature=legacyP5Signature(state,view);
+  if(scene.dataset.visualBaselineV1===signature&&scene.querySelector('[data-visual-baseline-v1]'))return;
   scene.dataset.visualBaselineV1=signature;
   const running=(view.cells??[]).filter((cell:any)=>cell.status==='running').length,productionWorkers=(state.workforceV3?.workers??[]).filter((worker:any)=>worker.status==='production').length;
   scene.innerHTML=`<div class="baseSceneLabel ivSceneLabel"><b>Промышленная мастерская</b><span>${running}/3 участков работают · ${productionWorkers} сотруд. в производстве</span></div>
