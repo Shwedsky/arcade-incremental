@@ -50,6 +50,11 @@ try{
   const constrained=page.locator('[data-network-route="route-1"]');assert.match(await constrained.innerText(),/До заполнения:/);assert.equal(await constrained.locator('[data-network-route-vehicle="route-1"] option[value="vehicle-3"]').count(),1,'free larger Rig must be offered as causal remediation');
 
   await page.click('[data-base-surface="overview"]');await page.waitForSelector('#baseStageSceneV2.stage-yard');await page.waitForSelector('[data-yard-network-scene]');
+  assert.equal(await page.locator('.yardBulkField').count(),1,'Yard must expose a bulk scrap field');
+  assert.equal(await page.locator('.yardRecovered').count(),1,'Yard must expose recovered-object staging');
+  assert.equal(await page.locator('.yardCrewMuster').count(),1,'Yard must expose crew muster');
+  assert.equal(await page.locator('.yardVehicleApron').count(),1,'Yard must expose a fleet apron');
+  assert.equal(await page.locator('.yardVehicleApron .baseBay').count(),7,'Yard must visibly expose its canonical seven-vehicle capacity');
   assert.equal(await page.locator('.yardRouteLane').count(),2,'Yard scene must visibly show both active route lanes');
   const yard=await page.locator('[data-yard-network-scene]').innerText();assert.match(yard,/Фургон #1/);assert.match(yard,/Грузовик #1/);
 
@@ -69,7 +74,10 @@ try{
   // P4-B: one group action dispatches two idle people to the same mastered zone on the canonical 2h shift.
   await page.click('[data-base-surface="logistics"]');await page.waitForSelector('[data-crew-dispatch]');
   assert.match(await page.locator('[data-crew-dispatch]').innerText(),/Стандартная смена — 2 часа/);
+  const stableWorker=await page.locator('[data-crew-worker="worker-1"]').elementHandle();assert.ok(stableWorker,'worker-1 selector must exist');
   await page.check('[data-crew-worker="worker-1"]');await page.check('[data-crew-worker="worker-3"]');await page.check('[data-crew-vehicle="vehicle-1"]');
+  await page.waitForTimeout(1600);
+  assert.equal(await stableWorker!.evaluate(el=>el.isConnected&&(el as HTMLInputElement).checked),true,'live route metrics must not recreate or reset the group-dispatch controls');
   await page.selectOption('[data-crew-zone]','z2');
   await page.waitForFunction(()=>{const text=document.querySelector('[data-crew-preview-kg]')?.textContent??'';const detail=document.querySelector('[data-crew-preview-detail]')?.textContent??'';return !text.startsWith('0 ')&&detail.includes('2 маршрут')&&detail.includes('без транспорта 1')});
   assert.equal(await page.locator('[data-crew-dispatch-go]').isEnabled(),true,'group dispatch must become actionable after crew selection');
@@ -104,5 +112,5 @@ try{
   await page.click('[data-base-surface="overview"]');await page.waitForSelector('#baseStageSceneV2.stage-yard');assert.equal(await page.locator('[data-yard-network-scene]').isVisible(),true,'mobile Yard must retain visible network activity');
 
   await context.close();
-  console.log('P4 Salvage Yard / Fleet Network V1 A-D browser acceptance: multi-route + remediation + group dispatch + Save V10 offline + mobile PASS');
+  console.log('P4 Salvage Yard / Fleet Network V1 A-D browser acceptance: Yard structure + stable UI + multi-route + remediation + group dispatch + Save V10 offline + mobile PASS');
 }finally{await browser.close();await stop(proc)}
