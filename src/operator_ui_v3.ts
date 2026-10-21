@@ -5,6 +5,7 @@ import './production_cells_ui_v1.ts';
 import './production_heavy_support_ui_v1.ts';
 import './industrial_visual_baseline_v1.ts';
 import './industrial_visual_art_v1.css';
+import './stage_visual_consistency_v1.css';
 import './production_resource_lock_v1.ts';
 import './owner_review_v6.ts';
 
