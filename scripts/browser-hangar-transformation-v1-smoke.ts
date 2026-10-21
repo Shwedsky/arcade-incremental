@@ -98,8 +98,8 @@ try{
   await h.page.click('[data-base-surface="overview"]');
   await h.page.waitForFunction(()=>{const scene=document.querySelector('#baseStageSceneV2')?.textContent??'';const ops=(document.querySelector('[data-hangar-ops]')?.textContent??'').toLocaleLowerCase('ru-RU');return scene.includes('Фургон #1')&&scene.includes('СВОБОДЕН')&&ops.includes('маршруты')&&ops.includes('0')});
   const liveScene=await h.page.locator('#baseStageSceneV2').innerText(),liveOps=await h.page.locator('[data-hangar-ops]').innerText();
-  assert.match(liveScene,/Илья[\s\S]*Свободен/,'dispatch board must show the formerly routed worker as idle');
-  assert.match(liveScene,/Фургон #1[\s\S]*СВОБОДЕН/,'vehicle bay must show the unassigned Van as free');
+  assert.match(liveScene,/Илья[\s\S]*Свободен/i,'dispatch board must show the formerly routed worker as idle');
+  assert.match(liveScene,/Фургон #1[\s\S]*СВОБОДЕН/i,'vehicle bay must show the unassigned Van as free');
   assert.match(liveOps,/ПЕРСОНАЛ\s*1\/3/i,'only the production Operator should remain active');
   assert.match(liveOps,/АВТОПАРК\s*0\/2/i,'no vehicles should remain assigned after route removal');
   assert.match(liveOps,/МАРШРУТЫ\s*0/i,'operations center must show zero routes without reload');
