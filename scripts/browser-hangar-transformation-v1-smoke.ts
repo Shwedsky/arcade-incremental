@@ -96,7 +96,7 @@ try{
   await h.page.click('[data-base-surface="crew"]');await h.page.waitForSelector('[data-v3-unassign="route-1"]');await h.page.click('[data-v3-unassign="route-1"]');
   await h.page.waitForFunction(()=>{const s=(globalThis as any).__SALVAGE_TEST__.getState().workforceV3;return s.routes.length===0&&s.workers.find((w:any)=>w.id==='worker-1')?.status==='idle'&&s.fleet.find((v:any)=>v.id==='vehicle-1')?.routeId===null});
   await h.page.click('[data-base-surface="overview"]');
-  await h.page.waitForFunction(()=>{const scene=document.querySelector('#baseStageSceneV2')?.textContent??'';const ops=document.querySelector('[data-hangar-ops]')?.textContent??'';return scene.includes('Фургон #1')&&scene.includes('СВОБОДЕН')&&ops.includes('МАРШРУТЫ')&&ops.includes('0')});
+  await h.page.waitForFunction(()=>{const scene=document.querySelector('#baseStageSceneV2')?.textContent??'';const ops=(document.querySelector('[data-hangar-ops]')?.textContent??'').toLocaleLowerCase('ru-RU');return scene.includes('Фургон #1')&&scene.includes('СВОБОДЕН')&&ops.includes('маршруты')&&ops.includes('0')});
   const liveScene=await h.page.locator('#baseStageSceneV2').innerText(),liveOps=await h.page.locator('[data-hangar-ops]').innerText();
   assert.match(liveScene,/Илья[\s\S]*Свободен/,'dispatch board must show the formerly routed worker as idle');
   assert.match(liveScene,/Фургон #1[\s\S]*СВОБОДЕН/,'vehicle bay must show the unassigned Van as free');
