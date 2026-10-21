@@ -11,14 +11,14 @@ const server=spawn(process.execPath,[viteBin,'preview','--host','127.0.0.1','--p
 let output='';server.stdout.on('data',b=>output+=String(b));server.stderr.on('data',b=>output+=String(b));
 async function waitServer(){for(let i=0;i<80;i++){try{const r=await fetch(ORIGIN);if(r.ok)return}catch{}await new Promise(r=>setTimeout(r,125))}throw new Error(`server did not start\n${output}`)}
 async function stopServer(){if(server.exitCode!==null)return;server.kill('SIGTERM');await Promise.race([once(server,'exit'),new Promise(r=>setTimeout(r,1500))]);if(server.exitCode===null)server.kill('SIGKILL')}
-async function waitGame(page:any){await page.waitForFunction(()=>(globalThis as any).__SALVAGE_TEST__?.getState()?.saveVersion===10,{timeout:20_000});if(await page.locator('#offlineScreen').isVisible())await page.click('#offlineClose');await page.waitForFunction(()=>(globalThis as any).__SALVAGE_OWNER_V6__?.refresh,{timeout:20_000})}
+async function waitGame(page:any){await page.waitForFunction(()=>(globalThis as any).__SALVAGE_TEST__?.getState()?.saveVersion===10,undefined,{timeout:20_000});if(await page.locator('#offlineScreen').isVisible())await page.click('#offlineClose');await page.waitForFunction(()=>(globalThis as any).__SALVAGE_OWNER_V6__?.refresh,undefined,{timeout:20_000})}
 async function state(page:any){return page.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.getState())}
 async function forceGarage(page:any){const hidden=await page.locator('#garageScreen').getAttribute('hidden');if(hidden!==null)await page.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.forceGarage());await page.waitForSelector('#garageScreen:not([hidden])');await page.evaluate(()=>(globalThis as any).__SALVAGE_OWNER_V6__.refresh())}
 async function unlockAll(page:any){
   await forceGarage(page);await page.click('#hfDevToggle');await page.waitForSelector('#hfDevPanel:not([hidden])');
   const mainFrame=page.mainFrame();const navigated=page.waitForEvent('framenavigated',(frame:any)=>frame===mainFrame,{timeout:20_000});
   await page.click('[data-dev="unlockAll"]');await navigated;await page.waitForLoadState('load');await waitGame(page);
-  await page.waitForFunction(()=>{const s=(globalThis as any).__SALVAGE_TEST__.getState();return s.level===50&&s.packE?.processingPlantOwned&&s.workforceV3?.workers?.length>=3},{timeout:20_000});
+  await page.waitForFunction(()=>{const s=(globalThis as any).__SALVAGE_TEST__.getState();return s.level===50&&s.packE?.processingPlantOwned&&s.workforceV3?.workers?.length>=3},undefined,{timeout:20_000});
   await forceGarage(page)
 }
 async function mutateSave(page:any,mutatorSource:string){
@@ -44,6 +44,10 @@ try{
   await page.waitForFunction((cash)=>((globalThis as any).__SALVAGE_TEST__.getState().cash)>cash,standingCash);
   assert.match(await page.locator('#ownerV6Notice').innerText(),/Отгружено|покупател|получено/i,'first standing-order click must show feedback');
 
+  // Replenish through the legal DEV fixture so the special-order assertion is independent
+  // from whichever resource the standing buyer just consumed.
+  console.log('V6 browser: refresh mature fixture for special order');
+  await unlockAll(page);await openBaseSurface(page,'contracts');await page.waitForSelector('.contractV3');
   console.log('V6 browser: special order');
   await page.waitForSelector('.specialOrder.ready [data-special-submit]');
   const special=page.locator('.specialOrder.ready [data-special-submit]').first();before=await state(page);const specialCash=before.cash;await special.click();
