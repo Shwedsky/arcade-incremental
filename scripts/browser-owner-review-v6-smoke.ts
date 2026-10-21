@@ -101,6 +101,25 @@ try{
   assert.match(await page.locator('#ownerV6Notice').innerText(),/Не хватает .*₽.*обучен|обучен.*Не хватает .*₽/i);
   s=await state(page);assert.equal(s.workforceV3.workers.find((w:any)=>w.id===worker.id).rank,rankBefore,'failed training must not change rank');
 
+  console.log('V6 browser: active production resource locks');
+  await page.waitForFunction(()=>!!(globalThis as any).__SALVAGE_TEST__?.__productionResourceLockV1);
+  await page.evaluate(()=>{const api=(globalThis as any).__SALVAGE_TEST__,s=api.getState();for(const route of s.workforceV3.routes??[])api.unassignGenericRoute(route.id)});
+  s=await state(page);const productionWorker=s.workforceV3.workers[0],routeWorker=s.workforceV3.workers[1];assert.ok(productionWorker&&routeWorker,'fixture needs two workers');
+  assert.equal(await page.evaluate((id)=> (globalThis as any).__SALVAGE_TEST__.assignProductionCellWorkerV1(id,'heavy_assembly','operator'),productionWorker.id),true,'worker must be assignable before cycle start');
+  const started=await page.evaluate(()=> (globalThis as any).__SALVAGE_TEST__.startProductionCellV1('heavy_assembly'));assert.equal(started?.ok,true,'heavy cycle must start');
+  s=await state(page);const heavyJob=s.productionCellsV1.cells.heavy_assembly.job,rigId=heavyJob?.support?.vehicleId;assert.ok(heavyJob&&rigId,'heavy cycle must reserve Recovery Rig support');
+  assert.equal(await page.evaluate((id)=> (globalThis as any).__SALVAGE_TEST__.setGenericWorkerRole(id,'scavenger'),productionWorker.id),false,'active-cycle worker role must be locked');
+  assert.equal(await page.evaluate((id)=> (globalThis as any).__SALVAGE_TEST__.assignGenericProduction(id,'plant_lines'),productionWorker.id),false,'active-cycle worker cannot move to another production surface');
+  assert.equal(await page.evaluate((id)=> (globalThis as any).__SALVAGE_TEST__.assignGenericRoute(id,'z1',null),productionWorker.id),null,'active-cycle worker cannot be routed');
+  assert.equal(await page.evaluate((id)=> (globalThis as any).__SALVAGE_TEST__.setGenericWorkerRole(id,'scavenger'),routeWorker.id),true,'second worker can be prepared for route test');
+  assert.equal(await page.evaluate(({workerId,vehicleId})=> (globalThis as any).__SALVAGE_TEST__.assignGenericRoute(workerId,'z1',vehicleId),{workerId:routeWorker.id,vehicleId:rigId}),null,'Recovery Rig supporting active cycle cannot be routed');
+  assert.equal(await page.evaluate((vehicleId)=> (globalThis as any).__SALVAGE_TEST__.sellGenericVehicle(vehicleId),rigId),null,'Recovery Rig supporting active cycle cannot be sold');
+  assert.match(await page.locator('#ownerV6Notice').innerText(),/занят|нельзя продать|использует/i,'resource lock must explain the blocked action');
+  await page.evaluate((endsAt)=> (globalThis as any).__SALVAGE_TEST__.advanceProductionCellsV1To(endsAt+1),heavyJob.endsAt);
+  assert.equal(await page.evaluate((id)=> (globalThis as any).__SALVAGE_TEST__.setGenericWorkerRole(id,'scavenger'),productionWorker.id),true,'worker lock must release after cycle completion');
+  const releasedRoute=await page.evaluate(({workerId,vehicleId})=> (globalThis as any).__SALVAGE_TEST__.assignGenericRoute(workerId,'z1',vehicleId),{workerId:routeWorker.id,vehicleId:rigId});assert.ok(releasedRoute?.id,'Recovery Rig lock must release after cycle completion');
+  await page.evaluate((routeId)=> (globalThis as any).__SALVAGE_TEST__.unassignGenericRoute(routeId),releasedRoute.id);
+
   console.log('V6 browser: Hangar Overview gate');
   await mutateSave(page,`save=>{
     save.cash=1_000_000;
@@ -123,6 +142,6 @@ try{
   await openBaseSurface(page,'overview');await page.locator('[data-owner-acquire-hangar]').click();await page.waitForFunction(()=>!!(globalThis as any).__SALVAGE_TEST__.getState().packB.hangarOwned);
   assert.match(await page.locator('#ownerV6Notice').innerText(),/Ангар открыт/);
 
-  console.log('Owner Review V6 browser acceptance: one-click orders + RU UI + clear plant + money feedback + Overview hangar gate: PASS');
+  console.log('Owner Review V6 browser acceptance: one-click orders + RU UI + clear plant + money feedback + active production locks + Overview hangar gate: PASS');
   await context.close();
 }finally{await browser.close();await stopServer()}
