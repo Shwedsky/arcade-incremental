@@ -9,6 +9,7 @@ const money=(value:number)=>`${Math.round(Number(value)||0).toLocaleString('ru-R
 const qty=(value:number,digits=0)=>Number(value||0).toLocaleString('ru-RU',{maximumFractionDigits:digits});
 
 const TEXT_REPLACEMENTS:[RegExp,string][]=[
+  [/Линии Processing Plant/g,'Линии перерабатывающего завода'],
   [/Processing Plant/g,'Перерабатывающий завод'],
   [/Industrial Workshop/g,'Промышленная мастерская'],
   [/Salvage Yard/g,'Площадка разборки'],
