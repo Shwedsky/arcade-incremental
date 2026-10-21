@@ -83,13 +83,13 @@ try{
   assert.match(sceneText,/ПРОИЗВОДСТВЕННЫЙ ПОЛ/);assert.match(sceneText,/ДИСПЕТЧЕРСКАЯ/);assert.match(sceneText,/СКЛАД \/ СТЕЙДЖИНГ/);assert.match(sceneText,/ТРАНСПОРТНЫЕ БОКСЫ/);
   assert.match(sceneText,/Илья/);assert.match(sceneText,/Марина/);assert.match(sceneText,/Олег/);assert.match(sceneText,/Фургон #1/);assert.match(sceneText,/Грузовик #1/);
   const opsText=await h.page.locator('[data-hangar-ops]').innerText();
-  assert.match(opsText,/Персонал\s*2\/3/);assert.match(opsText,/Автопарк\s*1\/2/);assert.match(opsText,/Маршруты\s*1/);assert.match(opsText,/Есть свободные люди/);
+  assert.match(opsText,/ПЕРСОНАЛ\s*2\/3/i);assert.match(opsText,/АВТОПАРК\s*1\/2/i);assert.match(opsText,/МАРШРУТЫ\s*1/i);assert.match(opsText,/Есть свободные люди/);
 
   const assignmentSnapshot=()=>h.page.evaluate(()=>{const s=(globalThis as any).__SALVAGE_TEST__.getState().workforceV3;return{workers:s.workers.map((w:any)=>({id:w.id,status:w.status,routeId:w.routeId,productionCellId:w.productionCellId})),fleet:s.fleet.map((v:any)=>({id:v.id,routeId:v.routeId}))}});
   const before=await assignmentSnapshot();
-  await h.page.click('[data-base-surface="logistics"]');await h.page.waitForSelector('#fleetV3Root');assert.equal(await h.page.locator('#fleetV3Root').isVisible(),true);
-  await h.page.click('[data-base-surface="crew"]');await h.page.waitForSelector('#workforceV3Root');assert.equal(await h.page.locator('#workforceV3Root').isVisible(),true);
-  await h.page.click('[data-base-surface="overview"]');await h.page.waitForSelector('[data-hangar-ops]');
+  await h.page.click('[data-base-surface="logistics"]');await h.page.waitForSelector('#fleetV3Root');assert.equal(await h.page.locator('#fleetV3Root').isVisible(),true);assert.equal(await h.page.locator('#baseStageSceneV2').isHidden(),true,'full Hangar scene must not obstruct Logistics management');
+  await h.page.click('[data-base-surface="crew"]');await h.page.waitForSelector('#workforceV3Root');assert.equal(await h.page.locator('#workforceV3Root').isVisible(),true);assert.equal(await h.page.locator('#baseStageSceneV2').isHidden(),true,'full Hangar scene must not obstruct Crew management');
+  await h.page.click('[data-base-surface="overview"]');await h.page.waitForSelector('[data-hangar-ops]');assert.equal(await h.page.locator('#baseStageSceneV2').isVisible(),true,'Hangar scene must return with Overview');
   const after=await assignmentSnapshot();assert.deepEqual(after,before,'switching Hangar management surfaces must not mutate assignments');
   await h.context.close();
 
