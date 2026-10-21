@@ -51,13 +51,30 @@ try{
   assert.equal(await page.locator('.yardRouteLane').count(),2,'Yard scene must visibly show both active route lanes');
   const yard=await page.locator('[data-yard-network-scene]').innerText();assert.match(yard,/Фургон #1/);assert.match(yard,/Грузовик #1/);
 
+  // Remove one route using the old individual Crew UI: the network must follow canonical state immediately.
   await page.click('[data-base-surface="crew"]');await page.waitForSelector('[data-v3-unassign="route-1"]');await page.click('[data-v3-unassign="route-1"]');
   await page.waitForFunction(()=>((globalThis as any).__SALVAGE_TEST__.getState().workforceV3.routes??[]).length===1);
-  await page.click('[data-base-surface="logistics"]');
-  await page.waitForFunction(()=>document.querySelectorAll('[data-network-route]').length===1);
-  const after=await page.locator('#fleetNetworkV1Root').innerText();assert.match(after,/Маршруты\s*1/i);assert.doesNotMatch(after,/Илья[\s\S]*Фургон #1[\s\S]*В РАБОТЕ/i);
+  await page.click('[data-base-surface="logistics"]');await page.waitForFunction(()=>document.querySelectorAll('[data-network-route]').length===1);
+  const after=await page.locator('#fleetNetworkV1Root').innerText();assert.match(after,/Маршруты\s*1/i);
   await page.click('[data-base-surface="overview"]');await page.waitForFunction(()=>document.querySelectorAll('.yardRouteLane').length===1);
 
+  // P4-B: one group action dispatches two idle people to the same mastered zone.
+  await page.click('[data-base-surface="logistics"]');await page.waitForSelector('[data-crew-dispatch]');
+  await page.check('[data-crew-worker="worker-1"]');await page.check('[data-crew-worker="worker-3"]');await page.check('[data-crew-vehicle="vehicle-1"]');
+  await page.selectOption('[data-crew-zone]','z2');await page.selectOption('[data-crew-shift]','4');
+  await page.waitForFunction(()=>{const text=document.querySelector('[data-crew-preview-kg]')?.textContent??'';const detail=document.querySelector('[data-crew-preview-detail]')?.textContent??'';return !text.startsWith('0 ')&&detail.includes('2 маршрут')&&detail.includes('без транспорта 1')});
+  assert.equal(await page.locator('[data-crew-dispatch-go]').isEnabled(),true,'group dispatch must become actionable after crew selection');
+  await page.click('[data-crew-dispatch-go]');
+  await page.waitForFunction(()=>{const wf=(globalThis as any).__SALVAGE_TEST__.getState().workforceV3;return wf.routes.length===3&&wf.workers.find((w:any)=>w.id==='worker-1')?.status==='route'&&wf.workers.find((w:any)=>w.id==='worker-3')?.status==='route'});
+  const dispatched=await page.evaluate(()=>{const wf=(globalThis as any).__SALVAGE_TEST__.getState().workforceV3;return{routes:wf.routes.map((r:any)=>({zone:r.zone,workerIds:r.workerIds,vehicleId:r.vehicleId})),van:wf.fleet.find((v:any)=>v.id==='vehicle-1')}});
+  const z2=dispatched.routes.filter((route:any)=>route.zone==='z2');assert.equal(z2.length,2,'group action must create two normal V3 routes, not a parallel crew state');
+  assert.equal(z2.find((route:any)=>route.workerIds.includes('worker-1'))?.vehicleId,'vehicle-1','higher-rank selected worker should receive the selected Van');
+  assert.equal(z2.find((route:any)=>route.workerIds.includes('worker-3'))?.vehicleId,null,'extra selected worker should dispatch explicitly without transport');
+  assert.ok(dispatched.van?.routeId,'selected Van must be owned by one canonical route');
+  await page.waitForFunction(()=>document.querySelectorAll('[data-network-route]').length===3);
+  const groupedNetwork=await page.locator('#fleetNetworkV1Root').innerText();assert.match(groupedNetwork,/Маршруты\s*3/i);assert.match(groupedNetwork,/Илья/);assert.match(groupedNetwork,/Олег/);
+  await page.click('[data-base-surface="overview"]');await page.waitForFunction(()=>document.querySelectorAll('.yardRouteLane').length===3);
+
   await context.close();
-  console.log('P4 Salvage Yard / Fleet Network V1 two-route live browser acceptance: PASS');
+  console.log('P4 Salvage Yard / Fleet Network V1 live network + group dispatch browser acceptance: PASS');
 }finally{await browser.close();await stop(proc)}
