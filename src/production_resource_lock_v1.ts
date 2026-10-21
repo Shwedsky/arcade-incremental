@@ -12,6 +12,7 @@ const CELL_LABELS:Record<ProductionCellId,string>={
   fabrication:'сборочный участок',
   heavy_assembly:'участок тяжёлой сборки'
 };
+const LOCK_ATTR='productionLockV1';
 
 function notify(text:string){
   window.dispatchEvent(new CustomEvent('salvage:ui-notice',{detail:{text,tone:'warn'}}));
@@ -36,8 +37,27 @@ function reservationText(entry:ActiveJob){
   return CELL_LABELS[entry.cellId]??'производственный участок';
 }
 
+function lockControl(element:HTMLButtonElement|HTMLInputElement|HTMLOptionElement,reason:string){
+  if(!element.dataset[LOCK_ATTR])element.dataset[LOCK_ATTR]='1';
+  element.disabled=true;element.title=reason;
+}
+
+function lockText(element:HTMLElement,text:string){
+  if(element.dataset.productionLockOriginal===undefined)element.dataset.productionLockOriginal=element.textContent??'';
+  element.dataset[LOCK_ATTR]='1';element.textContent=text;
+}
+
+function restoreUiLocks(){
+  document.querySelectorAll<HTMLElement>('[data-production-lock-v1]').forEach(element=>{
+    if('disabled' in element)(element as HTMLButtonElement|HTMLInputElement|HTMLOptionElement).disabled=false;
+    if(element.dataset.productionLockOriginal!==undefined){element.textContent=element.dataset.productionLockOriginal;delete element.dataset.productionLockOriginal}
+    element.removeAttribute('title');delete element.dataset[LOCK_ATTR];
+  });
+}
+
 function decorateUi(){
   const runtime=api(),state=runtime?.getState?.();if(!state)return;
+  restoreUiLocks();
   const jobs=activeJobs(state),workers=new Map<string,ActiveJob>(),vehicles=new Map<string,ActiveJob>();
   for(const entry of jobs){
     const workerId=entry.job?.staffing?.workerId,vehicleId=entry.job?.support?.vehicleId;
@@ -47,24 +67,44 @@ function decorateUi(){
   document.querySelectorAll<HTMLSelectElement>('[data-pc-worker]').forEach(select=>{
     for(const option of Array.from(select.options)){
       if(!option.value)continue;const lock=workers.get(option.value);if(!lock)continue;
-      option.disabled=true;
-      if(!option.textContent?.includes('занят циклом'))option.textContent=`${option.textContent} · занят циклом`;
+      lockControl(option,`Занят: ${reservationText(lock)}`);
+      if(!option.textContent?.includes('занят циклом'))lockText(option,`${option.textContent} · занят циклом`);
+    }
+  });
+
+  for(const [workerId,lock] of workers){
+    const reason=`Занят текущим циклом: ${reservationText(lock)}`;
+    document.querySelectorAll<HTMLButtonElement>(`[data-worker="${workerId}"][data-v3-role], [data-v3-train="${workerId}"], [data-op-assign="${workerId}"]`).forEach(button=>lockControl(button,reason));
+  }
+
+  document.querySelectorAll<HTMLSelectElement>('[data-v3-vehicle]').forEach(select=>{
+    for(const option of Array.from(select.options)){
+      const lock=vehicles.get(option.value);if(!lock)continue;
+      lockControl(option,`Занята: ${reservationText(lock)}`);
+      if(!option.textContent?.includes('занята производством'))lockText(option,`${option.textContent} · занята производством`);
     }
   });
 
   document.querySelectorAll<HTMLInputElement>('[data-crew-vehicle]').forEach(input=>{
     const id=String(input.dataset.crewVehicle??'');const lock=vehicles.get(id);if(!lock)return;
-    input.checked=false;input.disabled=true;
-    const label=input.closest('label'),small=label?.querySelector('small');
-    if(small&&!small.textContent?.includes('занята производством'))small.textContent=`${small.textContent} · занята производством`;
+    input.checked=false;lockControl(input,`Занята: ${reservationText(lock)}`);
+    const label=input.closest('label'),small=label?.querySelector<HTMLElement>('small');
+    if(small)lockText(small,`${small.textContent} · занята производством`);
   });
 
   document.querySelectorAll<HTMLSelectElement>('[data-network-route-vehicle]').forEach(select=>{
     for(const option of Array.from(select.options)){
-      const lock=vehicles.get(option.value);if(!lock)continue;option.disabled=true;
-      if(!option.textContent?.includes('занята производством'))option.textContent=`${option.textContent} · занята производством`;
+      const lock=vehicles.get(option.value);if(!lock)continue;
+      lockControl(option,`Занята: ${reservationText(lock)}`);
+      if(!option.textContent?.includes('занята производством'))lockText(option,`${option.textContent} · занята производством`);
     }
   });
+
+  for(const [vehicleId,lock] of vehicles){
+    const card=document.querySelector<HTMLElement>(`[data-vehicle-card="${vehicleId}"]`);if(!card)continue;
+    const status=card.querySelector<HTMLElement>('p');if(status)lockText(status,`На производстве · ${reservationText(lock)}`);
+    card.querySelectorAll<HTMLButtonElement>('[data-v3-sell-vehicle]').forEach(button=>lockControl(button,`Нельзя продать: ${reservationText(lock)} использует машину`));
+  }
 }
 
 function install(){
@@ -75,6 +115,7 @@ function install(){
     assignGenericRoute:runtime.assignGenericRoute?.bind(runtime),
     sellGenericVehicle:runtime.sellGenericVehicle?.bind(runtime),
     setGenericWorkerRole:runtime.setGenericWorkerRole?.bind(runtime),
+    trainGenericWorker:runtime.trainGenericWorker?.bind(runtime),
     assignGenericProduction:runtime.assignGenericProduction?.bind(runtime),
     assignProductionCellWorkerV1:runtime.assignProductionCellWorkerV1?.bind(runtime)
   };
@@ -96,6 +137,12 @@ function install(){
     const lock=workerReservation(runtime.getState(),workerId);
     if(lock){notify(`Роль нельзя сменить до завершения цикла: ${reservationText(lock)}.`);return false}
     return original.setGenericWorkerRole?.(workerId,role)??false;
+  };
+
+  runtime.trainGenericWorker=(workerId:string)=>{
+    const lock=workerReservation(runtime.getState(),workerId);
+    if(lock){notify(`Обучение доступно после завершения цикла: ${reservationText(lock)}.`);return false}
+    return original.trainGenericWorker?.(workerId)??false;
   };
 
   runtime.assignGenericProduction=(workerId:string,cellId:string)=>{
