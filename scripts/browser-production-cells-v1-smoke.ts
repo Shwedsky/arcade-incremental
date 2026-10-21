@@ -72,7 +72,7 @@ try{
   await page.evaluate(()=>(globalThis as any).__SALVAGE_PLATFORM__.forceSave());const offlineRaw=await page.evaluate(key=>localStorage.getItem(key),SAVE_KEY);assert.ok(offlineRaw,'running P5 Save V10 fixture must exist');const offlineFixture=JSON.parse(offlineRaw!);const offlineBaseline={reinforcedAlloy:running.stock.reinforcedAlloy,drive:running.stock.drive,hydraulicPower:running.stock.hydraulicPower};
 
   // Overview is no longer a generic four-box mock; it mirrors the same live three-cell state.
-  await openBaseSurface(page,'overview');await page.waitForSelector('#baseStageSceneV2.stage-industrial');await page.waitForSelector('[data-industrial-workshop-live]');
+  await openBaseSurface(page,'overview');await page.waitForSelector('#baseStageSceneV2.stage-industrial');await page.waitForSelector('[data-industrial-workshop-live]');await page.waitForFunction(()=>document.querySelector('.industrialHeavyGate')?.textContent?.includes('−15%'));
   assert.equal(await page.locator('[data-industrial-scene-cell]').count(),3);assert.equal(await page.locator('[data-industrial-scene-cell].running').count(),3);
   const scene=await page.locator('[data-industrial-workshop-live]').innerText();assert.match(scene,/Участок подготовки сырья/);assert.match(scene,/Сборочный участок/);assert.match(scene,/Участок тяжёлой сборки/);assert.match(scene,/Тяжёлая эвакуационная платформа/);assert.match(scene,/−15%/);
 
