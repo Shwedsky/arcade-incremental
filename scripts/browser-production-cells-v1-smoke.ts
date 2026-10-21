@@ -37,50 +37,54 @@ try{
 
   const initial=await page.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.getState());
   const workers=initial.workforceV3.workers;assert.ok(workers.length>=3,'migrated Workforce V3 roster must supply P5 staffing');
-  const refWorker=workers[0],fabWorker=workers[1];
+  const refWorker=workers[0],fabWorker=workers[1],heavyWorker=workers[2];
   const before=await page.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.getProductionCellsV1View());
-  assert.equal(before.cells.find((cell:any)=>cell.id==='refining').status,'ready');assert.equal(before.cells.find((cell:any)=>cell.id==='fabrication').status,'ready');
+  assert.equal(before.cells.find((cell:any)=>cell.id==='refining').status,'ready');assert.equal(before.cells.find((cell:any)=>cell.id==='fabrication').status,'ready');assert.equal(before.cells.find((cell:any)=>cell.id==='heavy_assembly').status,'ready');
+  assert.equal(before.heavySupport.kind,'recovery_rig','free canonical Recovery Rig must be visible to Heavy Assembly');assert.ok(before.heavySupport.vehicleId);
+  await page.waitForFunction(()=>document.querySelector('[data-production-cell="heavy_assembly"] .pcHeavySupport')?.textContent?.includes('−15%'));
 
-  // Assign through the player-facing P5 surface. Assignment must detach canonical route work rather than creating a second worker state.
+  // Assign all three production roles through the player-facing surface. Canonical Workforce V3 remains the only worker state.
   await page.selectOption('[data-pc-worker="refining"]',refWorker.id);await page.selectOption('[data-pc-role="refining"]','logistician');await page.click('[data-pc-assign="refining"]');
   await page.waitForFunction((id)=>{const worker=(globalThis as any).__SALVAGE_TEST__.getState().workforceV3.workers.find((w:any)=>w.id===id);return worker?.status==='production'&&worker?.productionCellId==='refining'&&worker?.role==='logistician'},refWorker.id);
   await page.selectOption('[data-pc-worker="fabrication"]',fabWorker.id);await page.selectOption('[data-pc-role="fabrication"]','operator');await page.click('[data-pc-assign="fabrication"]');
   await page.waitForFunction((id)=>{const worker=(globalThis as any).__SALVAGE_TEST__.getState().workforceV3.workers.find((w:any)=>w.id===id);return worker?.status==='production'&&worker?.productionCellId==='fabrication'&&worker?.role==='operator'},fabWorker.id);
+  await page.selectOption('[data-pc-worker="heavy_assembly"]',heavyWorker.id);await page.selectOption('[data-pc-role="heavy_assembly"]','technician');await page.click('[data-pc-assign="heavy_assembly"]');
+  await page.waitForFunction((id)=>{const worker=(globalThis as any).__SALVAGE_TEST__.getState().workforceV3.workers.find((w:any)=>w.id===id);return worker?.status==='production'&&worker?.productionCellId==='heavy_assembly'&&worker?.role==='technician'},heavyWorker.id);
 
   const assigned=await page.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.getProductionCellsV1View());
-  assert.equal(assigned.cells.find((cell:any)=>cell.id==='refining').assignedWorker.role,'logistician');
-  assert.equal(assigned.cells.find((cell:any)=>cell.id==='fabrication').assignedWorker.role,'operator');
+  assert.equal(assigned.cells.find((cell:any)=>cell.id==='refining').assignedWorker.role,'logistician');assert.equal(assigned.cells.find((cell:any)=>cell.id==='fabrication').assignedWorker.role,'operator');assert.equal(assigned.cells.find((cell:any)=>cell.id==='heavy_assembly').assignedWorker.role,'technician');
 
-  // Start two independent cells through the UI and prove real live stock is committed immediately.
+  // Start all three coherent cells through the UI and prove inputs come from the real shared inventories.
   const preStock=assigned.stock;
   await page.click('[data-pc-start="refining"]');await page.waitForFunction(()=>(globalThis as any).__SALVAGE_TEST__.getState().productionCellsV1.cells.refining.job!==null);
   await page.click('[data-pc-start="fabrication"]');await page.waitForFunction(()=>(globalThis as any).__SALVAGE_TEST__.getState().productionCellsV1.cells.fabrication.job!==null);
+  await page.click('[data-pc-start="heavy_assembly"]');await page.waitForFunction(()=>(globalThis as any).__SALVAGE_TEST__.getState().productionCellsV1.cells.heavy_assembly.job!==null);
   const running=await page.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.getProductionCellsV1View());
-  assert.equal(running.cells.filter((cell:any)=>cell.status==='running').length,2,'two industrial activities must run in parallel');
-  assert.equal(running.stock.alloyScrap,preStock.alloyScrap-25,'Refining must consume real Pack C alloy scrap at start');
-  assert.equal(running.stock.structuralProfile,preStock.structuralProfile-2,'Fabrication must consume real structural profile at start');
-  assert.equal(running.stock.cleanCopper,preStock.cleanCopper-6,'Fabrication must consume real clean copper at start');
-  const refJob=running.cells.find((cell:any)=>cell.id==='refining').job,fabJob=running.cells.find((cell:any)=>cell.id==='fabrication').job;
-  assert.ok(refJob.endsAt-refJob.startedAt<240_000,'Logistician must measurably shorten Refining cycle');assert.ok(fabJob.endsAt-fabJob.startedAt<360_000,'Operator must measurably shorten Fabrication cycle');
+  assert.equal(running.cells.filter((cell:any)=>cell.status==='running').length,3,'all three industrial activities must be able to run in parallel');
+  assert.equal(running.stock.alloyScrap,preStock.alloyScrap-25,'Refining must consume real Pack C alloy scrap at start');assert.equal(running.stock.reinforcedAlloy,preStock.reinforcedAlloy-8,'Heavy Assembly must consume real reinforced alloy at start');
+  assert.equal(running.stock.structuralProfile,preStock.structuralProfile-12,'Fabrication + Heavy Assembly must share and commit the same structural profile stock');assert.equal(running.stock.cleanCopper,preStock.cleanCopper-6,'Fabrication must consume real clean copper at start');
+  const refJob=running.cells.find((cell:any)=>cell.id==='refining').job,fabJob=running.cells.find((cell:any)=>cell.id==='fabrication').job,heavyJob=running.cells.find((cell:any)=>cell.id==='heavy_assembly').job;
+  assert.ok(refJob.endsAt-refJob.startedAt<240_000,'Logistician must measurably shorten Refining cycle');assert.ok(fabJob.endsAt-fabJob.startedAt<360_000,'Operator must measurably shorten Fabrication cycle');assert.ok(heavyJob.endsAt-heavyJob.startedAt<480_000*.9,'Technician + Recovery Rig must materially shorten Heavy Assembly');
+  assert.equal(heavyJob.support.kind,'recovery_rig');assert.equal(heavyJob.support.vehicleId,before.heavySupport.vehicleId);assert.equal(heavyJob.support.durationFactor,.85);
 
-  await page.waitForFunction(()=>document.querySelectorAll('.productionCellCard.status-running').length===2);
-  const runningSurface=await page.locator('#productionCellsV1Root').innerText();assert.match(runningSurface,/Входы уже списаны и закреплены за этим циклом/);
+  await page.waitForFunction(()=>document.querySelectorAll('.productionCellCard.status-running').length===3);await page.waitForFunction(()=>document.querySelector('[data-production-cell="heavy_assembly"] .pcHeavySupport.active')?.textContent?.includes('поддержал запуск'));
+  const runningSurface=await page.locator('#productionCellsV1Root').innerText();assert.match(runningSurface,/Входы уже списаны и закреплены за этим циклом/);assert.match(runningSurface,/Recovery Rig/);assert.match(runningSurface,/−15%/);
 
   // Overview is no longer a generic four-box mock; it mirrors the same live three-cell state.
   await openBaseSurface(page,'overview');await page.waitForSelector('#baseStageSceneV2.stage-industrial');await page.waitForSelector('[data-industrial-workshop-live]');
-  assert.equal(await page.locator('[data-industrial-scene-cell]').count(),3);assert.equal(await page.locator('[data-industrial-scene-cell].running').count(),2);
-  const scene=await page.locator('[data-industrial-workshop-live]').innerText();assert.match(scene,/Refining Cell/);assert.match(scene,/Fabrication Cell/);assert.match(scene,/Heavy Assembly Cell/);assert.match(scene,/Recovery Rig/);
+  assert.equal(await page.locator('[data-industrial-scene-cell]').count(),3);assert.equal(await page.locator('[data-industrial-scene-cell].running').count(),3);
+  const scene=await page.locator('[data-industrial-workshop-live]').innerText();assert.match(scene,/Refining Cell/);assert.match(scene,/Fabrication Cell/);assert.match(scene,/Heavy Assembly Cell/);assert.match(scene,/Recovery Rig/);assert.match(scene,/−15%/);
 
   // Exactly-once completion through the runtime bridge and Save V10 persistence.
-  const finishAt=Math.max(refJob.endsAt,fabJob.endsAt)+1;const firstComplete=await page.evaluate((t)=>(globalThis as any).__SALVAGE_TEST__.advanceProductionCellsV1To(t),finishAt);assert.equal(firstComplete.length,2);
-  const completed=await page.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.getProductionCellsV1View());assert.equal(completed.stock.reinforcedAlloy,preStock.reinforcedAlloy+18);assert.equal(completed.stock.drive,preStock.drive+1);
+  const finishAt=Math.max(refJob.endsAt,fabJob.endsAt,heavyJob.endsAt)+1;const firstComplete=await page.evaluate((t)=>(globalThis as any).__SALVAGE_TEST__.advanceProductionCellsV1To(t),finishAt);assert.equal(firstComplete.length,3);
+  const completed=await page.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.getProductionCellsV1View());assert.equal(completed.stock.reinforcedAlloy,preStock.reinforcedAlloy+10,'Refining +18 and Heavy -8 must reconcile in the shared stock');assert.equal(completed.stock.drive,preStock.drive+1);assert.equal(completed.stock.hydraulicPower,preStock.hydraulicPower+1);
   const secondComplete=await page.evaluate((t)=>(globalThis as any).__SALVAGE_TEST__.advanceProductionCellsV1To(t),finishAt+60_000);assert.equal(secondComplete.length,0,'same completed jobs must not pay twice');
-  await page.evaluate(()=>(globalThis as any).__SALVAGE_PLATFORM__.forceSave());await page.reload();await page.waitForFunction(()=>(globalThis as any).__SALVAGE_TEST__?.getState()?.productionCellsV1?.cells?.refining?.completedCycles===1);
-  const persisted=await page.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.getProductionCellsV1View());assert.equal(persisted.stock.reinforcedAlloy,preStock.reinforcedAlloy+18);assert.equal(persisted.stock.drive,preStock.drive+1);
+  await page.evaluate(()=>(globalThis as any).__SALVAGE_PLATFORM__.forceSave());await page.reload();await page.waitForFunction(()=>(globalThis as any).__SALVAGE_TEST__?.getState()?.productionCellsV1?.cells?.heavy_assembly?.completedCycles===1);
+  const persisted=await page.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.getProductionCellsV1View());assert.equal(persisted.stock.reinforcedAlloy,preStock.reinforcedAlloy+10);assert.equal(persisted.stock.drive,preStock.drive+1);assert.equal(persisted.stock.hydraulicPower,preStock.hydraulicPower+1);
 
-  // Phone-sized management keeps a single readable column and live scene identity.
+  // Phone-sized management keeps a single readable column and the same three canonical cells.
   if(await page.locator('#offlineScreen').isVisible())await page.click('#offlineClose');await page.click('#garage');await page.waitForSelector('#garageScreen:not([hidden])');await page.setViewportSize({width:390,height:844});await openBaseSurface(page,'production');await page.waitForSelector('#productionCellsV1Root:not([hidden])');
   const rootBox=await page.locator('#productionCellsV1Root').boundingBox();assert.ok(rootBox&&rootBox.width<=390,'Production Cells surface must fit phone viewport');assert.equal(await page.locator('[data-production-cell]').count(),3);
 
-  await context.close();console.log('P5-A/B Production Cells V1 browser acceptance: live stock + staffing + parallel cycles + industrial scene + persistence + mobile PASS');
+  await context.close();console.log('P5-A/C/D Production Cells V1 browser acceptance: live stock + Logistician/Operator/Technician + 3 parallel cells + Recovery Rig + scene + persistence + mobile PASS');
 }finally{await browser.close();await stop(proc)}
