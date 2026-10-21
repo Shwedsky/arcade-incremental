@@ -36,6 +36,8 @@ jobs:
         run: npm run smoke:fleet-network-v1
       - name: Production Cells V1 parallel domain smoke
         run: npm run smoke:production-cells-v1
+      - name: Visual Baseline V1 structural contract
+        run: npm run smoke:visual-baseline-v1
       - name: Contract Board V2 legacy domain smoke
         run: npm run smoke:contract-board-v2
       - name: Contract Board V3 standing + special domain smoke
