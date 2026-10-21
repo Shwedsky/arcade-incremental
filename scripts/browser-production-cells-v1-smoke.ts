@@ -68,12 +68,13 @@ try{
   assert.equal(heavyJob.support.kind,'recovery_rig');assert.equal(heavyJob.support.vehicleId,before.heavySupport.vehicleId);assert.equal(heavyJob.support.durationFactor,.85);
 
   await page.waitForFunction(()=>document.querySelectorAll('.productionCellCard.status-running').length===3);await page.waitForFunction(()=>document.querySelector('[data-production-cell="heavy_assembly"] .pcHeavySupport.active')?.textContent?.includes('поддержал запуск'));
-  const runningSurface=await page.locator('#productionCellsV1Root').innerText();assert.match(runningSurface,/Входы уже списаны и закреплены за этим циклом/);assert.match(runningSurface,/Recovery Rig/);assert.match(runningSurface,/−15%/);
+  const runningSurface=await page.locator('#productionCellsV1Root').innerText();assert.match(runningSurface,/Входы уже списаны и закреплены за этим циклом/);assert.match(runningSurface,/(Recovery Rig|Тяжёлая эвакуационная платформа)/);assert.match(runningSurface,/−15%/);
+  await page.evaluate(()=>(globalThis as any).__SALVAGE_PLATFORM__.forceSave());const offlineRaw=await page.evaluate(key=>localStorage.getItem(key),SAVE_KEY);assert.ok(offlineRaw,'running P5 Save V10 fixture must exist');const offlineFixture=JSON.parse(offlineRaw!);const offlineBaseline={reinforcedAlloy:running.stock.reinforcedAlloy,drive:running.stock.drive,hydraulicPower:running.stock.hydraulicPower};
 
   // Overview is no longer a generic four-box mock; it mirrors the same live three-cell state.
   await openBaseSurface(page,'overview');await page.waitForSelector('#baseStageSceneV2.stage-industrial');await page.waitForSelector('[data-industrial-workshop-live]');
   assert.equal(await page.locator('[data-industrial-scene-cell]').count(),3);assert.equal(await page.locator('[data-industrial-scene-cell].running').count(),3);
-  const scene=await page.locator('[data-industrial-workshop-live]').innerText();assert.match(scene,/Refining Cell/);assert.match(scene,/Fabrication Cell/);assert.match(scene,/Heavy Assembly Cell/);assert.match(scene,/Recovery Rig/);assert.match(scene,/−15%/);
+  const scene=await page.locator('[data-industrial-workshop-live]').innerText();assert.match(scene,/Refining Cell/);assert.match(scene,/Fabrication Cell/);assert.match(scene,/Heavy Assembly Cell/);assert.match(scene,/(Recovery Rig|Тяжёлая эвакуационная платформа)/);assert.match(scene,/−15%/);
 
   // Exactly-once completion through the runtime bridge and Save V10 persistence.
   const finishAt=Math.max(refJob.endsAt,fabJob.endsAt,heavyJob.endsAt)+1;const firstComplete=await page.evaluate((t)=>(globalThis as any).__SALVAGE_TEST__.advanceProductionCellsV1To(t),finishAt);assert.equal(firstComplete.length,3);
@@ -85,6 +86,17 @@ try{
   // Phone-sized management keeps a single readable column and the same three canonical cells.
   if(await page.locator('#offlineScreen').isVisible())await page.click('#offlineClose');await page.click('#garage');await page.waitForSelector('#garageScreen:not([hidden])');await page.setViewportSize({width:390,height:844});await openBaseSurface(page,'production');await page.waitForSelector('#productionCellsV1Root:not([hidden])');
   const rootBox=await page.locator('#productionCellsV1Root').boundingBox();assert.ok(rootBox&&rootBox.width<=390,'Production Cells surface must fit phone viewport');assert.equal(await page.locator('[data-production-cell]').count(),3);
+  await context.close();
 
-  await context.close();console.log('P5-A/C/D Production Cells V1 browser acceptance: live stock + Logistician/Operator/Technician + 3 parallel cells + Recovery Rig + scene + persistence + mobile PASS');
+  // P5-D: prove the normal startup offline pipeline completes the same persisted jobs exactly once.
+  const past=Date.now()-3_600_000;offlineFixture.lastSeen=past;if(offlineFixture.workforceV3)offlineFixture.workforceV3.lastSimulatedAt=Date.now();
+  for(const cell of Object.values(offlineFixture.productionCellsV1.cells) as any[]){if(!cell.job)continue;cell.job.startedAt=past-600_000;cell.job.endsAt=past+60_000}
+  const offlineContext=await browser.newContext({viewport:{width:1440,height:1000},storageState:{cookies:[],origins:[{origin:ORIGIN,localStorage:[{name:SAVE_KEY,value:JSON.stringify(offlineFixture)}]}]}}),offlinePage=await offlineContext.newPage();
+  await offlinePage.goto(ORIGIN+'/?seed=p5-production-offline');await offlinePage.waitForFunction(()=>(globalThis as any).__SALVAGE_TEST__?.getState()?.businessStage==='industrial_workshop');await offlinePage.waitForSelector('#offlineScreen:not([hidden])');await offlinePage.waitForSelector('.offlineProductionCellsV1 li');
+  const offlineText=await offlinePage.locator('#offlineLoot').innerText();assert.match(offlineText,/Industrial Workshop/);assert.match(offlineText,/Усиленный сплав/);assert.match(offlineText,/Приводной модуль/);assert.match(offlineText,/Гидравлический силовой модуль/);
+  const offlineView=await offlinePage.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.getProductionCellsV1View());assert.equal(offlineView.cells.every((cell:any)=>cell.job===null),true,'startup offline must clear completed jobs');assert.equal(offlineView.cells.every((cell:any)=>cell.status!=='running'),true);assert.equal(offlineView.stock.reinforcedAlloy,offlineBaseline.reinforcedAlloy+18);assert.equal(offlineView.stock.drive,offlineBaseline.drive+1);assert.equal(offlineView.stock.hydraulicPower,offlineBaseline.hydraulicPower+1);
+  const completedCycles=await offlinePage.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.getState().productionCellsV1.cells);assert.equal(completedCycles.refining.completedCycles,1);assert.equal(completedCycles.fabrication.completedCycles,1);assert.equal(completedCycles.heavy_assembly.completedCycles,1);
+  await offlinePage.click('#offlineClose');const once=JSON.stringify({stock:offlineView.stock,cycles:Object.fromEntries(Object.entries(completedCycles).map(([id,cell]:any)=>[id,cell.completedCycles]))});await offlinePage.reload();await offlinePage.waitForFunction(()=>(globalThis as any).__SALVAGE_TEST__?.getState()?.productionCellsV1);const twice=await offlinePage.evaluate(()=>{const api=(globalThis as any).__SALVAGE_TEST__,view=api.getProductionCellsV1View(),cells=api.getState().productionCellsV1.cells;return JSON.stringify({stock:view.stock,cycles:Object.fromEntries(Object.entries(cells).map(([id,cell]:any)=>[id,cell.completedCycles]))})});assert.equal(twice,once,'second startup must not duplicate already-completed P5 jobs');await offlineContext.close();
+
+  console.log('P5-A-D Production Cells V1 browser acceptance: live stock + Logistician/Operator/Technician + 3 parallel cells + Recovery Rig + scene + Save V10 startup-offline exactly-once + mobile PASS');
 }finally{await browser.close();await stop(proc)}

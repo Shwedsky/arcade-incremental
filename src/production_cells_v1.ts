@@ -76,6 +76,7 @@ export interface ProductionStartResultV1{
 export interface ProductionCompletionV1{
   cellId:ProductionCellIdV1;
   planId:ProductionPlanIdV1;
+  label:string;
   jobId:string;
   outputs:IndustrialStockDeltaV1;
 }
@@ -242,7 +243,7 @@ export function advanceProductionCellsV1(state:ProductionCellsV1State,stock:Indu
   for(const cell of Object.values(state.cells)){
     const job=cell.job;if(!job||job.endsAt>now)continue;
     for(const [key,amount] of Object.entries(job.outputs) as [IndustrialStockKeyV1,number][])stock[key]+=amount;
-    completed.push({cellId:cell.id,planId:job.planId,jobId:job.id,outputs:{...job.outputs}});cell.job=null;cell.completedCycles++;
+    completed.push({cellId:cell.id,planId:job.planId,label:PRODUCTION_PLANS_V1[job.planId].label,jobId:job.id,outputs:{...job.outputs}});cell.job=null;cell.completedCycles++;
   }
   return completed;
 }
