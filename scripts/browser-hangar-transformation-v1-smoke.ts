@@ -91,6 +91,18 @@ try{
   await h.page.click('[data-base-surface="crew"]');await h.page.waitForSelector('#workforceV3Root');assert.equal(await h.page.locator('#workforceV3Root').isVisible(),true);assert.equal(await h.page.locator('#baseStageSceneV2').isHidden(),true,'full Hangar scene must not obstruct Crew management');
   await h.page.click('[data-base-surface="overview"]');await h.page.waitForSelector('[data-hangar-ops]');assert.equal(await h.page.locator('#baseStageSceneV2').isVisible(),true,'Hangar scene must return with Overview');
   const after=await assignmentSnapshot();assert.deepEqual(after,before,'switching Hangar management surfaces must not mutate assignments');
+
+  // Live source-of-truth proof: unassign route through the real Crew UI and require the scene + Ops center to follow without reload.
+  await h.page.click('[data-base-surface="crew"]');await h.page.waitForSelector('[data-v3-unassign="route-1"]');await h.page.click('[data-v3-unassign="route-1"]');
+  await h.page.waitForFunction(()=>{const s=(globalThis as any).__SALVAGE_TEST__.getState().workforceV3;return s.routes.length===0&&s.workers.find((w:any)=>w.id==='worker-1')?.status==='idle'&&s.fleet.find((v:any)=>v.id==='vehicle-1')?.routeId===null});
+  await h.page.click('[data-base-surface="overview"]');
+  await h.page.waitForFunction(()=>{const scene=document.querySelector('#baseStageSceneV2')?.textContent??'';const ops=document.querySelector('[data-hangar-ops]')?.textContent??'';return scene.includes('Фургон #1')&&scene.includes('СВОБОДЕН')&&ops.includes('МАРШРУТЫ')&&ops.includes('0')});
+  const liveScene=await h.page.locator('#baseStageSceneV2').innerText(),liveOps=await h.page.locator('[data-hangar-ops]').innerText();
+  assert.match(liveScene,/Илья[\s\S]*Свободен/,'dispatch board must show the formerly routed worker as idle');
+  assert.match(liveScene,/Фургон #1[\s\S]*СВОБОДЕН/,'vehicle bay must show the unassigned Van as free');
+  assert.match(liveOps,/ПЕРСОНАЛ\s*1\/3/i,'only the production Operator should remain active');
+  assert.match(liveOps,/АВТОПАРК\s*0\/2/i,'no vehicles should remain assigned after route removal');
+  assert.match(liveOps,/МАРШРУТЫ\s*0/i,'operations center must show zero routes without reload');
   await h.context.close();
 
   const m=await openFixture(hangar,'hangar-v1-mobile',{width:390,height:844});
@@ -100,5 +112,5 @@ try{
   assert.equal(await m.page.locator('[data-hangar-ops]').isVisible(),true,'Hangar operations overview must remain visible on mobile');
   await m.context.close();
 
-  console.log('Hangar Transformation V1 scene / V3 operations / assignment preservation browser acceptance: PASS');
+  console.log('Hangar Transformation V1 scene / V3 operations / live assignment reflection browser acceptance: PASS');
 }finally{await browser.close();await stop(proc)}
