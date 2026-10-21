@@ -98,6 +98,7 @@ import {
   type VehicleTypeV3,type WorkforceFleetV3State
 } from './workforce_fleet_v3.ts';
 import {sellVehicleV3} from './fleet_market_v1.ts';
+import {formatXpGain} from './ui_format.ts';
 import {
   advanceProductionCellsV1,createDefaultProductionCellsV1,emptyIndustrialStockV1,normalizeProductionCellsV1,
   productionCellProjectionV1,setProductionPlanV1,startProductionCellV1,
@@ -251,12 +252,29 @@ function ensureVehicleV3(type:VehicleTypeV3){let vehicle=workforceV3.fleet.find(
 function assignLegacyWorkerV3(index:number,zone:ZoneId){const worker=ensureLegacyWorkerV3(index);if(!worker)return;let vehicleId:string|null=null;if(index===0&&midgame.economyV2.vanWorker==='w1')vehicleId=workforceV3.fleet.find(v=>v.type==='van')?.id??null;createOrAssignRouteV3(workforceV3,{workerId:worker.id,zone,vehicleId,now:Date.now()})}
 function workforceContext(now:number,offline:boolean){const e=effects();return{stage:currentBusinessStage(),now,offline,offlineCapHours:e.offlineCapHours,workerOutputMultiplier:e.workerOutputMultiplier*(offline?e.offlineEfficiency:1),workerShiftMultiplier:e.workerShiftMultiplier,benchmarks:midgame.economyV2.benchmarks}}
 function applyWorkforceTick(now=Date.now(),offline=false){const result=simulateWorkforceV3(workforceV3,workforceContext(now,offline));for(const key of ['metal','copper','plastic'] as ResourceKind[])storage[key]+=result.total[key];return result}
-function hireGenericWorker(){const cost=nextWorkerHireCost(workforceV3),stage=currentBusinessStage(),before=workforceV3.workers.length;if(before===0&&!zoneMastered(midgame,'z1'))return null;if(cash<cost||before>=workerCapacityForStage(stage))return null;const worker=hireWorkerV3(workforceV3,stage,Date.now());if(!worker)return null;cash-=cost;if(before===0){midgame.worker.hired=true;midgame.worker.lastTick=Date.now()}else if(before===1){packB.secondWorker.hired=true;packB.secondWorker.lastTick=Date.now()}else if(before===2){packC.crew3.hired=true;packC.crew3.role='scavenger';packC.crew3.lastTick=Date.now()}else if(before===3){packD.crew4.hired=true;packD.crew4.role='scavenger';packD.crew4.lastTick=Date.now()}saveGame();renderGarage();return worker}
+function hireGenericWorker(){
+  const stage=currentBusinessStage(),before=workforceV3.workers.length,cost=nextWorkerHireCost(workforceV3);
+  if(before===0&&!zoneMastered(midgame,'z1')){showToast('Сначала полностью освой Зону 1');return null}
+  const limit=workerCapacityForStage(stage);if(before>=limit){showToast(`На текущей базе нет свободных мест для персонала: ${before}/${limit}`);return null}
+  if(cash<cost){showToast(`На найм нужно ${money(cost)} · не хватает ${money(cost-cash)}`);return null}
+  const worker=hireWorkerV3(workforceV3,stage,Date.now());if(!worker)return null;cash-=cost;
+  if(before===0){midgame.worker.hired=true;midgame.worker.lastTick=Date.now()}
+  else if(before===1){packB.secondWorker.hired=true;packB.secondWorker.lastTick=Date.now()}
+  else if(before===2){packC.crew3.hired=true;packC.crew3.role='scavenger';packC.crew3.lastTick=Date.now()}
+  else if(before===3){packD.crew4.hired=true;packD.crew4.role='scavenger';packD.crew4.lastTick=Date.now()}
+  showToast(`${worker.name} нанят · ${money(cost)}`);saveGame();renderGarage();return worker
+}
 function acquireGenericVehicle(type:VehicleTypeV3){const stage=currentBusinessStage();if(workforceV3.fleet.length>=fleetCapacityForStage(stage))return null;const costs={van:90_000,truck:260_000,recovery_rig:480_000} as const,cost=costs[type];if(cash<cost)return null;const vehicle=acquireVehicleV3(workforceV3,stage,type,Date.now());if(!vehicle)return null;cash-=cost;saveGame();renderGarage();return vehicle}
 function sellGenericVehicle(vehicleId:string){const sale=sellVehicleV3(workforceV3,vehicleId);if(!sale)return null;cash+=sale.refund;showToast(`${sale.vehicle.name} продан · +${money(sale.refund)}`);saveGame();renderGarage();return sale}
 function assignGenericRoute(workerId:string,zone:ZoneId,vehicleId:string|null=null){if(!zoneMastered(midgame,zone))return null;const route=createOrAssignRouteV3(workforceV3,{workerId,zone,vehicleId,now:Date.now()});if(route){saveGame();renderGarage()}return route}
 function unassignGenericRoute(routeId:string){if(unassignRouteV3(workforceV3,routeId)){saveGame();renderGarage();return true}return false}
-function trainGenericWorker(workerId:string){const worker=workforceV3.workers.find(w=>w.id===workerId);if(!worker||worker.rank>=5)return false;const cost=15_000*worker.rank;if(cash<cost)return false;cash-=cost;if(!trainWorkerV3(workforceV3,workerId))return false;saveGame();renderGarage();return true}
+function trainGenericWorker(workerId:string){
+  const worker=workforceV3.workers.find(w=>w.id===workerId);if(!worker)return false;
+  if(worker.rank>=5){showToast(`${worker.name}: максимальный ранг`);return false}
+  const cost=15_000*worker.rank;if(cash<cost){showToast(`Обучение стоит ${money(cost)} · не хватает ${money(cost-cash)}`);return false}
+  cash-=cost;if(!trainWorkerV3(workforceV3,workerId)){cash+=cost;return false}
+  showToast(`${worker.name}: ранг ${worker.rank} · обучение ${money(cost)}`);saveGame();renderGarage();return true
+}
 function setGenericWorkerRole(workerId:string,role:'scavenger'|'operator'|'logistician'|'technician'){const ok=setWorkerRoleV3(workforceV3,workerId,role);if(ok){saveGame();renderGarage()}return ok}
 function operatorFactor(cellId:string){const worker=workforceV3.workers.find(w=>w.status==='production'&&w.productionCellId===cellId&&w.role==='operator');if(!worker)return 1;return Math.max(.68,1/(1.18+.06*(worker.rank-1)))}
 type GenericProductionCellId='heavy_cell'|'plant_lines'|ProductionCellIdV1;
@@ -312,7 +330,7 @@ const jobForMachine=(id:MachineId,kind?:WorkshopJob['kind'])=>jobs.find(j=>j.mac
 function saveGame(){const state:SaveStateV10={v:10,xp,storage:{...storage},components:{...storedComps},processed:{...processed},cash,installed:[...installed],machineLevels:{...machineLevels},talents:[...talents],equipmentLevels:{...equipmentLevels},scheduler:normalizeWorkshopScheduler(workshop),contract:{...contractState},totalDestroyed,lastSeen:Date.now(),midgame:normalizeMidgame(midgame),packB:normalizePackB(packB),packC:normalizePackC(packC),packD:normalizePackD(packD),packE:normalizePackE(packE),productionCellsV1:normalizeProductionCellsV1(productionCellsV1),workforceV3:normalizeWorkforceFleetV3(workforceV3)},raw=JSON.stringify(state),result=writeResilientSave(localStorage,SAVE_KEY,raw);if(!result.ok)diagnostics.record('save.write_failed','error',result.reason,{bytes:result.bytes})}
 setInterval(saveGame,10000);addEventListener('beforeunload',saveGame);
 function showToast(text:string){toastEl.textContent=text;toastEl.classList.add('show');toastUntil=2.2}
-function gainXp(amount:number,pos?:Vec2){const before=level();xp+=amount;const after=level();if(pos)texts.push({x:pos.x,y:pos.y-48,text:`+${amount} XP`,color:'#9ce7ff',life:1.2});if(after>before)showToast(`Уровень ${after}! +1 очко мастерства`);renderProgress()}
+function gainXp(amount:number,pos?:Vec2){const before=level();xp+=amount;const after=level();if(pos)texts.push({x:pos.x,y:pos.y-48,text:formatXpGain(amount),color:'#9ce7ff',life:1.2});if(after>before)showToast(`Уровень ${after}! +1 очко мастерства`);renderProgress()}
 function jobId(prefix:string){return `${prefix}-${Date.now()}-${Math.floor(Math.random()*1e6)}`}
 function adjustedDuration(sec:number){return Math.max(5,sec/effects().workshopSpeedMultiplier)}
 function consume(requirements:MachineRequirement[],multiplier=effects().machineCostMultiplier){for(const req of requirements){const need=requirementAmount(req,multiplier);if(req.kind==='cash')cash-=need;else if(req.kind==='resource')storage[req.key as ResourceKind]-=need;else storedComps[req.key as ComponentKind]-=need}}
@@ -359,7 +377,7 @@ function applyOffline(){
   saveGame()
 }
 
-function refreshField(){trip++;rng=mulberry32(hashSeed(`${baseSeed}:${midgame.currentZone}:${trip}`));targets=generateField(`${baseSeed}:field:${midgame.currentZone}:${trip}`,FIELD_NODE_COUNT);applyZoneProfile(targets,midgame.currentZone,rng);fieldZone=midgame.currentZone;fieldInitialTargetCount=targets.length;respawnSerial=0;nextRespawnAt=0;drops=[];texts=[];sparks=[];decor=makeDecor(mulberry32(hashSeed(`${baseSeed}:decor:${midgame.currentZone}:${trip}`)),WORLD.width,WORLD.height,midgame.currentZone);player.x=START_POS.x;player.y=START_POS.y;player.fx=1;player.fy=0;seedEl.textContent=`seed ${baseSeed} · поле ${trip}`}
+function refreshField(){trip++;rng=mulberry32(hashSeed(`${baseSeed}:${midgame.currentZone}:${trip}`));targets=generateField(`${baseSeed}:field:${midgame.currentZone}:${trip}`,FIELD_NODE_COUNT);applyZoneProfile(targets,midgame.currentZone,rng);fieldZone=midgame.currentZone;fieldInitialTargetCount=targets.length;respawnSerial=0;nextRespawnAt=0;drops=[];texts=[];sparks=[];decor=makeDecor(mulberry32(hashSeed(`${baseSeed}:decor:${midgame.currentZone}:${trip}`)),WORLD.width,WORLD.height,midgame.currentZone);player.x=START_POS.x;player.y=START_POS.y;player.fx=1;player.fy=0;seedEl.textContent=`генерация ${baseSeed} · поле ${trip}`}
 function spawnMedalRespawnTarget(){for(let attempt=0;attempt<8;attempt++){const fresh=generateField(`${baseSeed}:respawn:${fieldZone}:${trip}:${respawnSerial++}:${attempt}`,1);applyZoneProfile(fresh,fieldZone,rng);const t=fresh[0];if(targets.some(existing=>existing.alive&&d2(existing,t)<90*90))continue;t.id=targets.reduce((m,x)=>Math.max(m,x.id),0)+1;targets.push(t);return true}return false}
 function masteredRespawnDelay(){return hasClearMedal(midgame.economyV2,fieldZone)?550:900}
 function maybeRespawnMasteredZone(now:number){if(!zoneMastered(midgame,fieldZone)||cart>=capacity()-.01)return;const alive=targets.filter(t=>t.alive).length;if(alive>=fieldInitialTargetCount)return;const delay=masteredRespawnDelay();if(nextRespawnAt<=0)nextRespawnAt=now+delay;if(now<nextRespawnAt)return;const deficit=fieldInitialTargetCount-alive,spawnCount=hasClearMedal(midgame.economyV2,fieldZone)?Math.min(2,deficit):1;let made=0;for(let i=0;i<spawnCount;i++)if(spawnMedalRespawnTarget())made++;nextRespawnAt=now+(made?delay:Math.max(250,delay/2))}

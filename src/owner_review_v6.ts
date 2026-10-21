@@ -53,6 +53,7 @@ const TEXT_REPLACEMENTS:[RegExp,string][]=[
   [/\bTier I\b/g,'Этап I'],
   [/\bACTIVE\b/g,'РАБОТАЕТ'],
   [/\bREADY\b/g,'ГОТОВО'],
+  [/\bseed\b/gi,'генерация'],
 ];
 
 const PRESSURE_REPLACEMENTS=new Map<string,string>([

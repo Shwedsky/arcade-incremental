@@ -118,6 +118,10 @@ jobs:
         run: npm run smoke:browser:core-rebuild-v1
       - name: Owner Feedback V5 browser acceptance
         run: npm run smoke:browser:owner-feedback-v5
+      - name: Owner Review V6 domain acceptance
+        run: npm run smoke:owner-review-v6
+      - name: Owner Review V6 browser acceptance
+        run: npm run smoke:browser:owner-review-v6
       - name: Platform and responsive browser proof
         run: npm run smoke:browser:platform
       - name: Build release manifest

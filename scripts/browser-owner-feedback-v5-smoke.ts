@@ -55,7 +55,7 @@ try{
 
   // OWNER CONFUSION: color must mean state only; Tier is explained separately.
   await page.evaluate(()=>(globalThis as any).__SALVAGE_BASE_SHELL__.open('development'));await page.waitForSelector('#talentScreen:not([hidden])');await page.waitForSelector('#talentImpactV4 .talentStateLegend');
-  const legend=await page.locator('.talentStateLegend').innerText();assert.match(legend,/Зелёный.*изучено/s);assert.match(legend,/Золотой.*можно купить/s);assert.match(legend,/Серый.*закрыто/s);assert.match(legend,/Tier I \/ II \/ III.*этап развития/s);
+  const legend=await page.locator('.talentStateLegend').innerText();assert.match(legend,/Зелёный.*изучено/s);assert.match(legend,/Золотой.*можно купить/s);assert.match(legend,/Серый.*закрыто/s);assert.match(legend,/Этап I \/ II \/ III.*этап развития/s);
   const tier2=page.locator('.talentNode.tier2.unlocked').first(),tier1=page.locator('.talentNode.tier1.unlocked').first();assert.ok(await tier2.count()&&await tier1.count());
   const colors=await page.evaluate(()=>{const one=document.querySelector<HTMLElement>('.talentNode.tier1.unlocked')!,two=document.querySelector<HTMLElement>('.talentNode.tier2.unlocked')!;return[getComputedStyle(one).backgroundColor,getComputedStyle(two).backgroundColor]});assert.equal(colors[0],colors[1],'learned Tier I and Tier II nodes must share the same state color');
   await page.click('#talentsClose');

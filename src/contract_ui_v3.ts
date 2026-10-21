@@ -12,6 +12,7 @@ let observer:MutationObserver|null=null;
 const money=(value:number)=>`${Math.round(value).toLocaleString('ru-RU')} ₽`;
 const qty=(value:number)=>Number(value||0).toLocaleString('ru-RU',{maximumFractionDigits:1});
 const safe=(value:string)=>value.replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]??ch));
+const notify=(text:string,tone:'ok'|'warn'='warn')=>window.dispatchEvent(new CustomEvent('salvage:ui-notice',{detail:{text,tone}}));
 
 function snapshot(){
   const test=api();if(!test?.getState||!test?.getContractV3View)return null;
@@ -58,9 +59,34 @@ function attach(){const panel=document.querySelector<HTMLElement>('#contractPane
 document.addEventListener('input',event=>{const input=(event.target as HTMLElement).closest<HTMLInputElement>('[data-standing-amount]');if(!input?.dataset.standingAmount)return;const data=snapshot(),entry=data?.view?.standing?.find((x:any)=>x.buyer.id===input.dataset.standingAmount),max=entry&&data?freeStandingOwned(entry,data):0;const value=Math.max(0,Math.min(max,Number(input.value)||0));drafts.set(input.dataset.standingAmount,value);if(Number(input.value)>max)input.value=String(max)},true);
 document.addEventListener('click',event=>{
   const target=event.target as HTMLElement;
-  const max=target.closest<HTMLElement>('[data-standing-max]');if(max?.dataset.standingMax){const id=max.dataset.standingMax,data=snapshot(),entry=data?.view?.standing?.find((x:any)=>x.buyer.id===id);if(entry&&data){drafts.set(id,freeStandingOwned(entry,data));render(true)}return}
-  const submit=target.closest<HTMLElement>('[data-standing-submit]');if(submit?.dataset.standingSubmit){const id=submit.dataset.standingSubmit,data=snapshot(),entry=data?.view?.standing?.find((x:any)=>x.buyer.id===id);if(!entry||!data)return;const free=freeStandingOwned(entry,data),input=document.querySelector<HTMLInputElement>(`[data-standing-amount="${id}"]`),requested=Math.max(0,Math.min(free,Number(input?.value)||drafts.get(id)||0));if(requested>0){api()?.submitStandingV3?.(id,requested);drafts.delete(id);render(true)}return}
-  const special=target.closest<HTMLElement>('[data-special-submit]');if(special?.dataset.specialSubmit){const data=snapshot(),entry=data?.view?.specials?.find((x:any)=>x.def.id===special.dataset.specialSubmit);if(entry&&data&&specialReady(entry,data)){api()?.submitSpecialV3?.(special.dataset.specialSubmit);render(true)}}
+  const max=target.closest<HTMLElement>('[data-standing-max]');
+  if(max?.dataset.standingMax){
+    event.preventDefault();event.stopImmediatePropagation();
+    const id=max.dataset.standingMax,data=snapshot(),entry=data?.view?.standing?.find((x:any)=>x.buyer.id===id);
+    if(entry&&data){drafts.set(id,freeStandingOwned(entry,data));render(true)}return
+  }
+  const submit=target.closest<HTMLButtonElement>('[data-standing-submit]');
+  if(submit?.dataset.standingSubmit){
+    event.preventDefault();event.stopImmediatePropagation();
+    const id=submit.dataset.standingSubmit,data=snapshot(),entry=data?.view?.standing?.find((x:any)=>x.buyer.id===id);if(!entry||!data){notify('Отгрузка не выполнена: данные заказа обновляются.');return}
+    const free=freeStandingOwned(entry,data),input=document.querySelector<HTMLInputElement>(`[data-standing-amount="${id}"]`),requested=Math.max(0,Math.min(free,Number(input?.value)||drafts.get(id)||0));
+    if(requested<=0){notify('Укажи количество для отгрузки.');return}
+    submit.disabled=true;submit.textContent='Отгружаем…';
+    const result=api()?.submitStandingV3?.(id,requested);
+    if(result?.consumed>0){drafts.delete(id);notify(`Отгружено ${qty(result.consumed)} кг · получено ${money(result.cash)}.`,'ok')}
+    else notify('Отгрузка не выполнена: свободного товара уже не хватает.');
+    render(true);requestAnimationFrame(()=>render(true));return
+  }
+  const special=target.closest<HTMLButtonElement>('[data-special-submit]');
+  if(special?.dataset.specialSubmit){
+    event.preventDefault();event.stopImmediatePropagation();
+    const data=snapshot(),entry=data?.view?.specials?.find((x:any)=>x.def.id===special.dataset.specialSubmit);
+    if(!entry||!data||!specialReady(entry,data)){notify('Спецзаказ пока нельзя сдать: проверь свободные товары.');render(true);return}
+    special.disabled=true;special.textContent='Сдаём…';
+    const ok=api()?.submitSpecialV3?.(special.dataset.specialSubmit);
+    if(ok)notify(`Спецзаказ «${entry.def.name}» сдан. Награда начислена.`,'ok');else notify('Спецзаказ не сдан: состояние товаров изменилось.');
+    render(true);requestAnimationFrame(()=>render(true));return
+  }
 },true);
 
 queueMicrotask(attach);
