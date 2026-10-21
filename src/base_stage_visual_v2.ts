@@ -95,12 +95,19 @@ function sceneMarkup(stage:Stage,s:RuntimeState){
   return`<div class="baseSceneLabel"><b>Processing Plant</b><span>Завод · линии + склад + входящая логистика</span></div><div class="plantScene"><div class="plantStacks"><i></i><i></i><i></i></div><div class="plantWarehouse">СКЛАД<br><strong>150 000 кг</strong></div><div class="plantLines"><div>ЛИНИЯ 1<i></i></div><div>ЛИНИЯ 2<i></i></div></div><div class="plantDock">${bays(s,5,'Док')}</div>${workers(s,12)}</div>`;
 }
 
+function placeScene(box:HTMLElement,scene:HTMLElement){
+  const overview=box.querySelector<HTMLElement>('[data-base-pane="overview"]');
+  if(overview){const card=overview.querySelector<HTMLElement>('#baseStageOverview');if(scene.parentElement!==overview){if(card)overview.insertBefore(scene,card);else overview.prepend(scene)}return}
+  if(scene.parentElement!==box){const header=box.querySelector<HTMLElement>(':scope > header');header?.insertAdjacentElement('afterend',scene)}
+}
+
 function render(){
   const runtime=api();if(!runtime?.getState)return;const s=runtime.getState();
   const box=document.querySelector<HTMLElement>('.garageBox');if(!box)return;
   const stage=stageOf(s);box.dataset.visualStage=stage;
   let scene=box.querySelector<HTMLElement>('#baseStageSceneV2');
-  if(!scene){scene=document.createElement('section');scene.id='baseStageSceneV2';scene.className='baseStageSceneV2';const header=box.querySelector(':scope > header');header?.insertAdjacentElement('afterend',scene)}
+  if(!scene){scene=document.createElement('section');scene.id='baseStageSceneV2';scene.className='baseStageSceneV2';const header=box.querySelector<HTMLElement>(':scope > header');header?.insertAdjacentElement('afterend',scene)}
+  placeScene(box,scene);
   const signature=stage==='hangar'?`${stage}:${hangarSignature(s)}`:`${stage}:${workerCount(s)}:${vehicleCount(s)}:${machineCount(s)}:${s?.packE?.production?.length??0}`;
   if(scene.dataset.signature===signature)return;scene.dataset.signature=signature;scene.className=`baseStageSceneV2 stage-${stage}`;scene.innerHTML=sceneMarkup(stage,s);
 }
