@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {createDefaultWorkforceFleetV3,hireWorkerV3,acquireVehicleV3,createOrAssignRouteV3,projectRouteV3,simulateWorkforceV3} from '../src/workforce_fleet_v3.ts';
 import {deriveFleetNetworkV1,previewCrewDispatchV1} from '../src/fleet_network_v1.ts';
-import {baseStoragePressureV1} from '../src/base_storage_v1.ts';
+import {baseStoragePressureV1,runtimeBaseStorageFreeKg} from '../src/base_storage_v1.ts';
 
 const now=1_800_000_000_000;
 const state=createDefaultWorkforceFleetV3(now);
@@ -59,5 +59,15 @@ assert.ok(accepted<=25.0001&&accepted>=24.99,`shared base storage must accept on
 assert.ok(storageRun.reports.some(report=>report.stopReason==='base_storage_full'),'at least one simultaneous route must explicitly stop on base storage');
 const fullProjection=projectRouteV3(storageLimited,sr2!,{stage:'salvage_yard',now:now+3_600_000,offline:false,offlineCapHours:0,workerOutputMultiplier:1,workerShiftMultiplier:1,baseStorageFreeKg:0});
 assert.equal(fullProjection.bottleneck,'base_storage','a full base must become the visible route bottleneck');
+
+// Startup offline happens before __SALVAGE_TEST__ is installed. Yard must still read Save V10 storage,
+// while earlier business stages remain outside the P4 base-storage enforcement gate.
+const priorLocalStorage=(globalThis as any).localStorage,priorRuntime=(globalThis as any).__SALVAGE_TEST__;
+delete (globalThis as any).__SALVAGE_TEST__;
+(globalThis as any).localStorage={getItem:(key:string)=>key==='arcade-incremental-playable-v0-save-v2'?JSON.stringify({storage:{metal:30_000,copper:0,plastic:0}}):null};
+assert.equal(runtimeBaseStorageFreeKg('salvage_yard'),0,'startup Yard simulation must see a full saved receiving store before runtime API bootstraps');
+assert.equal(runtimeBaseStorageFreeKg('hangar'),Infinity,'P4 storage-stop must not retroactively change Hangar route economy');
+if(priorLocalStorage===undefined)delete (globalThis as any).localStorage;else (globalThis as any).localStorage=priorLocalStorage;
+if(priorRuntime===undefined)delete (globalThis as any).__SALVAGE_TEST__;else (globalThis as any).__SALVAGE_TEST__=priorRuntime;
 
 console.log('Fleet Network V1 multi-route + capacity + crew preview + real base-storage pressure: PASS');
