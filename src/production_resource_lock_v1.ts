@@ -38,7 +38,11 @@ function reservationText(entry:ActiveJob){
 }
 
 function lockControl(element:HTMLButtonElement|HTMLInputElement|HTMLOptionElement,reason:string){
-  if(!element.dataset[LOCK_ATTR])element.dataset[LOCK_ATTR]='1';
+  if(!element.dataset[LOCK_ATTR]){
+    element.dataset[LOCK_ATTR]='1';
+    element.dataset.productionLockDisabled=element.disabled?'1':'0';
+    element.dataset.productionLockTitle=element.getAttribute('title')??'';
+  }
   element.disabled=true;element.title=reason;
 }
 
@@ -49,9 +53,16 @@ function lockText(element:HTMLElement,text:string){
 
 function restoreUiLocks(){
   document.querySelectorAll<HTMLElement>('[data-production-lock-v1]').forEach(element=>{
-    if('disabled' in element)(element as HTMLButtonElement|HTMLInputElement|HTMLOptionElement).disabled=false;
+    if('disabled' in element&&element.dataset.productionLockDisabled!==undefined){
+      (element as HTMLButtonElement|HTMLInputElement|HTMLOptionElement).disabled=element.dataset.productionLockDisabled==='1';
+      delete element.dataset.productionLockDisabled;
+    }
     if(element.dataset.productionLockOriginal!==undefined){element.textContent=element.dataset.productionLockOriginal;delete element.dataset.productionLockOriginal}
-    element.removeAttribute('title');delete element.dataset[LOCK_ATTR];
+    if(element.dataset.productionLockTitle!==undefined){
+      if(element.dataset.productionLockTitle)element.setAttribute('title',element.dataset.productionLockTitle);else element.removeAttribute('title');
+      delete element.dataset.productionLockTitle;
+    }
+    delete element.dataset[LOCK_ATTR];
   });
 }
 
