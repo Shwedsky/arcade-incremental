@@ -42,11 +42,12 @@ try{
   await page.goto(`${ORIGIN}/?seed=p4-yard-network`);await page.waitForFunction(()=>(globalThis as any).__SALVAGE_TEST__?.getState()?.businessStage==='salvage_yard');await closeOffline(page);
   await page.click('#garage');await page.waitForSelector('#garageScreen:not([hidden])');await page.waitForSelector('#baseShellNav');
 
-  await page.click('[data-base-surface="logistics"]');await page.waitForSelector('#fleetNetworkV1Root');
+  await page.click('[data-base-surface="logistics"]');await page.waitForSelector('#fleetNetworkV1Root');await page.waitForSelector('[data-base-storage-root="logistics"] [data-base-storage-pressure]');
   assert.equal(await page.locator('[data-network-route]').count(),2,'Yard network must show both simultaneous canonical routes');
   const network=await page.locator('#fleetNetworkV1Root').innerText();
   assert.match(network,/Сеть снабжения/);assert.match(network,/Маршруты\s*2/i);assert.match(network,/Илья/);assert.match(network,/Марина/);assert.match(network,/Фургон #1/);assert.match(network,/Грузовик #1/);
   assert.match(network,/Транспорт заполнится раньше конца смены/,'long Van shift should expose the real capacity bottleneck');
+  const storageStart=await page.locator('[data-base-storage-root="logistics"]').innerText();assert.match(storageStart,/ПРИЁМНЫЙ СКЛАД/);assert.match(storageStart,/30[\s\u00a0]?000 кг/,'Yard receiving capacity must be visibly 30,000 kg');
   const constrained=page.locator('[data-network-route="route-1"]');assert.match(await constrained.innerText(),/До заполнения:/);assert.equal(await constrained.locator('[data-network-route-vehicle="route-1"] option[value="vehicle-3"]').count(),1,'free larger Rig must be offered as causal remediation');
 
   await page.click('[data-base-surface="overview"]');await page.waitForSelector('#baseStageSceneV2.stage-yard');await page.waitForSelector('[data-yard-network-scene]');
@@ -73,13 +74,14 @@ try{
   const after=await page.locator('#fleetNetworkV1Root').innerText();assert.match(after,/Маршруты\s*1/i);
   await page.click('[data-base-surface="overview"]');await page.waitForFunction(()=>document.querySelectorAll('.yardRouteLane').length===1);
 
-  // P4-B: one group action dispatches two idle people to the same mastered zone on the canonical 2h shift.
+  // P4-B: a reusable preset chooses the crew, then one group action dispatches canonical 2h routes.
   await page.click('[data-base-surface="logistics"]');await page.waitForSelector('[data-crew-dispatch]');
   assert.match(await page.locator('[data-crew-dispatch]').innerText(),/Стандартная смена — 2 часа/);
   const stableWorker=await page.locator('[data-crew-worker="worker-1"]').elementHandle();assert.ok(stableWorker,'worker-1 selector must exist');
-  await page.check('[data-crew-worker="worker-1"]');await page.check('[data-crew-worker="worker-3"]');await page.check('[data-crew-vehicle="vehicle-1"]');
-  await page.waitForTimeout(1600);
-  assert.equal(await stableWorker!.evaluate(el=>el.isConnected&&(el as HTMLInputElement).checked),true,'live route metrics must not recreate or reset the group-dispatch controls');
+  await page.click('[data-crew-preset="top2"]');
+  assert.equal(await page.locator('[data-crew-worker="worker-1"]').isChecked(),true,'top2 preset must choose the strongest free worker');assert.equal(await page.locator('[data-crew-worker="worker-3"]').isChecked(),true,'top2 preset must choose the second free worker');
+  await page.check('[data-crew-vehicle="vehicle-1"]');await page.waitForTimeout(1600);
+  assert.equal(await stableWorker!.evaluate(el=>el.isConnected&&(el as HTMLInputElement).checked),true,'live route metrics must not recreate or reset preset-selected crew controls');
   await page.selectOption('[data-crew-zone]','z2');
   await page.waitForFunction(()=>{const text=document.querySelector('[data-crew-preview-kg]')?.textContent??'';const detail=document.querySelector('[data-crew-preview-detail]')?.textContent??'';return !text.startsWith('0 ')&&detail.includes('2 маршрут')&&detail.includes('без транспорта 1')});
   assert.equal(await page.locator('[data-crew-dispatch-go]').isEnabled(),true,'group dispatch must become actionable after crew selection');
@@ -102,17 +104,24 @@ try{
   assert.deepEqual(afterReload,beforeReload,'all canonical Yard routes and assignments must survive Save V10 reload');
   await page.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.forceGarage());await page.waitForSelector('#garageScreen:not([hidden])');await page.click('[data-base-surface="logistics"]');await page.waitForSelector('#fleetNetworkV1Root');assert.equal(await page.locator('[data-network-route]').count(),3);
 
-  // Run the standard startup offline pipeline one hour later for all three routes.
-  await page.evaluate((key)=>{const raw=localStorage.getItem(key);if(!raw)throw new Error('missing P4 offline save');const save=JSON.parse(raw),past=Date.now()-3_600_000;save.lastSeen=past;save.workforceV3.lastSimulatedAt=past;for(const route of save.workforceV3.routes){route.startedAt=past;route.shiftEndsAt=past+2*3_600_000;route.deliveredKg=0}localStorage.setItem(key,JSON.stringify(save))},SAVE_KEY);
-  await page.reload();await page.waitForFunction(()=>(globalThis as any).__SALVAGE_TEST__?.getState()?.workforceV3?.routes?.length===3);await page.waitForSelector('#offlineScreen:not([hidden])');await page.waitForSelector('.offlineRoutesV3 li');
+  // Fill Yard receiving storage, then run the standard startup offline pipeline one hour later.
+  await page.evaluate((key)=>{const raw=localStorage.getItem(key);if(!raw)throw new Error('missing P4 offline save');const save=JSON.parse(raw),past=Date.now()-3_600_000;save.lastSeen=past;save.storage={...(save.storage??{}),metal:30_000,copper:0,plastic:0};save.workforceV3.lastSimulatedAt=past;for(const route of save.workforceV3.routes){route.startedAt=past;route.shiftEndsAt=past+2*3_600_000;route.deliveredKg=0}localStorage.setItem(key,JSON.stringify(save))},SAVE_KEY);
+  await page.reload();await page.waitForFunction(()=>(globalThis as any).__SALVAGE_TEST__?.getState()?.workforceV3?.routes?.length===3);await page.waitForSelector('#offlineScreen:not([hidden])');await page.waitForSelector('.offlineRoutesV3 li');await page.waitForSelector('[data-offline-storage-stop]');
   assert.ok(await page.locator('.offlineRoutesV3 li').count()>=3,'offline return report must expose every persisted Yard route');
-  const offlineText=await page.locator('.offlineRoutesV3').innerText();assert.match(offlineText,/кг\/ч/);assert.match(offlineText,/\+\d/,'offline network report must show real route gains/stops');await page.click('#offlineClose');
+  const offlineText=await page.locator('#offlineLoot').innerText();assert.match(offlineText,/кг\/ч/);assert.match(offlineText,/склад базы заполнен/i,'offline report must name the actual base-storage stop');
+  const stoppedLoads=await page.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.getState().workforceV3.routes.map((route:any)=>route.deliveredKg));assert.ok(stoppedLoads.every((load:number)=>load<=.001),`full base storage must stop passive route delivery, got ${stoppedLoads.join(', ')}`);
+  await page.click('#offlineClose');
 
-  // Same network management must remain usable at a phone-sized viewport.
-  await page.setViewportSize({width:390,height:844});await page.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.forceGarage());await page.waitForSelector('#garageScreen:not([hidden])');await page.click('[data-base-surface="logistics"]');await page.waitForSelector('#fleetNetworkV1Root');
-  const mobileNetwork=await page.locator('#fleetNetworkV1Root').boundingBox(),mobileDispatch=await page.locator('[data-crew-dispatch]').boundingBox();assert.ok(mobileNetwork&&mobileNetwork.width<=390,'Fleet Network must fit mobile viewport');assert.ok(mobileDispatch&&mobileDispatch.width<=mobileNetwork!.width,'group dispatch must stay inside network panel on mobile');assert.equal(await page.locator('[data-network-route]').count(),3);
+  await page.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.forceGarage());await page.waitForSelector('#garageScreen:not([hidden])');await page.click('[data-base-surface="logistics"]');await page.waitForSelector('[data-base-storage-root="logistics"] [data-base-storage-pressure].full');
+  const fullStorage=await page.locator('[data-base-storage-root="logistics"]').innerText();assert.match(fullStorage,/ПРИЁМ ОСТАНОВЛЕН/);assert.match(fullStorage,/30[\s\u00a0]?000 кг/);
+  await page.waitForFunction(()=>Array.from(document.querySelectorAll<HTMLElement>('[data-network-route]')).some(card=>card.textContent?.includes('Склад базы заполнен')));
+  await page.click('[data-base-surface="storage"]');await page.waitForSelector('[data-base-storage-root="storage"] [data-base-storage-pressure].full');
+
+  // Same network management and storage pressure must remain usable at a phone-sized viewport.
+  await page.setViewportSize({width:390,height:844});await page.click('[data-base-surface="logistics"]');await page.waitForSelector('#fleetNetworkV1Root');
+  const mobileNetwork=await page.locator('#fleetNetworkV1Root').boundingBox(),mobileDispatch=await page.locator('[data-crew-dispatch]').boundingBox(),mobileStorage=await page.locator('[data-base-storage-root="logistics"]').boundingBox();assert.ok(mobileNetwork&&mobileNetwork.width<=390,'Fleet Network must fit mobile viewport');assert.ok(mobileDispatch&&mobileDispatch.width<=mobileNetwork!.width,'group dispatch must stay inside network panel on mobile');assert.ok(mobileStorage&&mobileStorage.width<=390,'base storage pressure must fit mobile viewport');assert.equal(await page.locator('[data-network-route]').count(),3);
   await page.click('[data-base-surface="overview"]');await page.waitForSelector('#baseStageSceneV2.stage-yard');assert.equal(await page.locator('[data-yard-network-scene]').isVisible(),true,'mobile Yard must retain visible network activity');
 
   await context.close();
-  console.log('P4 Salvage Yard / Fleet Network V1 A-D browser acceptance: Yard structure + stable UI + multi-route + remediation + group dispatch + Save V10 offline + mobile PASS');
+  console.log('P4 Salvage Yard / Fleet Network V1 A-D browser acceptance: Yard structure + presets + stable UI + causal remediation + real storage stop + Save V10 offline + mobile PASS');
 }finally{await browser.close();await stop(proc)}
