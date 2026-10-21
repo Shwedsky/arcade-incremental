@@ -1,3 +1,5 @@
+@import './gate_a_visual_fixes.css';
+
 #ownerV6Notice{
   position:fixed;left:50%;top:20px;z-index:10050;transform:translate(-50%,-16px);
   min-width:min(560px,calc(100vw - 32px));max-width:min(760px,calc(100vw - 32px));
