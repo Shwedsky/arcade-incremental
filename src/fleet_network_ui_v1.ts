@@ -22,7 +22,18 @@ function networkRoot(){
   return root;
 }
 
-function routeMarkup(route:ReturnType<typeof viewFor>['routes'][number]){
+function routeRemediationMarkup(route:ReturnType<typeof viewFor>['routes'][number],s:any){
+  const freeLarger=(s.workforceV3?.fleet??[]).filter((vehicle:any)=>!vehicle.routeId&&Number(vehicle.capacityKg)>route.capacityKg);
+  const fill=route.hoursToCapacity===null?'—':route.hoursToCapacity<=0?'полон':`${route.hoursToCapacity.toFixed(1)} ч`;
+  if(!['capacity','no_vehicle'].includes(route.bottleneck)||route.workerIds.length!==1||!freeLarger.length)return`<div class="fleetNetworkPressure"><span>До заполнения: <b>${fill}</b></span></div>`;
+  return`<div class="fleetNetworkPressure actionable" data-network-remediation="${route.routeId}">
+    <span>До заполнения: <b>${fill}</b></span>
+    <label>Свободная машина<select data-network-route-vehicle="${route.routeId}">${freeLarger.sort((a:any,b:any)=>Number(b.capacityKg)-Number(a.capacityKg)).map((vehicle:any)=>`<option value="${vehicle.id}">${vehicleIcon(vehicle.type)} ${vehicle.name} · ${vehicle.capacityKg} кг</option>`).join('')}</select></label>
+    <button data-network-reassign-route="${route.routeId}" data-network-worker="${route.workerIds[0]}" data-network-zone="${route.zone}">Усилить маршрут</button>
+  </div>`;
+}
+
+function routeMarkup(route:ReturnType<typeof viewFor>['routes'][number],s:any){
   const zone=ZONE_DEFS[route.zone]?.name??route.zone.toUpperCase();
   const crew=route.workerNames.length?route.workerNames.join(' + '):'Нет бригады';
   const vehicle=route.vehicleName??'Без транспорта';
@@ -37,6 +48,7 @@ function routeMarkup(route:ReturnType<typeof viewFor>['routes'][number]){
       <span>Смена<b>${route.shiftRemainingHours.toFixed(1)} ч</b></span>
     </div>
     <small class="fleetNetworkBottleneck">${fleetNetworkBottleneckLabelV1(route.bottleneck)}</small>
+    ${routeRemediationMarkup(route,s)}
   </article>`;
 }
 
@@ -69,7 +81,7 @@ function renderNetwork(s:any){
       <article><small>Общий поток</small><b>${summary.totalKgPerHour.toFixed(0)}</b><span>кг/ч по сети</span></article>
       <article><small>Стоимость потока</small><b>${money(summary.totalValuePerHour)}</b><span>в час до переработки</span></article>
     </div>
-    <div class="fleetNetworkRoutes">${view.routes.length?view.routes.map(routeMarkup).join(''):'<div class="fleetNetworkEmpty">Сеть пока простаивает. Назначь людей и транспорт на освоенные зоны — маршруты появятся здесь одновременно.</div>'}</div>`;
+    <div class="fleetNetworkRoutes">${view.routes.length?view.routes.map(route=>routeMarkup(route,s)).join(''):'<div class="fleetNetworkEmpty">Сеть пока простаивает. Назначь людей и транспорт на освоенные зоны — маршруты появятся здесь одновременно.</div>'}</div>`;
   updateCrewPreview(s);
 }
 
@@ -113,7 +125,14 @@ export function refreshFleetNetworkV1(){
 
 addEventListener('change',event=>{const target=event.target as HTMLElement;if(target.closest('[data-crew-dispatch]')){const s=runtime();if(s)updateCrewPreview(s)}} ,true);
 addEventListener('click',event=>{
-  const target=event.target as HTMLElement;if(!target.closest('[data-crew-dispatch-go]'))return;
+  const target=event.target as HTMLElement;
+  const reassign=target.closest<HTMLElement>('[data-network-reassign-route]');
+  if(reassign?.dataset.networkReassignRoute&&reassign.dataset.networkWorker&&reassign.dataset.networkZone){
+    const routeId=reassign.dataset.networkReassignRoute,vehicleId=document.querySelector<HTMLSelectElement>(`[data-network-route-vehicle="${routeId}"]`)?.value;
+    if(vehicleId&&api()?.assignGenericRoute?.(reassign.dataset.networkWorker,reassign.dataset.networkZone,vehicleId)){lastSignature='';window.dispatchEvent(new CustomEvent('salvage:business-state-changed'));setTimeout(refreshFleetNetworkV1,0)}
+    return;
+  }
+  if(!target.closest('[data-crew-dispatch-go]'))return;
   const s=runtime(),panel=document.querySelector<HTMLElement>('[data-crew-dispatch]');if(!s?.workforceV3||!panel)return;
   const zone=panel.querySelector<HTMLSelectElement>('[data-crew-zone]')?.value as ZoneId|undefined;if(!zone)return;
   const selectedWorkers=selectedIds('[data-crew-worker]').map(id=>s.workforceV3.workers.find((worker:any)=>worker.id===id)).filter(Boolean).sort((a:any,b:any)=>Number(b.rank)-Number(a.rank));
