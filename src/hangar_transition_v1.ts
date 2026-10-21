@@ -12,9 +12,19 @@ const SURFACE_BY_CLASS:[string,Surface,string][]=[
   ['vehicleZone','logistics','Открыть логистику']
 ];
 
+function requestPresentationRefresh(){
+  shell()?.refresh?.();
+  // base_stage_visual_v2 owns the scene and observes child-list changes inside
+  // Garage. Nudge that observer so its canonical V3 signature is re-evaluated
+  // immediately after a Workforce/Fleet action instead of waiting for polling.
+  const scene=document.querySelector<HTMLElement>('#baseStageSceneV2');
+  if(scene){const marker=document.createComment('hangar-business-refresh');scene.append(marker);marker.remove()}
+  queueMicrotask(enhanceScene);
+}
+
 function showMilestone(){
   shell()?.open?.('overview');
-  shell()?.refresh?.();
+  requestPresentationRefresh();
   let toast=document.querySelector<HTMLElement>('#hangarMilestoneV1');
   if(!toast){toast=document.createElement('aside');toast.id='hangarMilestoneV1';toast.className='hangarMilestoneV1';document.body.append(toast)}
   toast.innerHTML='<small>НОВЫЙ МАСШТАБ БИЗНЕСА</small><b>Ангар открыт</b><span>Теперь у тебя 5 мест персонала, 4 транспортных бокса и отдельная операционная база.</span>';
@@ -46,6 +56,7 @@ function boot(){
   if(!runtime()?.getState||!shell()?.open){window.setTimeout(boot,80);return}
   document.addEventListener('click',event=>activateZone(event.target));
   document.addEventListener('keydown',event=>{if(event.key!=='Enter'&&event.key!==' ')return;if(activateZone(event.target)){event.preventDefault()}});
+  window.addEventListener('salvage:business-state-changed',requestPresentationRefresh);
   new MutationObserver(enhanceScene).observe(document.documentElement,{subtree:true,childList:true});
   tick();window.setInterval(tick,250);
 }
