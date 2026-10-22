@@ -7,6 +7,7 @@ const field=readFileSync(`${root}src/field_view.ts`,'utf8');
 const art=readFileSync(`${root}src/field_art_v2.ts`,'utf8');
 const baseModule=readFileSync(`${root}src/base_stage_art_v2.ts`,'utf8');
 const baseCss=readFileSync(`${root}src/base_stage_art_v2.css`,'utf8');
+const sceneFirstCss=readFileSync(`${root}src/base_stage_art_scene_first_v3.css`,'utf8');
 const uiCss=readFileSync(`${root}src/visual_rebuild_v2_ui.css`,'utf8');
 const atlasPath=`${root}public/art/v2/field_atlas.svg`;
 const baseAtlasPath=`${root}public/art/v2/base_scenes.svg`;
@@ -40,9 +41,14 @@ for(const marker of ['id="garage"','id="hangar"','id="yard"','id="industrial"','
 }
 assert.ok(baseModule.includes("scene.prepend(art)"),'V2 base art must be attached behind live canonical overlays');
 assert.ok(baseModule.includes("className='stageIllustrationV2'"),'V2 base layer must use a stable semantic class');
+assert.ok(baseModule.includes("import './base_stage_art_scene_first_v3.css'"),'scene-first composition must load after the baseline art layer');
 for(const stage of ['stage-garage','stage-hangar','stage-yard','stage-industrial'])assert.ok(baseCss.includes(`.${stage}`),`V2 CSS must author ${stage}`);
 assert.ok(baseCss.includes("background-image:url('/art/v2/base_scenes.svg')"),'base surfaces must use the authored scene atlas rather than CSS-only primitive scenery');
 assert.ok(baseCss.includes('.stage-industrial .productionCells'),'live production overlays must remain attached to the illustrated workshop');
+for(const token of ['.stage-hangar .machineZone{','.stage-hangar .dispatchZone{','.stage-yard .yardVehicleApron{','.stage-yard .yardCrewMuster{'])assert.ok(sceneFirstCss.includes(token),`scene-first layer must preserve compact canonical status dock: ${token}`);
+assert.ok(sceneFirstCss.includes('The authored location remains the hero.'),'scene-first layer must document the visual hierarchy contract');
+assert.ok(sceneFirstCss.includes('grid-template-columns:repeat(6,minmax(0,1fr))'),'Hangar production status must be a compact dock rather than a large dashboard grid');
+assert.ok(sceneFirstCss.includes('height:42px!important'),'Yard semantic badges must stay compact so the authored yard remains visible');
 
 assert.ok(zoneMap.includes('МАРШРУТ СБОРА'),'zone map must be an authored salvage-route illustration');
 assert.ok(zoneMap.includes('<circle cx="1360" cy="527" r="22"/>'),'zone map art must contain all eight route nodes');
@@ -57,4 +63,4 @@ for(const forbidden of ['rollDrops(','gainXp(','addActiveMastery(','zoneYieldMul
   assert.ok(!baseModule.includes(forbidden),`V2 base art integration must remain economy-neutral: ${forbidden}`);
 }
 
-console.log('Visual Rebuild V2 structural contract: illustrated field, real break debris, authored base scenes and illustrated zone route map: PASS');
+console.log('Visual Rebuild V2 structural contract: illustrated field, real break debris, authored base scenes, scene-first live docks and illustrated zone route map: PASS');
