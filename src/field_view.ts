@@ -17,7 +17,7 @@ type BreakVisual=Vec2&{frame:FieldArtFrame;vx:number;vy:number;rotation:number;s
 const RESOURCE_COLOR:Record<ResourceKind,string>={metal:'#d7dfdf',copper:'#f08a45',plastic:'#46a7ff'};
 const DECOR_COUNT_BY_ZONE:Record<ZoneId,number>={z1:92,z2:80,z3:112,z4:118,z5:124,z6:132,z7:138,z8:126};
 const DECOR_SIZE_BOOST_BY_ZONE:Record<ZoneId,number>={z1:0,z2:0,z3:5,z4:7,z5:9,z6:12,z7:15,z8:12};
-const aliveMemory=new Map<string,boolean>();
+const aliveMemory=new Map<SalvageTarget['id'],boolean>();
 let breakVisuals:BreakVisual[]=[],lastVisualTick=0,lastVisualZone:ZoneId|null=null;
 let lastPlayerX=NaN,lastPlayerY=NaN,lastPlayerMoveAt=0;
 
@@ -174,7 +174,7 @@ function spawnBreakVisuals(t:SalvageTarget){
 }
 function syncBreakVisuals(targets:SalvageTarget[],zone:ZoneId){
   if(lastVisualZone!==zone){aliveMemory.clear();breakVisuals=[];lastVisualZone=zone}
-  const present=new Set<string>();
+  const present=new Set<SalvageTarget['id']>();
   for(const t of targets){present.add(t.id);const before=aliveMemory.get(t.id);if(before===true&&!t.alive)spawnBreakVisuals(t);aliveMemory.set(t.id,t.alive)}
   for(const id of [...aliveMemory.keys()])if(!present.has(id))aliveMemory.delete(id);
 }
