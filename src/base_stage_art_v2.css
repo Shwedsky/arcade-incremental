@@ -1,0 +1,61 @@
+.baseStageSceneV2{isolation:isolate;min-height:340px;background:#111814!important;box-shadow:inset 0 0 80px rgba(0,0,0,.34),0 14px 34px rgba(0,0,0,.18)}
+.stageIllustrationV2{position:absolute;inset:0;z-index:-1;background-image:url('/art/v2/base_scenes.svg');background-repeat:no-repeat;background-size:100% 400%;background-position-x:center;filter:saturate(.96) contrast(1.03);pointer-events:none}
+.stage-garage{min-height:390px}.stage-garage .stageIllustrationV2{background-position-y:0%}
+.stage-hangar{min-height:500px!important}.stage-hangar .stageIllustrationV2{background-position-y:33.333%}
+.stage-yard{min-height:440px!important}.stage-yard .stageIllustrationV2{background-position-y:66.666%}
+.stage-industrial{min-height:470px!important}.stage-industrial .stageIllustrationV2{background-position-y:100%}
+
+/* Labels become HUD overlays; the illustration is the place itself. */
+.baseStageSceneV2 .baseSceneLabel{z-index:30;background:rgba(8,13,10,.67);border-color:rgba(210,180,109,.2);box-shadow:0 8px 22px rgba(0,0,0,.18)}
+
+/* Garage: retain live people, remove the obsolete CSS furniture silhouettes. */
+.stage-garage .garageWall{inset:0;background:transparent!important;border:0!important}
+.stage-garage .garageDoor,.stage-garage .garageBench,.stage-garage .garageShelves,.stage-garage .garageMachines{opacity:0!important}
+.stage-garage .basePerson{bottom:47px;filter:drop-shadow(0 3px 4px rgba(0,0,0,.45))}
+
+/* Hangar: real illustrated hall behind restrained live operational overlays. */
+.stage-hangar .hangarStructure{opacity:0!important}
+.stage-hangar .hangarFloorV1{inset:92px 24px 22px;padding:18px;gap:12px;border:0;background:transparent!important;grid-template-columns:minmax(0,1.3fr) minmax(245px,.9fr);grid-template-rows:1fr 1fr}
+.stage-hangar .hangarZone{border-color:rgba(198,218,205,.13);background:rgba(7,13,10,.38);box-shadow:0 10px 28px rgba(0,0,0,.14);backdrop-filter:blur(2px)}
+.stage-hangar .hangarZone>header{background:rgba(15,24,19,.54);border-bottom-color:rgba(190,209,198,.1)}
+.stage-hangar .hangarMachineSlot,.stage-hangar .dispatchSeat,.stage-hangar .baseBay{background:rgba(18,30,23,.56)}
+.stage-hangar .rack,.stage-hangar .hangarPallets{opacity:.32}
+.stage-hangar .basePerson{filter:drop-shadow(0 3px 4px rgba(0,0,0,.5))}
+
+/* Yard: remove old synthetic ground/sky; four live zones float over an authored open site. */
+.stage-yard .yardSky,.stage-yard .yardGround{background:transparent!important}
+.stage-yard .yardCrane,.stage-yard .yardFloodlights,.stage-yard .scrapPile,.stage-yard .yardBulkBins,.stage-yard .yardRecoveredObjects{opacity:.08!important}
+.stage-yard .yardGround{inset:92px 18px 18px;display:grid;grid-template-columns:1.35fr .9fr .82fr 1.15fr;gap:10px;align-items:end}
+.stage-yard .yardBulkField,.stage-yard .yardRecovered,.stage-yard .yardCrewMuster,.stage-yard .yardVehicleApron{position:relative!important;inset:auto!important;width:auto!important;height:154px!important;border:1px solid rgba(192,215,202,.12)!important;border-radius:10px;background:rgba(8,14,11,.33)!important;box-shadow:0 10px 24px rgba(0,0,0,.13);backdrop-filter:blur(1.5px);overflow:hidden}
+.stage-yard .yardBulkField>header,.stage-yard .yardRecovered>header,.stage-yard .yardCrewMuster>header,.stage-yard .yardVehicleApron>header{background:rgba(14,22,18,.48)!important}
+.stage-yard .yardBays{position:static!important;width:auto!important;padding:8px;grid-template-columns:repeat(2,minmax(0,1fr))!important}
+.stage-yard .yardCrewGrid{padding:8px}
+.stage-yard .yardGate,.stage-yard .yardStaging{opacity:.55}
+.stage-yard .basePerson{display:none}
+
+/* Workshop: illustrated machines carry visual identity; cards only carry live state. */
+.stage-industrial .industrialHall{inset:0;border:0;background:transparent!important}
+.stage-industrial .overheadCrane{opacity:0!important}
+.stage-industrial .productionCells{left:3.5%;right:3.5%;bottom:25px;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;z-index:9}
+.stage-industrial .productionCells>div{height:auto;min-height:56px;border:1px solid rgba(204,222,211,.14);background:rgba(8,14,11,.49);backdrop-filter:blur(2px);box-shadow:0 8px 20px rgba(0,0,0,.14);padding:8px 10px}
+.stage-industrial .productionCells>div i{display:none!important}
+.stage-industrial .productionCells>div.active{border-color:rgba(226,169,76,.42);box-shadow:0 0 0 1px rgba(226,169,76,.08),0 8px 20px rgba(0,0,0,.14)}
+.stage-industrial .industrialBays{opacity:.18;right:3%;bottom:104px}
+.stage-industrial .basePerson{bottom:99px;filter:drop-shadow(0 3px 4px rgba(0,0,0,.5))}
+
+@media(max-width:900px){
+  .stageIllustrationV2{background-size:auto 400%;background-position-x:center}
+  .stage-garage{min-height:360px}
+  .stage-hangar{min-height:650px!important}.stage-hangar .hangarFloorV1{inset:82px 12px 14px;overflow:auto}
+  .stage-yard{min-height:690px!important}.stage-yard .yardGround{grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;align-items:stretch}.stage-yard .yardBulkField,.stage-yard .yardRecovered,.stage-yard .yardCrewMuster,.stage-yard .yardVehicleApron{height:auto!important;min-height:190px}
+  .stage-industrial{min-height:570px!important}.stage-industrial .productionCells{grid-template-columns:1fr;left:4%;right:4%;bottom:18px;gap:7px}.stage-industrial .industrialBays{display:none}.stage-industrial .basePerson{bottom:218px}
+}
+@media(max-width:560px){
+  .baseStageSceneV2 .baseSceneLabel{left:9px;top:9px;right:9px;justify-content:space-between}
+  .stage-garage{min-height:330px}
+  .stage-hangar{min-height:720px!important}
+  .stage-yard{min-height:880px!important}.stage-yard .yardGround{grid-template-columns:1fr;grid-template-rows:repeat(4,1fr);top:72px}.stage-yard .yardBulkField,.stage-yard .yardRecovered,.stage-yard .yardCrewMuster,.stage-yard .yardVehicleApron{min-height:174px}
+  .stage-industrial{min-height:600px!important}
+}
+
+@media(prefers-reduced-motion:reduce){.stageIllustrationV2{filter:saturate(.96) contrast(1.03)}}
