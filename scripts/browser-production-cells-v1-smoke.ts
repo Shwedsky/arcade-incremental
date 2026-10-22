@@ -10,6 +10,15 @@ const dist=fileURLToPath(new URL('../dist',import.meta.url)),viteBin=fileURLToPa
 function server():ChildProcess{return spawn(process.execPath,[viteBin,'preview','--host','127.0.0.1','--port',String(PORT),'--strictPort','--outDir',dist],{stdio:['ignore','pipe','pipe']})}
 async function waitServer(){for(let i=0;i<80;i++){try{const r=await fetch(ORIGIN);if(r.ok)return}catch{}await new Promise(r=>setTimeout(r,125))}throw new Error('server did not start')}
 async function stop(proc:ChildProcess){if(proc.exitCode!==null)return;proc.kill('SIGTERM');await Promise.race([once(proc,'exit'),new Promise(r=>setTimeout(r,1200))]);if(proc.exitCode===null)proc.kill('SIGKILL')}
+async function startProductionCell(page:any,id:'refining'|'fabrication'|'heavy_assembly'){
+  await page.evaluate((cellId:string)=>{
+    const button=document.querySelector<HTMLButtonElement>(`[data-pc-start="${cellId}"]`);
+    if(!button)throw new Error(`missing production start control: ${cellId}`);
+    if(button.disabled)throw new Error(`production start control is disabled before click: ${cellId}`);
+    button.click();
+  },id);
+  await page.waitForFunction((cellId:string)=>(globalThis as any).__SALVAGE_TEST__.getState().productionCellsV1.cells[cellId].job!==null,id);
+}
 
 const now=Date.now();
 const save={
@@ -54,11 +63,13 @@ try{
   const assigned=await page.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.getProductionCellsV1View());
   assert.equal(assigned.cells.find((cell:any)=>cell.id==='refining').assignedWorker.role,'logistician');assert.equal(assigned.cells.find((cell:any)=>cell.id==='fabrication').assignedWorker.role,'operator');assert.equal(assigned.cells.find((cell:any)=>cell.id==='heavy_assembly').assignedWorker.role,'technician');
 
-  // Start all three coherent cells through the UI and prove inputs come from the real shared inventories.
+  // Trigger the real player-facing controls from the DOM, then assert domain state.
+  // Using HTMLElement.click() avoids Playwright retrying a locator that is intentionally
+  // destroyed and recreated immediately after the successful start action.
   const preStock=assigned.stock;
-  await page.click('[data-pc-start="refining"]');await page.waitForFunction(()=>(globalThis as any).__SALVAGE_TEST__.getState().productionCellsV1.cells.refining.job!==null);
-  await page.click('[data-pc-start="fabrication"]');await page.waitForFunction(()=>(globalThis as any).__SALVAGE_TEST__.getState().productionCellsV1.cells.fabrication.job!==null);
-  await page.click('[data-pc-start="heavy_assembly"]');await page.waitForFunction(()=>(globalThis as any).__SALVAGE_TEST__.getState().productionCellsV1.cells.heavy_assembly.job!==null);
+  await startProductionCell(page,'refining');
+  await startProductionCell(page,'fabrication');
+  await startProductionCell(page,'heavy_assembly');
   const running=await page.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.getProductionCellsV1View());
   assert.equal(running.cells.filter((cell:any)=>cell.status==='running').length,3,'all three industrial activities must be able to run in parallel');
   assert.equal(running.stock.alloyScrap,preStock.alloyScrap-25,'Refining must consume real Pack C alloy scrap at start');assert.equal(running.stock.reinforcedAlloy,preStock.reinforcedAlloy-8,'Heavy Assembly must consume real reinforced alloy at start');
