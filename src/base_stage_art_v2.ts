@@ -1,4 +1,5 @@
 import './base_stage_art_v2.css';
+import './base_stage_art_scene_first_v3.css';
 
 function attach(){
   const scene=document.querySelector<HTMLElement>('#baseStageSceneV2');
