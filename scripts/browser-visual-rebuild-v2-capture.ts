@@ -30,6 +30,14 @@ function stageSave(raw:string,stage:'garage'|'hangar'|'yard'|'industrial'){
   return JSON.stringify(s);
 }
 async function assertStage(page:Page,cls:string){await page.waitForSelector(`#baseStageSceneV2.${cls}`)}
+async function openZones(page:Page){
+  await page.evaluate(()=>{
+    const button=document.getElementById('zonesOpen') as HTMLButtonElement|null;
+    if(!button)throw new Error('canonical zonesOpen control missing');
+    button.click();
+  });
+  await page.waitForSelector('#zoneScreen:not([hidden])');
+}
 
 await waitServer();const browser=await chromium.launch({headless:true});
 try{
@@ -40,7 +48,7 @@ try{
   await page.waitForSelector('#game');await page.waitForTimeout(900);await saveShot(page,'01-field-desktop');
 
   // Real zone selector with V2 illustrated route map.
-  await page.click('#zonesOpen');await page.waitForSelector('#zoneScreen:not([hidden])');await page.waitForTimeout(350);await saveShot(page,'02-zone-map-desktop','#zoneScreen');await page.click('#zoneClose');
+  await openZones(page);await page.waitForTimeout(350);await saveShot(page,'02-zone-map-desktop','#zoneScreen');await page.click('#zoneClose');
 
   // Use the existing durable DEV preset to obtain a fully populated canonical roster/fleet/inventory.
   await page.click('#hfDevToggle');await page.waitForSelector('#hfDevPanel:not([hidden])');
@@ -57,7 +65,7 @@ try{
   const industrialRaw=stageSave(matureRaw,'industrial');
   const mobile=await browser.newContext({viewport:{width:390,height:844},storageState:{cookies:[],origins:[{origin:ORIGIN,localStorage:[{name:SAVE_KEY,value:industrialRaw}]}]}}),mobilePage=await mobile.newPage();
   await mobilePage.goto(`${ORIGIN}/?seed=visual-rebuild-v2-mobile`,{waitUntil:'load'});await ready(mobilePage);await forceGarage(mobilePage);await assertStage(mobilePage,'stage-industrial');await saveShot(mobilePage,'08-industrial-mobile');
-  await mobilePage.click('#zonesGarage');await mobilePage.waitForSelector('#zoneScreen:not([hidden])');await mobilePage.waitForTimeout(300);await saveShot(mobilePage,'09-zone-map-mobile','#zoneScreen');
+  await openZones(mobilePage);await mobilePage.waitForTimeout(300);await saveShot(mobilePage,'09-zone-map-mobile','#zoneScreen');
   await mobile.close();await context.close();
   console.log(`Visual Rebuild V2 capture: wrote screenshots to ${outDir}`);
 }finally{await browser.close();await stopServer()}
