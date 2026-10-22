@@ -1,0 +1,104 @@
+/* Visual Rebuild V2 / Sprint 3 — scene-first composition.
+   The authored location remains the hero. Canonical live state stays visible,
+   but status overlays are compact docks instead of full-screen dashboards. */
+
+.stage-hangar .hangarFloorV1{
+  inset:58px 18px 16px;
+  display:block;
+  padding:0;
+  border:0;
+  overflow:visible;
+  background:transparent!important;
+}
+.stage-hangar .hangarZone{
+  position:absolute;
+  min-width:0;
+  border:1px solid rgba(198,218,205,.16);
+  border-radius:9px;
+  background:rgba(6,11,8,.58);
+  box-shadow:0 10px 30px rgba(0,0,0,.22);
+  backdrop-filter:blur(3px);
+  overflow:hidden;
+}
+.stage-hangar .hangarZone>header{padding:5px 7px;background:rgba(10,17,13,.72)}
+.stage-hangar .hangarZone>header b{font-size:7px;letter-spacing:.12em}
+.stage-hangar .hangarZone>header span{font-size:7px}
+.stage-hangar .machineZone{left:1.5%;right:auto;top:auto;bottom:5px;width:39%;height:82px}
+.stage-hangar .storageZone{left:41.5%;right:auto;top:auto;bottom:5px;width:18%;height:82px}
+.stage-hangar .vehicleZone{left:auto;right:1.5%;top:auto;bottom:5px;width:38%;height:82px}
+.stage-hangar .dispatchZone{left:auto;right:1.5%;top:3px;bottom:auto;width:27%;height:108px}
+.stage-hangar .hangarMachinesV1{grid-template-columns:repeat(6,minmax(0,1fr));gap:3px;padding:5px}
+.stage-hangar .hangarMachineSlot{min-height:45px;border-radius:5px;gap:1px;background:rgba(15,27,20,.68)}
+.stage-hangar .hangarMachineSlot span{font-size:13px}
+.stage-hangar .hangarMachineSlot small{font-size:6px;line-height:1.05}
+.stage-hangar .dispatchGrid{grid-template-columns:1fr 1fr;gap:3px;padding:4px}
+.stage-hangar .dispatchSeat{min-height:27px;padding:3px 5px;grid-template-columns:minmax(0,1fr) auto;gap:0 4px}
+.stage-hangar .dispatchSeat b{font-size:7px}.stage-hangar .dispatchSeat span{font-size:6px}.stage-hangar .dispatchSeat small{font-size:5px}
+.stage-hangar .storageZone .rack,.stage-hangar .storageZone .hangarPallets{display:none}
+.stage-hangar .storageZone:after{content:'ПАЛЛЕТЫ · ВХОДЯЩИЙ ПОТОК';position:absolute;inset:30px 6px 6px;display:grid;place-items:center;border:1px dashed rgba(206,174,103,.22);border-radius:5px;color:#b8a57b;font:700 6px/1.25 system-ui;text-align:center;letter-spacing:.09em;background:rgba(33,28,18,.23)}
+.stage-hangar .hangarBaysV1{grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;padding:5px}
+.stage-hangar .hangarBaysV1 .baseBay{min-height:45px;height:45px;gap:0}
+.stage-hangar .hangarBaysV1 .baseBay span{font-size:15px}.stage-hangar .hangarBaysV1 .baseBay small{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:6px}.stage-hangar .hangarBaysV1 .baseBay em{font-size:5px}
+.stage-hangar .hangarExpansion{left:18px;top:62px;bottom:auto;transform:none;background:rgba(9,14,11,.62);opacity:.82}
+.stage-hangar .basePerson{bottom:104px;opacity:.94;transform:scale(.9);filter:drop-shadow(0 4px 5px rgba(0,0,0,.55))}
+
+/* Yard: the crane, bulk piles, recovered machinery and fleet apron remain visible.
+   Live state is reduced to two small semantic badges + two lower status docks. */
+.stage-yard .yardGround{inset:0;display:block;background:transparent!important}
+.stage-yard .yardBulkField,.stage-yard .yardRecovered,.stage-yard .yardCrewMuster,.stage-yard .yardVehicleApron{
+  position:absolute!important;
+  width:auto!important;
+  border:1px solid rgba(192,215,202,.14)!important;
+  border-radius:9px;
+  background:rgba(6,11,8,.54)!important;
+  box-shadow:0 10px 28px rgba(0,0,0,.2);
+  backdrop-filter:blur(2.5px);
+  overflow:hidden;
+}
+.stage-yard .yardBulkField{left:18px!important;right:auto!important;top:122px!important;bottom:auto!important;width:24%!important;height:42px!important}
+.stage-yard .yardRecovered{left:auto!important;right:18px!important;top:122px!important;bottom:auto!important;width:24%!important;height:42px!important}
+.stage-yard .yardVehicleApron{left:18px!important;right:auto!important;top:auto!important;bottom:14px!important;width:48%!important;height:96px!important}
+.stage-yard .yardCrewMuster{left:auto!important;right:18px!important;top:auto!important;bottom:14px!important;width:31%!important;height:96px!important}
+.stage-yard .yardBulkField>header,.stage-yard .yardRecovered>header,.stage-yard .yardCrewMuster>header,.stage-yard .yardVehicleApron>header{padding:5px 7px;background:rgba(10,17,13,.7)!important;border-bottom-color:rgba(190,209,198,.09)!important}
+.stage-yard .yardBulkField>header b,.stage-yard .yardRecovered>header b,.stage-yard .yardCrewMuster>header b,.stage-yard .yardVehicleApron>header b{font-size:7px;letter-spacing:.1em}
+.stage-yard .yardBulkField>header span,.stage-yard .yardRecovered>header span,.stage-yard .yardCrewMuster>header span,.stage-yard .yardVehicleApron>header span{font-size:6px}
+.stage-yard .yardBulkField .scrapPile,.stage-yard .yardBulkField .yardBulkBins,.stage-yard .yardRecovered .yardRecoveredObjects{display:none!important}
+.stage-yard .yardBulkField:after{content:'ВХОДЯЩИЙ ЛОМ';position:absolute;right:8px;bottom:5px;color:#9cab9f;font:700 6px/1 system-ui;letter-spacing:.1em}
+.stage-yard .yardRecovered:after{content:'КРУПНЫЕ ОБЪЕКТЫ';position:absolute;right:8px;bottom:5px;color:#9cab9f;font:700 6px/1 system-ui;letter-spacing:.1em}
+.stage-yard .yardBays{position:static!important;width:auto!important;display:grid;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:4px;padding:5px}
+.stage-yard .yardBays .baseBay{height:54px;min-height:0}.stage-yard .yardBays .baseBay span{font-size:15px}.stage-yard .yardBays .baseBay small{font-size:6px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.stage-yard .yardBays .baseBay em{font-size:5px}
+.stage-yard .yardCrewGrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:3px;padding:5px}
+.stage-yard .yardCrewSlot{min-height:27px;padding:3px}.stage-yard .yardCrewSlot b{font-size:6px}.stage-yard .yardCrewSlot span{font-size:5px}
+.stage-yard .yardGate{right:34%;left:auto;bottom:17px;top:auto;opacity:.4;transform:scale(.82);transform-origin:right bottom}
+.stage-yard .yardStaging{left:28%;right:auto;top:auto;bottom:17px;opacity:.38;transform:scale(.8);transform-origin:left bottom}
+
+/* Industrial already reads as a place; make the live rail quieter so authored
+   equipment remains dominant without removing any canonical status hooks. */
+.stage-industrial .productionCells{bottom:18px;left:4%;right:4%;gap:12px}
+.stage-industrial .productionCells>div{min-height:46px;padding:6px 9px;background:rgba(6,11,8,.42);border-color:rgba(204,222,211,.12);box-shadow:0 7px 16px rgba(0,0,0,.12)}
+.stage-industrial .productionCells b{font-size:8px}.stage-industrial .productionCells span{font-size:8px}
+.stage-industrial .industrialBays{opacity:.09}
+.stage-industrial .basePerson{bottom:82px}
+
+@media(max-width:900px){
+  .stage-hangar{min-height:590px!important}
+  .stage-hangar .hangarFloorV1{inset:70px 10px 12px;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:auto auto;gap:7px;align-content:end}
+  .stage-hangar .machineZone,.stage-hangar .storageZone,.stage-hangar .vehicleZone,.stage-hangar .dispatchZone{position:relative;inset:auto!important;width:auto!important;height:auto!important;min-height:88px}
+  .stage-hangar .machineZone{grid-column:1/3}.stage-hangar .dispatchZone{grid-column:1}.stage-hangar .storageZone{grid-column:2}.stage-hangar .vehicleZone{grid-column:1/3}
+  .stage-hangar .hangarMachinesV1{grid-template-columns:repeat(3,minmax(0,1fr))}.stage-hangar .hangarBaysV1{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .stage-hangar .basePerson,.stage-hangar .hangarExpansion{display:none}
+
+  .stage-yard{min-height:610px!important}
+  .stage-yard .yardBulkField{top:92px!important;width:34%!important}.stage-yard .yardRecovered{top:92px!important;width:34%!important}
+  .stage-yard .yardVehicleApron{left:10px!important;right:10px!important;bottom:120px!important;width:auto!important;height:100px!important}
+  .stage-yard .yardCrewMuster{left:10px!important;right:10px!important;bottom:12px!important;width:auto!important;height:100px!important}
+  .stage-yard .yardBays{grid-template-columns:repeat(4,minmax(0,1fr))!important}.stage-yard .yardCrewGrid{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .stage-yard .yardGate,.stage-yard .yardStaging{display:none}
+
+  .stage-industrial .productionCells{grid-template-columns:1fr;left:4%;right:4%;bottom:14px;gap:5px}.stage-industrial .productionCells>div{min-height:38px}.stage-industrial .basePerson{display:none}
+}
+
+@media(max-width:560px){
+  .stage-hangar{min-height:660px!important}.stage-hangar .hangarFloorV1{grid-template-columns:1fr}.stage-hangar .machineZone,.stage-hangar .dispatchZone,.stage-hangar .storageZone,.stage-hangar .vehicleZone{grid-column:1}.stage-hangar .hangarMachinesV1{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .stage-yard{min-height:660px!important}.stage-yard .yardBulkField,.stage-yard .yardRecovered{top:82px!important;width:42%!important}.stage-yard .yardBays{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+}
