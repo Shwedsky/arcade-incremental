@@ -7,15 +7,19 @@ const field=readFileSync(`${root}src/field_view.ts`,'utf8');
 const art=readFileSync(`${root}src/field_art_v2.ts`,'utf8');
 const baseModule=readFileSync(`${root}src/base_stage_art_v2.ts`,'utf8');
 const baseCss=readFileSync(`${root}src/base_stage_art_v2.css`,'utf8');
+const uiCss=readFileSync(`${root}src/visual_rebuild_v2_ui.css`,'utf8');
 const atlasPath=`${root}public/art/v2/field_atlas.svg`;
 const baseAtlasPath=`${root}public/art/v2/base_scenes.svg`;
+const zoneMapPath=`${root}public/art/v2/zone_map.svg`;
 const docPath=`${root}docs/VISUAL_REBUILD_V2.md`;
 
 assert.ok(existsSync(atlasPath),'V2 field atlas must exist');
 assert.ok(existsSync(baseAtlasPath),'V2 base scene atlas must exist');
+assert.ok(existsSync(zoneMapPath),'V2 zone map art must exist');
 assert.ok(existsSync(docPath),'Visual Rebuild V2 production contract must exist');
 const atlas=readFileSync(atlasPath,'utf8');
 const baseAtlas=readFileSync(baseAtlasPath,'utf8');
+const zoneMap=readFileSync(zoneMapPath,'utf8');
 const doc=readFileSync(docPath,'utf8');
 
 for(const frame of ['player-idle','player-move','player-attack','small-scrap','cable','small-appliance','machine-frame','medium-generator','large-intact','large-damaged','large-critical','debris']){
@@ -39,6 +43,12 @@ assert.ok(baseModule.includes("className='stageIllustrationV2'"),'V2 base layer 
 for(const stage of ['stage-garage','stage-hangar','stage-yard','stage-industrial'])assert.ok(baseCss.includes(`.${stage}`),`V2 CSS must author ${stage}`);
 assert.ok(baseCss.includes("background-image:url('/art/v2/base_scenes.svg')"),'base surfaces must use the authored scene atlas rather than CSS-only primitive scenery');
 assert.ok(baseCss.includes('.stage-industrial .productionCells'),'live production overlays must remain attached to the illustrated workshop');
+
+assert.ok(zoneMap.includes('МАРШРУТ СБОРА'),'zone map must be an authored salvage-route illustration');
+assert.ok(zoneMap.includes('<circle cx="1360" cy="527" r="22"/>'),'zone map art must contain all eight route nodes');
+assert.ok(uiCss.includes("url('/art/v2/zone_map.svg')"),'zone screen must use the illustrated V2 map');
+for(let i=1;i<=8;i++)assert.ok(uiCss.includes(`.zoneCard:nth-child(${i})`),`desktop map must author route position ${i}`);
+assert.ok(uiCss.includes('@media(max-width:900px)'),'zone map must include intentional phone/tablet composition');
 assert.ok(doc.includes('Green CI alone is not acceptance.'),'V2 contract must explicitly keep visual quality as a human gate');
 
 for(const forbidden of ['rollDrops(','gainXp(','addActiveMastery(','zoneYieldMultiplier(','componentChance']){
@@ -47,4 +57,4 @@ for(const forbidden of ['rollDrops(','gainXp(','addActiveMastery(','zoneYieldMul
   assert.ok(!baseModule.includes(forbidden),`V2 base art integration must remain economy-neutral: ${forbidden}`);
 }
 
-console.log('Visual Rebuild V2 structural contract: illustrated field, real break debris and authored Garage/Hangar/Yard/Workshop scenes: PASS');
+console.log('Visual Rebuild V2 structural contract: illustrated field, real break debris, authored base scenes and illustrated zone route map: PASS');
