@@ -132,6 +132,13 @@ jobs:
         run: npm run smoke:browser:owner-review-v6
       - name: Platform and responsive browser proof
         run: npm run smoke:browser:platform
+      - name: Capture Visual Rebuild V2 review screenshots
+        run: npm run capture:visual-rebuild-v2
+      - uses: actions/upload-artifact@v4
+        with:
+          name: visual-rebuild-v2-review-screenshots
+          path: visual-review-v2/*.png
+          if-no-files-found: error
       - name: Build release manifest
         run: npm run release:manifest
       - name: Package internal release candidate
