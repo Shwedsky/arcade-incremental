@@ -39,6 +39,14 @@ async function openZones(page:Page){
   await page.waitForSelector('#zoneScreen:not([hidden])');
 }
 
+async function assertFocusedNodeSurvivesTicks(page:Page,selector:string,label:string){
+  const locator=page.locator(selector).first();await locator.waitFor({state:'visible'});await locator.focus();
+  const handle=await locator.elementHandle();if(!handle)throw new Error(`${label}: missing DOM handle`);
+  await page.waitForTimeout(1250);
+  const stable=await handle.evaluate(node=>node.isConnected&&document.activeElement===node);
+  if(!stable)throw new Error(`${label}: focused select was replaced or lost focus during live render ticks`);
+}
+
 function garageFixture(canonical:any){
   const t=Date.now(),garage=structuredClone(canonical);
   garage.xp=Math.max(Number(garage.xp??0),30_000);
@@ -122,6 +130,15 @@ try{
   await industrialPage.waitForFunction(()=>(globalThis as any).__SALVAGE_TEST__?.getState()?.midgame?.mastery?.z8===100);
   await forceGarage(industrialPage);await assertStage(industrialPage,'stage-industrial','industrial_workshop');
   await saveShot(industrialPage,'06-industrial-stage-desktop','#baseStageSceneV2');await saveShot(industrialPage,'07-industrial-menu-desktop');
+
+  // Regression gate for the owner-reported flicker: controls must remain the same
+  // focused DOM nodes across several workforce/operator live-render intervals.
+  await industrialPage.evaluate(()=>(globalThis as any).__SALVAGE_BASE_SHELL__?.open?.('crew'));
+  await industrialPage.waitForSelector('[data-base-pane="crew"]:not([hidden])');
+  await assertFocusedNodeSurvivesTicks(industrialPage,'[data-v3-zone]','workforce zone select');
+  if(await industrialPage.locator('[data-op-cell]').count())await assertFocusedNodeSurvivesTicks(industrialPage,'[data-op-cell]','operator cell select');
+  await saveShot(industrialPage,'10-crew-ui-desktop','[data-base-pane="crew"]');
+
   const industrialRaw=await industrialPage.evaluate(key=>localStorage.getItem(key),SAVE_KEY);if(!industrialRaw)throw new Error('industrial visual capture save missing');await industrialContext.close();
 
   // Phone proof from the exact Industrial save captured above.
