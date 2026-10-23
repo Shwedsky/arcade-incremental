@@ -74,14 +74,31 @@ function updateLiveMetrics(s:any){
   }
 }
 
+function updateActionAvailability(s:any){
+  const wf=workforce(s),stage=s.businessStage as BusinessStageId,capacity=WORKER_CAPACITY_BY_STAGE[stage];
+  const hire=document.querySelector<HTMLButtonElement>('[data-v3-hire]');
+  if(hire){
+    const cost=nextWorkerHireCost(wf),mastered=(s.midgame?.mastery?.z1??0)>=99.999,space=wf.workers.length<capacity,entryReady=mastered||wf.workers.length>0,cashReady=s.cash>=cost;
+    const missing=Math.max(0,cost-s.cash);
+    hire.disabled=!(space&&entryReady);
+    hire.classList.toggle('needsCash',!cashReady);
+    hire.textContent=!space?'Нет свободных мест':!entryReady?'Сначала освой Z1':cashReady?`Нанять · ${money(cost)}`:`Нанять · ${money(cost)} · не хватает ${money(missing)}`;
+  }
+  const fleetFull=wf.fleet.length>=FLEET_CAPACITY_BY_STAGE[stage];
+  document.querySelectorAll<HTMLButtonElement>('[data-v3-buy-vehicle]').forEach(button=>{
+    const type=button.dataset.v3BuyVehicle as VehicleTypeV3|undefined;if(!type)return;
+    button.disabled=fleetFull||s.cash<VEHICLE_PURCHASE_COST[type];
+  });
+}
+
 let lastSignature='';
-function structuralSignature(s:any){const wf=workforce(s);return JSON.stringify({stage:s.businessStage,cash:Math.floor(s.cash),workers:wf.workers.map(w=>[w.id,w.rank,w.role,w.status,w.routeId,w.productionCellId]),fleet:wf.fleet.map(v=>[v.id,v.type,v.routeId]),routes:wf.routes.map(r=>[r.id,r.zone,r.workerIds,r.vehicleId]),mastered:Object.entries(s.midgame?.mastery??{}).filter(([,v])=>Number(v)>=99.999).map(([k])=>k)})}
+function structuralSignature(s:any){const wf=workforce(s);return JSON.stringify({stage:s.businessStage,workers:wf.workers.map(w=>[w.id,w.rank,w.role,w.status,w.routeId,w.productionCellId]),fleet:wf.fleet.map(v=>[v.id,v.type,v.routeId]),routes:wf.routes.map(r=>[r.id,r.zone,r.workerIds,r.vehicleId]),mastered:Object.entries(s.midgame?.mastery??{}).filter(([,v])=>Number(v)>=99.999).map(([k])=>k)})}
 function rootOwnedByLegacy(rootId:string,legacyId:string){const root=document.querySelector<HTMLElement>(`#${rootId}`),legacy=document.querySelector<HTMLElement>(`#${legacyId}`);return !!root&&!!legacy&&root.parentElement===legacy.parentElement&&root.nextElementSibling===legacy}
 function render(){
   const s=state();if(!s?.workforceV3)return;const garage=document.querySelector<HTMLElement>('#garageScreen');if(!garage||garage.hidden)return;
   const sig=structuralSignature(s),crewOwned=rootOwnedByLegacy('workforceV3Root','workerPanel'),fleetOwned=rootOwnedByLegacy('fleetV3Root','transportPanel');
   if(sig!==lastSignature||!crewOwned||!fleetOwned){renderCrew(s);renderFleet(s);lastSignature=sig}
-  updateLiveMetrics(s)
+  updateLiveMetrics(s);updateActionAvailability(s)
 }
 
 addEventListener('click',event=>{const target=event.target as HTMLElement;
