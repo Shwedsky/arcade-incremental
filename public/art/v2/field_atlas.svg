@@ -1,0 +1,155 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="768" viewBox="0 0 1024 768">
+  <defs>
+    <linearGradient id="steel" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#aeb9b3"/><stop offset=".55" stop-color="#66736d"/><stop offset="1" stop-color="#35413d"/></linearGradient>
+    <linearGradient id="darkSteel" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#5d6d65"/><stop offset="1" stop-color="#1f2a26"/></linearGradient>
+    <linearGradient id="orange" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f0a84d"/><stop offset="1" stop-color="#a85a2e"/></linearGradient>
+    <linearGradient id="rust" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#c67a43"/><stop offset="1" stop-color="#713b2a"/></linearGradient>
+    <linearGradient id="olive" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#87966c"/><stop offset="1" stop-color="#47533d"/></linearGradient>
+    <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="5"/></filter>
+    <filter id="soft" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="1.6"/></filter>
+  </defs>
+
+  <!-- 0: player idle -->
+  <g transform="translate(0 0)">
+    <ellipse cx="128" cy="202" rx="55" ry="18" fill="#07100c" opacity=".42" filter="url(#soft)"/>
+    <path d="M97 155 L90 197 L111 204 L122 165 Z" fill="#28352f"/><path d="M159 155 L166 197 L145 204 L134 165 Z" fill="#28352f"/>
+    <path d="M102 105 Q128 84 154 105 L162 159 Q128 177 94 159 Z" fill="url(#orange)" stroke="#61351f" stroke-width="4"/>
+    <path d="M105 111 Q128 99 151 111 L146 145 Q128 157 110 145 Z" fill="#e09a4f" opacity=".5"/>
+    <path d="M91 114 Q80 127 83 151 L98 148 L104 119 Z" fill="#c57639" stroke="#61351f" stroke-width="4"/>
+    <path d="M165 114 Q176 127 173 151 L158 148 L152 119 Z" fill="#c57639" stroke="#61351f" stroke-width="4"/>
+    <circle cx="128" cy="78" r="24" fill="#d8a06f" stroke="#5a3b2b" stroke-width="4"/>
+    <path d="M105 75 Q128 48 151 75 L151 84 L105 84 Z" fill="#35433c"/><path d="M109 68 Q128 57 147 69" fill="none" stroke="#7a8b80" stroke-width="5"/>
+    <path d="M99 103 Q83 110 81 135 L90 141 L105 121 Z" fill="url(#olive)" stroke="#303a2c" stroke-width="4"/>
+    <rect x="88" y="109" width="20" height="45" rx="7" fill="#59654b"/>
+    <path d="M153 115 L192 89" stroke="#4a3427" stroke-width="8" stroke-linecap="round"/><path d="M188 82 L201 94" stroke="#9aa39e" stroke-width="7" stroke-linecap="round"/>
+    <rect x="110" y="108" width="36" height="7" rx="3" fill="#f2c552"/>
+  </g>
+
+  <!-- 1: player move -->
+  <g transform="translate(256 0)">
+    <ellipse cx="128" cy="202" rx="59" ry="18" fill="#07100c" opacity=".42" filter="url(#soft)"/>
+    <path d="M112 158 L83 194 L101 207 L129 171 Z" fill="#28352f"/><path d="M146 157 L173 190 L154 204 L132 171 Z" fill="#28352f"/>
+    <path d="M101 106 Q127 84 154 103 L164 156 Q130 177 94 157 Z" fill="url(#orange)" stroke="#61351f" stroke-width="4"/>
+    <path d="M91 115 Q74 129 79 149 L95 146 L105 121 Z" fill="#c57639" stroke="#61351f" stroke-width="4"/>
+    <path d="M164 109 Q183 117 188 139 L173 145 L153 122 Z" fill="#c57639" stroke="#61351f" stroke-width="4"/>
+    <circle cx="129" cy="77" r="24" fill="#d8a06f" stroke="#5a3b2b" stroke-width="4"/>
+    <path d="M106 74 Q129 48 152 75 L152 84 L106 84 Z" fill="#35433c"/><path d="M100 104 Q83 112 81 137 L91 142 L106 122 Z" fill="url(#olive)" stroke="#303a2c" stroke-width="4"/>
+    <path d="M164 120 L199 99" stroke="#4a3427" stroke-width="8" stroke-linecap="round"/><path d="M195 92 L207 104" stroke="#aab3ae" stroke-width="7" stroke-linecap="round"/>
+    <rect x="111" y="108" width="37" height="7" rx="3" fill="#f2c552"/>
+  </g>
+
+  <!-- 2: player attack -->
+  <g transform="translate(512 0)">
+    <ellipse cx="128" cy="204" rx="61" ry="18" fill="#07100c" opacity=".42" filter="url(#soft)"/>
+    <path d="M108 157 L92 198 L113 205 L128 169 Z" fill="#28352f"/><path d="M147 157 L166 198 L145 205 L131 169 Z" fill="#28352f"/>
+    <path d="M101 106 Q128 84 155 104 L162 159 Q128 176 94 159 Z" fill="url(#orange)" stroke="#61351f" stroke-width="4"/>
+    <circle cx="127" cy="77" r="24" fill="#d8a06f" stroke="#5a3b2b" stroke-width="4"/>
+    <path d="M104 74 Q127 48 150 75 L150 84 L104 84 Z" fill="#35433c"/>
+    <path d="M99 105 Q82 112 81 137 L91 142 L106 121 Z" fill="url(#olive)" stroke="#303a2c" stroke-width="4"/>
+    <path d="M158 117 Q177 103 190 84" stroke="#c57639" stroke-width="15" stroke-linecap="round"/>
+    <path d="M184 88 L214 48" stroke="#4a3427" stroke-width="9" stroke-linecap="round"/><path d="M205 42 L220 55" stroke="#b6c0bb" stroke-width="8" stroke-linecap="round"/>
+    <path d="M183 70 Q202 60 217 61" fill="none" stroke="#f4ce75" stroke-width="4" opacity=".65"/>
+    <rect x="110" y="108" width="37" height="7" rx="3" fill="#f2c552"/>
+  </g>
+
+  <!-- 3: small scrap bundle -->
+  <g transform="translate(768 0)">
+    <ellipse cx="128" cy="184" rx="67" ry="19" fill="#07100c" opacity=".38"/>
+    <path d="M66 160 L92 112 L135 126 L168 104 L194 154 L173 178 L87 180 Z" fill="#3b4742" stroke="#202a26" stroke-width="5"/>
+    <path d="M77 153 L111 121 L132 133 L116 164 Z" fill="url(#steel)"/>
+    <path d="M128 133 L166 111 L181 148 L151 164 Z" fill="url(#rust)"/>
+    <path d="M93 164 L128 151 L163 166 L150 177 L101 177 Z" fill="#6e7872"/>
+    <circle cx="91" cy="145" r="14" fill="none" stroke="#252c29" stroke-width="8"/>
+    <path d="M149 138 Q168 121 181 137" fill="none" stroke="#d17a49" stroke-width="6"/>
+    <path d="M83 128 L118 104" stroke="#a9b2ad" stroke-width="6" stroke-linecap="round"/>
+  </g>
+
+  <!-- 4: cable coil -->
+  <g transform="translate(0 256)">
+    <ellipse cx="128" cy="185" rx="61" ry="17" fill="#07100c" opacity=".36"/>
+    <circle cx="128" cy="139" r="52" fill="#3a2923" stroke="#1c2420" stroke-width="7"/>
+    <circle cx="128" cy="139" r="34" fill="#202a26" stroke="#c86d3e" stroke-width="12"/>
+    <circle cx="128" cy="139" r="16" fill="#111917" stroke="#6f7a74" stroke-width="5"/>
+    <path d="M87 112 Q126 82 167 111" fill="none" stroke="#f09a58" stroke-width="5" stroke-linecap="round"/>
+    <path d="M170 151 L200 173" stroke="#c86d3e" stroke-width="9" stroke-linecap="round"/><circle cx="205" cy="177" r="7" fill="#d9a36e"/>
+  </g>
+
+  <!-- 5: small appliance -->
+  <g transform="translate(256 256)">
+    <ellipse cx="128" cy="191" rx="60" ry="17" fill="#07100c" opacity=".36"/>
+    <path d="M78 105 Q78 91 92 88 L167 88 Q181 91 181 105 L176 170 Q173 183 160 186 L95 186 Q82 183 80 170 Z" fill="url(#steel)" stroke="#293530" stroke-width="6"/>
+    <path d="M91 108 L168 108 L163 147 L95 147 Z" fill="#34443f"/>
+    <rect x="101" y="116" width="44" height="22" rx="5" fill="#1a2421"/><circle cx="157" cy="126" r="7" fill="#e09a4f"/>
+    <path d="M92 157 L164 157" stroke="#c2cbc6" stroke-width="5"/><path d="M103 173 L119 154" stroke="#9e623c" stroke-width="6"/>
+  </g>
+
+  <!-- 6: damaged machine frame -->
+  <g transform="translate(512 256)">
+    <ellipse cx="128" cy="191" rx="69" ry="20" fill="#07100c" opacity=".4"/>
+    <path d="M72 164 L82 100 L103 89 L178 101 L187 159 L169 180 L91 180 Z" fill="#26332e" stroke="#17211d" stroke-width="6"/>
+    <path d="M92 109 L116 96 L116 167 L91 171 Z" fill="url(#rust)"/>
+    <path d="M126 101 L169 110 L174 154 L151 166 L127 158 Z" fill="url(#steel)"/>
+    <circle cx="150" cy="133" r="18" fill="#17211e" stroke="#9aa69f" stroke-width="7"/>
+    <path d="M81 145 L62 126" stroke="#78847e" stroke-width="7"/><path d="M171 107 L194 86" stroke="#78847e" stroke-width="7"/>
+    <path d="M113 129 L144 111" stroke="#d99b4f" stroke-width="5"/>
+  </g>
+
+  <!-- 7: medium generator -->
+  <g transform="translate(768 256)">
+    <ellipse cx="128" cy="194" rx="78" ry="22" fill="#07100c" opacity=".42"/>
+    <path d="M62 114 Q64 96 83 92 L174 92 Q192 96 194 114 L188 165 Q184 184 165 187 L89 187 Q70 183 66 164 Z" fill="url(#olive)" stroke="#263128" stroke-width="7"/>
+    <path d="M79 112 L177 112 L172 163 L83 163 Z" fill="#26352f"/>
+    <circle cx="126" cy="138" r="30" fill="#151f1c" stroke="#71827a" stroke-width="8"/>
+    <circle cx="126" cy="138" r="13" fill="#b9c5bf"/>
+    <rect x="157" y="122" width="23" height="15" rx="4" fill="#d69445"/>
+    <path d="M76 174 L59 188 M180 174 L197 188" stroke="#202924" stroke-width="10" stroke-linecap="round"/>
+  </g>
+
+  <!-- 8: large industrial machine intact -->
+  <g transform="translate(0 512)">
+    <ellipse cx="128" cy="207" rx="92" ry="26" fill="#07100c" opacity=".45"/>
+    <path d="M45 126 Q47 101 72 95 L184 95 Q209 101 211 126 L205 180 Q201 202 177 207 L78 207 Q54 202 50 179 Z" fill="url(#darkSteel)" stroke="#17211d" stroke-width="8"/>
+    <path d="M61 116 L195 116 L191 165 L65 165 Z" fill="url(#steel)"/>
+    <path d="M73 127 L121 127 L121 154 L73 154 Z" fill="#2a3934"/>
+    <path d="M136 126 L181 126 L181 154 L136 154 Z" fill="#55493c"/>
+    <circle cx="86" cy="181" r="17" fill="#17211e" stroke="#8d9b94" stroke-width="6"/>
+    <circle cx="169" cy="181" r="17" fill="#17211e" stroke="#8d9b94" stroke-width="6"/>
+    <path d="M56 107 L80 82 L177 82 L201 107" fill="none" stroke="#d18a45" stroke-width="8" stroke-linejoin="round"/>
+    <rect x="112" y="91" width="32" height="12" rx="4" fill="#efbd55"/>
+  </g>
+
+  <!-- 9: large industrial machine damaged/open -->
+  <g transform="translate(256 512)">
+    <ellipse cx="128" cy="207" rx="94" ry="26" fill="#07100c" opacity=".45"/>
+    <path d="M46 129 Q48 104 72 98 L184 98 Q207 104 211 129 L203 181 Q198 201 176 207 L79 207 Q55 202 50 179 Z" fill="#35443d" stroke="#17211d" stroke-width="8"/>
+    <path d="M61 118 L121 118 L112 166 L65 165 Z" fill="url(#steel)"/>
+    <path d="M142 111 L197 124 L189 165 L132 154 Z" fill="url(#rust)" transform="rotate(9 165 138)"/>
+    <path d="M116 118 L145 118 L153 169 L105 169 Z" fill="#17211e"/>
+    <circle cx="128" cy="143" r="20" fill="#57645d" stroke="#b87b44" stroke-width="7"/>
+    <path d="M105 143 L151 143 M128 120 L128 166" stroke="#b8c1bc" stroke-width="5"/>
+    <path d="M80 98 L61 78 M184 99 L207 82" stroke="#d18a45" stroke-width="8" stroke-linecap="round"/>
+    <path d="M85 178 Q111 154 137 179" fill="none" stroke="#c86b3e" stroke-width="7"/>
+  </g>
+
+  <!-- 10: large machine near destroyed -->
+  <g transform="translate(512 512)">
+    <ellipse cx="128" cy="208" rx="98" ry="27" fill="#07100c" opacity=".45"/>
+    <path d="M54 144 L76 104 L117 113 L137 98 L188 121 L204 172 L179 203 L83 205 L47 176 Z" fill="#2c3934" stroke="#17211d" stroke-width="8"/>
+    <path d="M72 127 L111 115 L117 166 L77 177 Z" fill="url(#rust)" transform="rotate(-10 94 146)"/>
+    <path d="M140 112 L184 127 L175 167 L132 156 Z" fill="url(#steel)" transform="rotate(14 157 141)"/>
+    <circle cx="128" cy="151" r="24" fill="#17211e" stroke="#b87842" stroke-width="8"/>
+    <path d="M128 125 L128 176 M103 151 L153 151" stroke="#aeb9b3" stroke-width="5"/>
+    <path d="M61 110 L44 86 M190 115 L216 91 M84 192 L67 217" stroke="#7b8982" stroke-width="7" stroke-linecap="round"/>
+    <path d="M96 103 Q120 84 142 101" fill="none" stroke="#e3a754" stroke-width="5"/>
+  </g>
+
+  <!-- 11: debris cluster -->
+  <g transform="translate(768 512)">
+    <ellipse cx="128" cy="200" rx="91" ry="23" fill="#07100c" opacity=".38"/>
+    <path d="M55 173 L83 133 L113 151 L100 188 Z" fill="url(#rust)" stroke="#26302c" stroke-width="5"/>
+    <path d="M113 129 L157 112 L178 145 L145 165 Z" fill="url(#steel)" stroke="#26302c" stroke-width="5"/>
+    <path d="M147 171 L191 151 L202 181 L165 195 Z" fill="#4b5a53" stroke="#26302c" stroke-width="5"/>
+    <circle cx="104" cy="177" r="18" fill="none" stroke="#c66c3e" stroke-width="7"/>
+    <path d="M67 151 L45 129 M182 139 L207 120 M126 119 L119 91" stroke="#8d9993" stroke-width="7" stroke-linecap="round"/>
+  </g>
+</svg>

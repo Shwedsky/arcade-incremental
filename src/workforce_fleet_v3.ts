@@ -163,7 +163,18 @@ export function normalizeWorkforceFleetV3(value:Partial<WorkforceFleetV3State>|u
 export function workerCapacityForStage(stage:BusinessStageId):number{return WORKER_CAPACITY_BY_STAGE[stage]}
 export function fleetCapacityForStage(stage:BusinessStageId):number{return FLEET_CAPACITY_BY_STAGE[stage]}
 export function canUseVehicleType(stage:BusinessStageId,type:VehicleTypeV3):boolean{return STAGE_RANK[stage]>=STAGE_RANK[VEHICLE_SPECS[type].minStage]}
-export function nextWorkerHireCost(state:WorkforceFleetV3State):number{return Math.round(35_000*Math.pow(1.42,state.workers.length))}
+export const WORKER_HIRE_COST_BANDS=[
+  {min:0,max:2,cost:35_000,label:'Гараж',nextAt:3},
+  {min:3,max:4,cost:55_000,label:'Ангар',nextAt:5},
+  {min:5,max:7,cost:90_000,label:'Площадка разборки',nextAt:8},
+  {min:8,max:11,cost:140_000,label:'Промышленная мастерская',nextAt:12},
+  {min:12,max:Number.POSITIVE_INFINITY,cost:220_000,label:'Перерабатывающий завод',nextAt:null}
+] as const;
+export function workerHireBandForCount(workerCount:number){
+  const count=Math.max(0,Math.floor(Number(workerCount)||0));
+  return WORKER_HIRE_COST_BANDS.find(band=>count>=band.min&&count<=band.max)??WORKER_HIRE_COST_BANDS.at(-1)!;
+}
+export function nextWorkerHireCost(state:WorkforceFleetV3State):number{return workerHireBandForCount(state.workers.length).cost}
 
 export function hireWorkerV3(state:WorkforceFleetV3State,stage:BusinessStageId,now=Date.now()):WorkerV3|null{
   if(state.workers.length>=workerCapacityForStage(stage))return null;

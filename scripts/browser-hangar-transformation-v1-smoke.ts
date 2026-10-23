@@ -80,7 +80,7 @@ try{
   assert.equal(await h.page.locator('.dispatchSeat').count(),5,'Hangar must visibly expose five staffing positions');
   assert.equal(await h.page.locator('.hangarBaysV1 .baseBay').count(),4,'Hangar must visibly expose four vehicle bays');
   const sceneText=await h.page.locator('#baseStageSceneV2').innerText();
-  assert.match(sceneText,/ПРОИЗВОДСТВЕННЫЙ ПОЛ/);assert.match(sceneText,/ДИСПЕТЧЕРСКАЯ/);assert.match(sceneText,/СКЛАД \/ СТЕЙДЖИНГ/);assert.match(sceneText,/ТРАНСПОРТНЫЕ БОКСЫ/);
+  assert.match(sceneText,/ПРОИЗВОДСТВЕННЫЙ ПОЛ/);assert.match(sceneText,/ДИСПЕТЧЕРСКАЯ/);assert.match(sceneText,/СКЛАД \/ ПОДГОТОВКА/);assert.match(sceneText,/ТРАНСПОРТНЫЕ БОКСЫ/);
   assert.match(sceneText,/Илья/);assert.match(sceneText,/Марина/);assert.match(sceneText,/Олег/);assert.match(sceneText,/Фургон #1/);assert.match(sceneText,/Грузовик #1/);
   const opsText=await h.page.locator('[data-hangar-ops]').innerText();
   assert.match(opsText,/ПЕРСОНАЛ\s*2\/3/i);assert.match(opsText,/АВТОПАРК\s*1\/2/i);assert.match(opsText,/МАРШРУТЫ\s*1/i);assert.match(opsText,/Есть свободные люди/);
