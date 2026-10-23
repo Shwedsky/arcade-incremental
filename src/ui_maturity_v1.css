@@ -1,0 +1,146 @@
+/* UI Maturity V1 — industrial/control-room language, deliberately restrained. */
+:root{
+  --ui-bg:#0b100e;
+  --ui-panel:#111815;
+  --ui-panel-2:#161e1a;
+  --ui-panel-3:#1b2420;
+  --ui-line:#35413b;
+  --ui-line-soft:#29332e;
+  --ui-text:#e1e7e3;
+  --ui-muted:#8e9a94;
+  --ui-dim:#66736c;
+  --ui-accent:#c28b45;
+  --ui-accent-hi:#dda75d;
+  --ui-ok:#76a982;
+  --ui-warn:#c99a58;
+  --ui-danger:#b87367;
+  --ui-radius:6px;
+}
+
+body{background:var(--ui-bg);color:var(--ui-text)}
+.shell{background:#151d19}
+
+/* General chrome: flatter, quieter, less toy-like. */
+.panel{
+  border:1px solid var(--ui-line)!important;
+  border-radius:var(--ui-radius)!important;
+  background:rgba(12,18,15,.94)!important;
+  box-shadow:0 12px 30px rgba(0,0,0,.28)!important;
+  backdrop-filter:blur(3px)!important;
+}
+.zone,.goal,.stats{border-radius:6px!important}
+.zone small,.goal small,.garageBox header small,.inspectorHead small{color:#829087!important;font-weight:700!important;letter-spacing:.11em!important}
+.goal>b{color:#d8b06c!important}.goal.done>b{color:#8bb596!important}
+.stats b{color:#dfe6e2!important}
+
+button{
+  border-radius:5px!important;
+  border:1px solid #49554f!important;
+  padding:9px 13px!important;
+  min-height:34px;
+  font-weight:700!important;
+  letter-spacing:.01em;
+  color:#e4e9e6!important;
+  background:linear-gradient(180deg,#303a35,#252e2a)!important;
+  box-shadow:none!important;
+  transition:background .12s ease,border-color .12s ease,color .12s ease!important;
+}
+button:hover:not(:disabled){filter:none!important;background:#39453f!important;border-color:#64726a!important}
+button:focus-visible{outline:2px solid rgba(221,167,93,.55);outline-offset:2px}
+button:not(.secondary):not(:disabled){background:linear-gradient(180deg,#9f7139,#7f582d)!important;border-color:#b68549!important;color:#fff4e4!important}
+button:not(.secondary):not(:disabled):hover{background:#a9773d!important;border-color:#d09d59!important}
+button:disabled{background:#202824!important;border-color:#303a35!important;color:#65716b!important;opacity:.8}
+.secondary{background:#202925!important;border-color:#3b4741!important;color:#b9c4be!important}
+.dangerLite{background:#292321!important;border-color:#704d47!important;color:#cf9a91!important}
+
+select,input{
+  border-radius:5px!important;
+  border:1px solid #46524c!important;
+  background:#0d1411!important;
+  color:#dbe3de!important;
+  min-height:36px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.025);
+}
+select:focus-visible,input:focus-visible{outline:2px solid rgba(194,139,69,.45);outline-offset:1px;border-color:#9a7444!important}
+
+/* Bottom HUD: information strip, not a toy tray. */
+.bottom{border-radius:7px!important;background:rgba(10,15,13,.95)!important;border-color:#303a35!important;padding:10px 12px!important;min-height:70px!important}
+.cart>span{display:none!important}.cart{gap:8px}.cart i{height:7px!important;border-radius:2px!important;background:#242e29!important}.cart em{border-radius:2px!important;background:linear-gradient(90deg,#8e763d,#c4a35c)!important;box-shadow:none!important}
+.resources{gap:5px!important}.resources span{border-radius:4px!important;background:#151d19!important;border:1px solid #29332e;padding:7px 9px!important}.resources small{color:#7d8a83!important}
+.components span{border-radius:4px!important;background:#151d19!important;border:1px solid #27312c}.components span.has{background:#242116!important;border-color:#67572f!important;box-shadow:none!important;color:#d5b66c!important}
+
+/* Garage/base shell — steel workbench rather than rounded mobile cards. */
+.garage{background:radial-gradient(circle at 50% 8%,#24312b,#080d0b 68%)!important}
+.garageBox{border-width:5px!important;border-color:#303a35!important;border-radius:0!important;background:#0e1512!important;box-shadow:0 28px 70px rgba(0,0,0,.55)!important}
+.garageBox:before{opacity:.06!important}
+.garageBox>header,.garageBox>footer{border-radius:5px!important;background:#101714!important;border:1px solid #2c3631!important}
+.garageMeta>b,.garageMeta>strong{border-radius:4px!important;background:#1b2520!important;border:1px solid #34413a!important;color:#bac5bf!important}.garageMeta>strong{background:#2b2418!important;border-color:#5b4829!important;color:#d8b66e!important}
+
+.baseShellNav{border-radius:5px!important;background:#0f1613!important;border-color:#2b3630!important;padding:5px!important;gap:2px!important}
+.baseShellTab{border-radius:3px!important;background:transparent!important;border-color:transparent!important;color:#8e9b94!important;padding:8px 10px!important}
+.baseShellTab>span{display:none!important}
+.baseShellTab.active{background:#1b2420!important;border-color:#39463f!important;color:#e6ebe8!important;box-shadow:inset 0 -2px 0 var(--ui-accent)!important}
+.baseShellTab:hover:not(:disabled){background:#171f1b!important}
+
+.baseStageHeroCopy,.baseStageNext,.baseStagePrinciple,.baseStageMetrics article,.baseHangarOps,.baseHangarOpsGrid article,.baseHangarBottleneck{
+  border-radius:6px!important;
+  background:#111815!important;
+  border-color:#2f3a34!important;
+  box-shadow:none!important;
+}
+.baseStageHeroCopy{box-shadow:inset 3px 0 0 color-mix(in srgb,var(--stage-accent) 70%,#7d5a31)!important}
+.baseStageNext{background:#141a16!important}.baseStageNext b{color:#d0a25d!important}
+.baseStageRail{border-radius:5px!important;background:#0e1512!important;border-color:#2b3630!important;padding:10px!important}
+.baseStageStep.current i{box-shadow:none!important}.baseStageStep i{border-radius:2px!important}
+.baseStageMetrics article b{font-size:19px!important}
+.baseStagePrinciple b{color:#c9a361!important}
+.baseHangarOps>header>span{border-radius:4px!important;background:#17211d!important;color:#a7b4ad!important;border-color:#33423a!important}
+
+.machine,.inspector,.store,.managementCard,.productionCellCard,.v3WorkerCard,.v3VehicleCard,[data-network-route],.metricCard,.overviewCard{
+  border-radius:6px!important;
+  background:#111815!important;
+  border-color:#303b35!important;
+  box-shadow:none!important;
+}
+.machine:hover,.v3WorkerCard:hover,.productionCellCard:hover,[data-network-route]:hover{transform:none!important;background:#151e1a!important;border-color:#4a574f!important}
+.machine.selected{box-shadow:inset 3px 0 0 #c7934d!important;border-color:#6a5639!important}
+.lock,.installed{border-radius:4px!important}.installed{background:#233428!important;color:#96b59e!important}
+.art{border-radius:5px!important;background:linear-gradient(145deg,#38433e,#202724)!important;box-shadow:inset 0 -16px 24px rgba(0,0,0,.38)!important}
+.machineGlyph{border-radius:5px!important;background:#18201c!important;border-color:#354139!important;color:#c49b55!important}
+.machineReq,.unlockHint,.installedNote{border-radius:5px!important}
+
+/* Workforce: stable, dense control panel. */
+.v3SectionHead{border-radius:5px!important;background:#111815!important;border-color:#303b35!important;padding:11px 12px!important}
+.v3SectionHead small{color:#9a7c4b!important;font-weight:800}.v3SectionHead h2{font-size:17px!important}.v3SectionHead p{color:#89958f!important}
+.v3WorkerCard{padding:11px!important;gap:8px!important;border-left:3px solid #3b4741!important}
+.v3WorkerCard>header strong{border-radius:3px!important;background:#18211d!important;border-color:#39463f!important;color:#9faea6!important;padding:4px 6px!important}
+.v3RouteLive{border-radius:5px!important;background:#0e1512!important;border-color:#2d3932!important}
+.v3Metrics{gap:4px!important}.v3Metrics span{border-radius:3px!important;background:#151d19!important;border:1px solid #27322c!important}
+.v3Idle{border-radius:5px!important;color:#87938d!important;border-color:#39453f!important}
+.v3RoleButtons button{background:#1a231f!important;border-color:#354139!important;color:#9eaaa4!important}.v3RoleButtons button.active{background:#2a2920!important;border-color:#765d34!important;color:#d7b46c!important}
+.v3Assignment{gap:6px!important}.v3Assignment label{color:#748078!important;text-transform:uppercase;letter-spacing:.08em}
+.v3Assignment select{padding:7px 9px!important}
+.v3VehicleCard.busy{background:#151e1a!important;border-left:3px solid #6e805f!important}
+.v3Empty{border-radius:5px!important;background:#0e1512!important}
+
+.v3OperatorBlock{border-radius:5px!important;background:#0e1512!important;border-color:#2d3932!important}.v3OperatorBlock.active{border-color:#695533!important;background:#17160f!important}.opAssign select{background:#0b110f!important}
+
+/* Zone selector: cartographic control surface, no bouncy card game behavior. */
+.zoneBox{border-radius:7px!important;background:#0d1411!important}.zoneGrid{border-radius:5px!important}
+.zoneCard,.zoneCard:hover{border-radius:5px!important;background:rgba(10,15,13,.91)!important;box-shadow:0 5px 15px rgba(0,0,0,.28)!important;transform:translate(-50%,-105%)!important}
+.zoneCard:hover{border-color:#6b593a!important}.zoneCard.current{border-color:#a67a40!important;box-shadow:inset 3px 0 0 #c08c45,0 5px 15px rgba(0,0,0,.28)!important}.zoneCard.mastered{border-color:#45594b!important}
+.zoneCard button{border-radius:3px!important}
+
+.target,.rare,.full,.toast{border-radius:5px!important}.rare.show,.rare.show.strong{box-shadow:0 12px 30px rgba(0,0,0,.35)!important}
+
+@media(max-width:900px){
+  .zoneCard,.zoneCard:hover{transform:none!important}
+  .baseShellNav{gap:3px!important}
+  .baseShellTab{padding:8px 9px!important}
+}
+@media(max-width:560px){
+  button{min-height:36px}
+  .garageBox{border-width:3px!important}
+  .baseShellNav{border-radius:4px!important}
+}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
