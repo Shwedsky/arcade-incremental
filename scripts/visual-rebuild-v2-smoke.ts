@@ -10,6 +10,7 @@ const baseCss=readFileSync(`${root}src/base_stage_art_v2.css`,'utf8');
 const sceneFirstCss=readFileSync(`${root}src/base_stage_art_scene_first_v3.css`,'utf8');
 const uiCss=readFileSync(`${root}src/visual_rebuild_v2_ui.css`,'utf8');
 const matureCss=readFileSync(`${root}src/ui_maturity_v1.css`,'utf8');
+const matureV2Css=readFileSync(`${root}src/ui_maturity_v2.css`,'utf8');
 const workforceUi=readFileSync(`${root}src/workforce_fleet_ui_v3.ts`,'utf8');
 const operatorUi=readFileSync(`${root}src/operator_ui_v3.ts`,'utf8');
 const productionUi=readFileSync(`${root}src/production_cells_ui_v1.ts`,'utf8');
@@ -75,7 +76,9 @@ assert.ok(!productionUi.includes('const signature=JSON.stringify({cells:view?.ce
 assert.ok(productionUi.includes('function updateIndustrialSceneLive'),'industrial scene countdown must update in place instead of rebuilding the scene every few seconds');
 
 for(const token of ['--ui-accent:#c28b45','--ui-radius:6px','.baseShellTab>span{display:none!important}','border-radius:5px!important','.v3WorkerCard{padding:11px!important'])assert.ok(matureCss.includes(token),`mature industrial UI layer must contain ${token}`);
+for(const token of ['Neutral controls by default','[data-v3-hire]:not(:disabled)','.zoneCard.current{width:166px!important}','.talentImpactCard>div>span{display:none!important}','.v3WorkerCard{background:#101714!important'])assert.ok(matureV2Css.includes(token),`UI maturity V2 refinement must contain ${token}`);
 assert.ok(indexHtml.includes('/src/ui_maturity_v1.ts'),'mature UI layer must load after the feature modules');
+assert.ok(indexHtml.indexOf('/src/ui_maturity_v2.ts')>indexHtml.indexOf('/src/ui_maturity_v1.ts'),'UI maturity V2 must load after V1 so screenshot-reviewed refinements win the cascade');
 
 for(const forbidden of ['rollDrops(','gainXp(','addActiveMastery(','zoneYieldMultiplier(','componentChance']){
   assert.ok(!field.includes(forbidden),`V2 presentation path must remain economy-neutral: ${forbidden}`);
@@ -83,4 +86,4 @@ for(const forbidden of ['rollDrops(','gainXp(','addActiveMastery(','zoneYieldMul
   assert.ok(!baseModule.includes(forbidden),`V2 base art integration must remain economy-neutral: ${forbidden}`);
 }
 
-console.log('Visual Rebuild V2 structural contract: illustrated field, upright player, stable assignment controls, mature industrial chrome, authored base scenes and route map: PASS');
+console.log('Visual Rebuild V2 structural contract: illustrated field, upright player, stable assignment controls, mature industrial chrome V2, authored base scenes and route map: PASS');
