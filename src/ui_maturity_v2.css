@@ -44,7 +44,8 @@ button:not(.secondary):not(:disabled):hover{background:#39443f!important;border-
 
 /* Route map: the authored route remains visible; cards are labels, not modal windows. */
 .zoneCard,.zoneCard:hover{width:146px!important;padding:7px 8px!important;background:rgba(8,13,11,.88)!important}
-.zoneCard.current{width:166px!important;background:rgba(13,19,16,.96)!important}
+.zoneCard.current{width:166px!important}
+.zoneCard.current{background:rgba(13,19,16,.96)!important}
 .zoneCard h3{font-size:12px!important;line-height:1.15!important;margin:2px 0 3px!important}
 .zoneCard .zoneNumber{font-size:8px!important}.zoneCard .masteryLine{margin:3px 0!important}.zoneCard .masteryLine>span{font-size:8px!important}
 .zoneCard .gateText{display:none!important}.zoneCard.current .gateText,.zoneCard:focus-within .gateText{display:block!important;font-size:8px!important;min-height:0!important;margin-top:4px}
