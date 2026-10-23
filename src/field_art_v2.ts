@@ -38,9 +38,17 @@ export function drawFieldArtFrame(
   ensureAtlas();
   if(!atlas||!ready)return false;
   const index=FRAME_INDEX[frame],sx=(index%4)*CELL,sy=Math.floor(index/4)*CELL;
+  const playerFrame=frame==='player-idle'||frame==='player-move'||frame==='player-attack';
   ctx.save();
   ctx.translate(x,y);
-  if(rotation)ctx.rotate(rotation);
+  if(playerFrame){
+    // Player sprites are authored upright. Rotating the whole atlas frame made the
+    // character literally turn upside down when moving south. Keep the body upright
+    // and mirror only left/right facing; vertical movement is communicated by motion
+    // and attack state until dedicated directional frames exist.
+    const facingLeft=Math.sin(rotation)<-.08;
+    if(facingLeft)ctx.scale(-1,1);
+  }else if(rotation)ctx.rotate(rotation);
   ctx.globalAlpha*=alpha;
   ctx.drawImage(atlas,sx,sy,CELL,CELL,-width/2,-height/2,width,height);
   ctx.restore();
