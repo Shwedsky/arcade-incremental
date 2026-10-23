@@ -9,6 +9,10 @@ const baseModule=readFileSync(`${root}src/base_stage_art_v2.ts`,'utf8');
 const baseCss=readFileSync(`${root}src/base_stage_art_v2.css`,'utf8');
 const sceneFirstCss=readFileSync(`${root}src/base_stage_art_scene_first_v3.css`,'utf8');
 const uiCss=readFileSync(`${root}src/visual_rebuild_v2_ui.css`,'utf8');
+const matureCss=readFileSync(`${root}src/ui_maturity_v1.css`,'utf8');
+const workforceUi=readFileSync(`${root}src/workforce_fleet_ui_v3.ts`,'utf8');
+const operatorUi=readFileSync(`${root}src/operator_ui_v3.ts`,'utf8');
+const indexHtml=readFileSync(`${root}index.html`,'utf8');
 const atlasPath=`${root}public/art/v2/field_atlas.svg`;
 const baseAtlasPath=`${root}public/art/v2/base_scenes.svg`;
 const zoneMapPath=`${root}public/art/v2/zone_map.svg`;
@@ -35,6 +39,8 @@ for(const token of ['drawFieldArtFrame','artFrameForTarget','playerFrame','spawn
 assert.ok(field.includes("return hp>.72?'large-intact':hp>.35?'large-damaged':'large-critical'"),'large target must have three materially different HP art states');
 assert.ok(field.includes("before===true&&!t.alive"),'break debris must be triggered by an actual alive -> destroyed transition');
 assert.ok(field.includes("const frames:FieldArtFrame[]=big?['large-critical','debris','small-scrap','cable','machine-frame','debris']"),'large break event must visibly split into multiple illustrated pieces');
+assert.ok(art.includes("const playerFrame=frame==='player-idle'||frame==='player-move'||frame==='player-attack'"),'player atlas frames must use dedicated upright handling');
+assert.ok(art.includes('const facingLeft=Math.sin(rotation)<-.08'),'player orientation must mirror horizontally instead of rotating the whole body upside down');
 
 for(const marker of ['id="garage"','id="hangar"','id="yard"','id="industrial"','ЛИЧНЫЙ ГАРАЖ','ОПЕРАЦИОННЫЙ АНГАР','ПЛОЩАДКА РАЗБОРКИ','ПРОМЫШЛЕННАЯ МАСТЕРСКАЯ']){
   assert.ok(baseAtlas.includes(marker),`base atlas must contain authored scene marker: ${marker}`);
@@ -57,10 +63,19 @@ for(let i=1;i<=8;i++)assert.ok(uiCss.includes(`.zoneCard:nth-child(${i})`),`desk
 assert.ok(uiCss.includes('@media(max-width:900px)'),'zone map must include intentional phone/tablet composition');
 assert.ok(doc.includes('Green CI alone is not acceptance.'),'V2 contract must explicitly keep visual quality as a human gate');
 
+// Owner-reported UI stability bugs are now hard contracts.
+assert.ok(!workforceUi.includes('cash:Math.floor(s.cash)'),'live cash must not invalidate the workforce structural signature and rebuild focused selects');
+assert.ok(workforceUi.includes('function updateActionAvailability'),'cash-dependent buttons must update in place instead of rebuilding worker cards');
+assert.ok(operatorUi.includes('dataset.opSignature=signature'),'operator assignment block must preserve DOM identity across 300 ms live ticks');
+assert.ok(operatorUi.includes("if(wrapper?.dataset.opSignature===signature){updateOperatorLive(wrapper,activeCell);continue}"),'operator live updates must not recreate the dropdown each tick');
+
+for(const token of ['--ui-accent:#c28b45','--ui-radius:6px','.baseShellTab>span{display:none!important}','border-radius:5px!important','.v3WorkerCard{padding:11px!important'])assert.ok(matureCss.includes(token),`mature industrial UI layer must contain ${token}`);
+assert.ok(indexHtml.includes('/src/ui_maturity_v1.ts'),'mature UI layer must load after the feature modules');
+
 for(const forbidden of ['rollDrops(','gainXp(','addActiveMastery(','zoneYieldMultiplier(','componentChance']){
   assert.ok(!field.includes(forbidden),`V2 presentation path must remain economy-neutral: ${forbidden}`);
   assert.ok(!art.includes(forbidden),`V2 atlas renderer must remain economy-neutral: ${forbidden}`);
   assert.ok(!baseModule.includes(forbidden),`V2 base art integration must remain economy-neutral: ${forbidden}`);
 }
 
-console.log('Visual Rebuild V2 structural contract: illustrated field, real break debris, authored base scenes, scene-first live docks and illustrated zone route map: PASS');
+console.log('Visual Rebuild V2 structural contract: illustrated field, upright player, stable assignment controls, mature industrial chrome, authored base scenes and route map: PASS');
