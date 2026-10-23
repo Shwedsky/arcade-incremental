@@ -12,6 +12,7 @@ const uiCss=readFileSync(`${root}src/visual_rebuild_v2_ui.css`,'utf8');
 const matureCss=readFileSync(`${root}src/ui_maturity_v1.css`,'utf8');
 const workforceUi=readFileSync(`${root}src/workforce_fleet_ui_v3.ts`,'utf8');
 const operatorUi=readFileSync(`${root}src/operator_ui_v3.ts`,'utf8');
+const productionUi=readFileSync(`${root}src/production_cells_ui_v1.ts`,'utf8');
 const indexHtml=readFileSync(`${root}index.html`,'utf8');
 const atlasPath=`${root}public/art/v2/field_atlas.svg`;
 const baseAtlasPath=`${root}public/art/v2/base_scenes.svg`;
@@ -68,6 +69,10 @@ assert.ok(!workforceUi.includes('cash:Math.floor(s.cash)'),'live cash must not i
 assert.ok(workforceUi.includes('function updateActionAvailability'),'cash-dependent buttons must update in place instead of rebuilding worker cards');
 assert.ok(operatorUi.includes('dataset.opSignature=signature'),'operator assignment block must preserve DOM identity across 300 ms live ticks');
 assert.ok(operatorUi.includes("if(wrapper?.dataset.opSignature===signature){updateOperatorLive(wrapper,activeCell);continue}"),'operator live updates must not recreate the dropdown each tick');
+assert.ok(productionUi.includes('function managementStructureSignature'),'production management must separate structural state from live progress/stock changes');
+assert.ok(productionUi.includes('function updateManagementLive'),'production live progress/stock must update in place without replacing assignment selects');
+assert.ok(!productionUi.includes('const signature=JSON.stringify({cells:view?.cells,stock:view?.stock'),'production management must not treat every live cell/stock tick as a structural rebuild');
+assert.ok(productionUi.includes('function updateIndustrialSceneLive'),'industrial scene countdown must update in place instead of rebuilding the scene every few seconds');
 
 for(const token of ['--ui-accent:#c28b45','--ui-radius:6px','.baseShellTab>span{display:none!important}','border-radius:5px!important','.v3WorkerCard{padding:11px!important'])assert.ok(matureCss.includes(token),`mature industrial UI layer must contain ${token}`);
 assert.ok(indexHtml.includes('/src/ui_maturity_v1.ts'),'mature UI layer must load after the feature modules');
