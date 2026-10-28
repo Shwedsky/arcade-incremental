@@ -40,15 +40,19 @@ function tick(){
   const label=badge?.textContent?.trim()??'',target=TARGET_BY_LABEL[label];
   if(!target){activeLabel='';startedAt=0;stableSince=0;return}
   const now=performance.now();
-  if(label!==activeLabel){activeLabel=label;startedAt=now;stableSince=0}
-  if(badge?.dataset.v3SurfaceStable==='1')return;
+  if(label!==activeLabel){activeLabel=label;startedAt=now;stableSince=0;if(badge)delete badge.dataset.v3SurfaceStable}
 
+  // A review surface can be correct for a moment and then be replaced by a late stage renderer.
+  // Never stop supervising it just because an earlier stability window passed: if it regresses,
+  // invalidate the marker, restore the promised landing, and require a fresh stable window.
   if(!targetIsReady(target)){
     stableSince=0;
+    if(badge)delete badge.dataset.v3SurfaceStable;
     enforceTarget(target);
     return;
   }
 
+  if(badge?.dataset.v3SurfaceStable==='1')return;
   if(!stableSince)stableSince=now;
   // Require the visible base + promised landing surface to survive late UI initialization.
   if(now-stableSince>=900||now-startedAt>=3500){
