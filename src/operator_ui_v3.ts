@@ -11,6 +11,7 @@ import './visual_rebuild_v2_ui.css';
 import './production_resource_lock_v1.ts';
 import './owner_review_v6.ts';
 import './v3_a_clarity.ts';
+import './v3_a_layout_fix.css';
 import './v3_review_presets.ts';
 
 const api=()=> (globalThis as any).__SALVAGE_TEST__;
