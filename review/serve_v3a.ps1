@@ -1,6 +1,12 @@
+param(
+  [int]$Port = 0,
+  [switch]$NoBrowser,
+  [string]$DistPath = ''
+)
+
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $MyInvocation.MyCommand.Path
-$dist = Join-Path $root 'dist'
+$dist = if ($DistPath) { [IO.Path]::GetFullPath($DistPath) } else { Join-Path $root 'dist' }
 $log = Join-Path $root 'launcher-v3a.log'
 
 function Log([string]$message) {
@@ -12,33 +18,41 @@ function Log([string]$message) {
 try {
   Set-Content -Path $log -Value ("V3-A launcher started at {0}" -f (Get-Date -Format 's'))
   if (-not (Test-Path $dist -PathType Container)) {
-    throw "dist folder not found next to launcher. Re-extract the complete owner-review ZIP."
+    throw "dist folder not found: $dist. Re-extract the complete owner-review ZIP."
   }
   if (-not (Test-Path (Join-Path $dist 'index.html') -PathType Leaf)) {
     throw "dist/index.html is missing. The archive is incomplete."
   }
 
   $listener = $null
-  $port = $null
-  foreach ($candidate in 4173..4190) {
-    try {
-      $probe = [System.Net.Sockets.TcpListener]::new([System.Net.IPAddress]::Loopback, $candidate)
-      $probe.Start()
-      $probe.Stop()
-      $port = $candidate
-      break
-    } catch {}
+  if ($Port -gt 0) {
+    $selectedPort = $Port
+  } else {
+    $selectedPort = $null
+    foreach ($candidate in 4173..4190) {
+      try {
+        $probe = [System.Net.Sockets.TcpListener]::new([System.Net.IPAddress]::Loopback, $candidate)
+        $probe.Start()
+        $probe.Stop()
+        $selectedPort = $candidate
+        break
+      } catch {}
+    }
   }
-  if ($null -eq $port) { throw 'No free TCP port found in range 4173-4190.' }
+  if ($null -eq $selectedPort) { throw 'No free TCP port found in range 4173-4190.' }
 
-  $prefix = "http://127.0.0.1:$port/"
+  $prefix = "http://127.0.0.1:$selectedPort/"
   $listener = [System.Net.HttpListener]::new()
   $listener.Prefixes.Add($prefix)
   $listener.Start()
   Log "Server: $prefix"
   Log "Root: $dist"
-  Start-Process $prefix
-  Log 'Browser opened. Keep this window open while testing; Ctrl+C stops the server.'
+  if (-not $NoBrowser) {
+    Start-Process $prefix
+    Log 'Browser opened. Keep this window open while testing; Ctrl+C stops the server.'
+  } else {
+    Log 'Browser launch disabled for automated verification.'
+  }
 
   $mime = @{
     '.html'='text/html; charset=utf-8'; '.js'='text/javascript; charset=utf-8'; '.css'='text/css; charset=utf-8';
@@ -53,13 +67,14 @@ try {
       if ([string]::IsNullOrWhiteSpace($rawPath)) { $rawPath = 'index.html' }
       $candidatePath = [IO.Path]::GetFullPath((Join-Path $dist ($rawPath -replace '/', [IO.Path]::DirectorySeparatorChar)))
       $distFull = [IO.Path]::GetFullPath($dist) + [IO.Path]::DirectorySeparatorChar
-      if (-not $candidatePath.StartsWith($distFull, [StringComparison]::OrdinalIgnoreCase) -and $candidatePath -ne [IO.Path]::GetFullPath((Join-Path $dist 'index.html'))) {
+      $indexPath = [IO.Path]::GetFullPath((Join-Path $dist 'index.html'))
+      if (-not $candidatePath.StartsWith($distFull, [StringComparison]::OrdinalIgnoreCase) -and $candidatePath -ne $indexPath) {
         $context.Response.StatusCode = 403
         $context.Response.Close()
         continue
       }
       if (-not (Test-Path $candidatePath -PathType Leaf)) {
-        $candidatePath = Join-Path $dist 'index.html'
+        $candidatePath = $indexPath
       }
       $bytes = [IO.File]::ReadAllBytes($candidatePath)
       $ext = [IO.Path]::GetExtension($candidatePath).ToLowerInvariant()
