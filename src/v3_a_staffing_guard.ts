@@ -7,6 +7,10 @@ function fmtDuration(sec:number):string{
   return`${m}:${String(s).padStart(2,'0')}`;
 }
 
+function setDatasetIfChanged(node:HTMLElement,key:'baseSec'|'adjustedSec',value:string){
+  if(node.dataset[key]!==value)node.dataset[key]=value;
+}
+
 function correctEmptyWorkerPreview(root:ParentNode=document){
   for(const card of Array.from(root.querySelectorAll<HTMLElement>('[data-production-cell]'))){
     const cellId=card.dataset.productionCell as ProductionCellIdV1;
@@ -15,7 +19,12 @@ function correctEmptyWorkerPreview(root:ParentNode=document){
     const plan=card.querySelector<HTMLSelectElement>(`[data-pc-plan="${cellId}"]`);
     if(!timing||!worker||worker.value)return;
     const planId=(plan?.value??'') as ProductionPlanIdV1,def=PRODUCTION_PLANS_V1[planId];if(!def)return;
-    timing.dataset.baseSec=String(def.baseDurationSec);timing.dataset.adjustedSec=String(def.baseDurationSec);
+    const base=String(def.baseDurationSec);
+    // The guard observes these attributes. Rewriting the same value still produces an
+    // attribute mutation in the browser and used to feed an endless microtask loop on
+    // Industrial Workshop presets. Only mutate when the canonical value really changed.
+    setDatasetIfChanged(timing,'baseSec',base);
+    setDatasetIfChanged(timing,'adjustedSec',base);
     const expected=`<small>Цикл</small><b>${fmtDuration(def.baseDurationSec)}</b><span>Без специалиста · базовое время</span>`;
     if(timing.innerHTML!==expected)timing.innerHTML=expected;
   }
