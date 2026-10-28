@@ -1,0 +1,67 @@
+@media(min-width:981px){
+  .v3TalentTreeRoot{
+    display:grid;
+    grid-template-columns:minmax(0,1fr) 210px minmax(0,1fr);
+    grid-template-rows:auto minmax(250px,1fr) auto;
+    column-gap:30px;
+    row-gap:22px;
+    min-height:780px;
+    padding:28px 34px;
+  }
+  .v3TalentTreeRoot:before{width:340px;height:340px}
+  .v3TalentCore{
+    position:static!important;
+    left:auto!important;top:auto!important;
+    transform:none!important;
+    grid-column:2;
+    grid-row:2;
+    align-self:center;
+    justify-self:center;
+    width:180px;
+    min-height:138px;
+    z-index:3;
+  }
+  .v3TalentBranch{
+    position:static!important;
+    left:auto!important;right:auto!important;top:auto!important;bottom:auto!important;
+    transform:none!important;
+    width:auto!important;
+    min-width:0;
+    z-index:5;
+  }
+  .v3TalentBranch[data-v3-branch="salvage"]{
+    grid-column:1 / -1;
+    grid-row:1;
+    justify-self:center;
+    width:min(520px,100%)!important;
+    text-align:center;
+  }
+  .v3TalentBranch[data-v3-branch="salvage"] header{margin-inline:auto}
+  .v3TalentBranch[data-v3-branch="salvage"] .v3TalentSpoke{justify-content:center}
+  .v3TalentBranch[data-v3-branch="trade"]{
+    grid-column:1;
+    grid-row:2;
+    align-self:center;
+  }
+  .v3TalentBranch[data-v3-branch="logistics"]{
+    grid-column:3;
+    grid-row:2;
+    align-self:center;
+  }
+  .v3TalentBranch[data-v3-branch="automation"]{
+    grid-column:1;
+    grid-row:3;
+    align-self:end;
+  }
+  .v3TalentBranch[data-v3-branch="workshop"]{
+    grid-column:3;
+    grid-row:3;
+    align-self:end;
+  }
+  .v3TalentBranch[data-v3-branch="trade"] .v3TalentSpoke,
+  .v3TalentBranch[data-v3-branch="automation"] .v3TalentSpoke{justify-content:flex-start}
+  .v3TalentBranch[data-v3-branch="logistics"] .v3TalentSpoke,
+  .v3TalentBranch[data-v3-branch="workshop"] .v3TalentSpoke{justify-content:flex-end}
+  .v3TalentSpoke{flex-wrap:nowrap;gap:5px}
+  .v3TalentNode{min-width:88px;max-width:98px}
+}

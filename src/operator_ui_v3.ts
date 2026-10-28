@@ -10,6 +10,14 @@ import './base_stage_art_v2.ts';
 import './visual_rebuild_v2_ui.css';
 import './production_resource_lock_v1.ts';
 import './owner_review_v6.ts';
+import './v3_a_clarity.ts';
+import './v3_a_legacy_talent_contract.ts';
+import './v3_a_legacy_zone_contract.ts';
+import './v3_a_layout_fix.css';
+import './v3_a_visual_guard.css';
+import './v3_a_tree_grid_fix.css';
+import './v3_a_staffing_guard.ts';
+import './v3_review_presets.ts';
 
 const api=()=> (globalThis as any).__SALVAGE_TEST__;
 const pct=(factor:number)=>`${Math.round((1-factor)*100)}% быстрее`;
