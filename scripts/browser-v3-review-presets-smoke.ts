@@ -32,11 +32,12 @@ try{
     const state=await page.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.getState());assert.equal(state.businessStage,item.stage,`${item.label} must load canonical expected business stage`);
     await page.waitForFunction(()=>{const el=document.querySelector<HTMLElement>('#garageScreen');return !!el&&!el.hidden});
     if(item.surface==='development')await page.waitForFunction(()=>{const el=document.querySelector<HTMLElement>('#talentScreen');return !!el&&!el.hidden});
-    else await page.waitForFunction((surface:string)=>(globalThis as any).__SALVAGE_BASE_SHELL__?.getActiveSurface?.()===surface,item.surface);
+    else await page.waitForFunction((surface:string)=>{const pane=document.querySelector<HTMLElement>(`[data-base-pane="${surface}"]`);return !!pane&&!pane.hidden},item.surface);
+    await page.waitForFunction(()=>document.querySelector<HTMLElement>('#v3PresetBadge')?.dataset.v3SurfaceStable==='1');
     if(item.id==='garageDeveloped'){assert.equal(state.midgame.currentZone,'z3');assert.equal(state.midgame.mastery.z1,100);assert.equal(state.midgame.mastery.z2,100);assert.ok(state.midgame.mastery.z3>0&&state.midgame.mastery.z3<100)}
     if(item.id==='industrialStaffing'){assert.equal(state.workforceV3.workers.length,4);assert.equal(state.packD.industrialWorkshopOwned,true);assert.ok(state.workforceV3.workers.some((w:any)=>w.role==='technician'&&w.rank===3));assert.ok(state.workforceV3.workers.some((w:any)=>w.role==='operator'))}
     await context.close();
   }
 
-  console.log('V3 formal owner-review DEV presets: all four presets survive reload and restore expected stage/surface: PASS');
+  console.log('V3 formal owner-review DEV presets: all four presets survive reload and restore expected visible stage/surface: PASS');
 }finally{await browser.close();await stop(proc)}
