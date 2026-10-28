@@ -8,6 +8,12 @@ const TARGET_BY_LABEL:Record<string,ReviewTarget>={
 };
 
 let activeLabel='',startedAt=0,stableSince=0;
+let observedGarage:HTMLElement|null=null,garageObserver:MutationObserver|null=null;
+
+function activeTarget():ReviewTarget|undefined{
+  const label=document.querySelector<HTMLElement>('#v3PresetBadge')?.textContent?.trim()??'';
+  return TARGET_BY_LABEL[label];
+}
 
 function targetIsReady(target:ReviewTarget):boolean{
   const garage=document.querySelector<HTMLElement>('#garageScreen');
@@ -35,7 +41,24 @@ function enforceTarget(target:ReviewTarget){
   else shell.open(target);
 }
 
+function installGarageVisibilityLock(){
+  const garage=document.querySelector<HTMLElement>('#garageScreen');
+  if(!garage||garage===observedGarage)return;
+  garageObserver?.disconnect();observedGarage=garage;
+  garageObserver=new MutationObserver(()=>{
+    const target=activeTarget();if(!target||!garage.hidden)return;
+    stableSince=0;
+    const badge=document.querySelector<HTMLElement>('#v3PresetBadge');if(badge)delete badge.dataset.v3SurfaceStable;
+    // Review presets are explicit owner-test sessions. While one is active, legacy field/base transitions
+    // must not steal the promised landing surface. Normal gameplay has no V3 preset badge and is untouched.
+    garage.hidden=false;
+    queueMicrotask(()=>enforceTarget(target));
+  });
+  garageObserver.observe(garage,{attributes:true,attributeFilter:['hidden']});
+}
+
 function tick(){
+  installGarageVisibilityLock();
   const badge=document.querySelector<HTMLElement>('#v3PresetBadge');
   const label=badge?.textContent?.trim()??'',target=TARGET_BY_LABEL[label];
   if(!target){activeLabel='';startedAt=0;stableSince=0;return}
