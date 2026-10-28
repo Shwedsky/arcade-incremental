@@ -99,7 +99,15 @@ function applyMapFog(){
   const s=state();if(!root||!screen||screen.hidden||!s)return;
   const cards=Array.from(root.querySelectorAll<HTMLElement>('.zoneCard[data-zone]'));
   if(cards.length<8)return; // act only on the canonical full render
-  const stage=businessStageId(s),known=knownZoneCount(stage);
+  const stage=businessStageId(s);
+  let known=knownZoneCount(stage);
+  // Fog must never hide a frontier the canonical progression has already made playable.
+  // This preserves transitions such as Z4 -> Hangar while still concealing locked future zones.
+  while(known<cards.length){
+    const nextButton=cards[known].querySelector<HTMLButtonElement>('button');
+    if(!nextButton||nextButton.disabled)break;
+    known++;
+  }
   const visible=cards.slice(0,known).map(card=>card.cloneNode(true) as HTMLElement);
   root.replaceChildren(...visible);
   root.classList.add('v3ZoneFog');
