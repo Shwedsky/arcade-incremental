@@ -12,6 +12,7 @@ import './production_resource_lock_v1.ts';
 import './owner_review_v6.ts';
 import './v3_a_clarity.ts';
 import './v3_a_legacy_talent_contract.ts';
+import './v3_a_legacy_zone_contract.ts';
 import './v3_a_layout_fix.css';
 import './v3_a_visual_guard.css';
 import './v3_a_tree_grid_fix.css';
