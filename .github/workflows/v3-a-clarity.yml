@@ -30,3 +30,56 @@ jobs:
           name: v3-a-clarity-review-screenshots
           path: visual-review-v3-a/*.png
           if-no-files-found: error
+      - name: Package V3-A owner review
+        shell: bash
+        run: |
+          rm -rf owner-review-v3a
+          mkdir -p owner-review-v3a/dist
+          cp -R dist/. owner-review-v3a/dist/
+          cp review/START_V3A.cmd review/serve_v3a.ps1 review/README_V3A.txt owner-review-v3a/
+          printf 'Source commit: %s\n' "$GITHUB_SHA" > owner-review-v3a/V3A_BUILD.txt
+          (cd owner-review-v3a && zip -r ../arcade-incremental-V3A-owner-review.zip .)
+      - uses: actions/upload-artifact@v4
+        with:
+          name: arcade-incremental-V3A-owner-review
+          path: arcade-incremental-V3A-owner-review.zip
+          if-no-files-found: error
+
+  windows-owner-launcher:
+    runs-on: windows-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install dependencies and build
+        shell: powershell
+        run: |
+          npm install --no-audit --no-fund
+          npm run build
+      - name: Verify dependency-free Windows launcher server
+        shell: powershell
+        run: |
+          $dist = (Resolve-Path 'dist').Path
+          $server = Start-Process powershell.exe -ArgumentList @(
+            '-NoLogo', '-NoProfile', '-ExecutionPolicy', 'Bypass',
+            '-File', (Resolve-Path 'review/serve_v3a.ps1').Path,
+            '-Port', '4173', '-NoBrowser', '-DistPath', $dist
+          ) -PassThru
+          try {
+            $ok = $false
+            for ($i = 0; $i -lt 40; $i++) {
+              Start-Sleep -Milliseconds 250
+              try {
+                $response = Invoke-WebRequest -UseBasicParsing 'http://127.0.0.1:4173/' -TimeoutSec 2
+                if ($response.StatusCode -eq 200 -and $response.Content -match '<!doctype html') {
+                  $ok = $true
+                  break
+                }
+              } catch {}
+            }
+            if (-not $ok) { throw 'V3-A Windows launcher did not serve dist/index.html.' }
+          } finally {
+            if ($server -and -not $server.HasExited) { Stop-Process -Id $server.Id -Force }
+          }
