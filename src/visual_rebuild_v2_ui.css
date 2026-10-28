@@ -1,0 +1,38 @@
+/* Visual Rebuild V2 — UI is framing for the art, not the art itself. */
+:root{--v2-panel:rgba(10,17,13,.84);--v2-panel-soft:rgba(16,25,20,.72);--v2-line:rgba(177,204,188,.14);--v2-amber:#ddb35a;--v2-green:#78b68b;--v2-text:#dce9e1;--v2-muted:#8da097}
+
+.panel{border-color:var(--v2-line)!important;background:linear-gradient(180deg,rgba(17,27,21,.88),rgba(8,14,11,.86))!important;box-shadow:0 10px 25px rgba(0,0,0,.16)!important;backdrop-filter:blur(5px)}
+button{border-radius:9px!important;box-shadow:none!important}button:not(.secondary):not(:disabled){background:linear-gradient(180deg,#c88e42,#9c622d)!important;border-color:#dea75d!important;color:#fff7e7!important}.secondary{background:rgba(28,42,34,.8)!important;border-color:rgba(160,190,171,.22)!important}
+
+/* Zone map is a route through an illustrated world instead of a dashboard grid. */
+.zoneScreen{background:radial-gradient(circle at 50% 25%,rgba(57,83,73,.28),rgba(3,7,5,.94))!important}
+.zoneBox{width:min(1500px,96vw)!important;max-width:none!important;background:linear-gradient(180deg,#17221d,#0b120f)!important;border:1px solid rgba(166,194,178,.16)!important;box-shadow:0 30px 90px rgba(0,0,0,.46)!important;overflow:hidden}
+.zoneBox>header{position:relative;z-index:5;margin-bottom:10px}.zoneBox>header h1{letter-spacing:-.02em}.zoneBox>header p{color:var(--v2-muted)}
+.zoneGrid{position:relative!important;display:block!important;min-height:650px;padding:0!important;border:1px solid rgba(169,195,180,.13);border-radius:17px;background-image:linear-gradient(180deg,rgba(7,12,9,.05),rgba(7,12,9,.2)),url('/art/v2/zone_map.svg');background-size:cover;background-position:center;overflow:hidden;box-shadow:inset 0 0 55px rgba(0,0,0,.25)}
+.zoneCard{position:absolute!important;width:178px!important;min-height:0!important;padding:9px 10px!important;border:1px solid rgba(199,219,207,.2)!important;border-radius:12px!important;background:rgba(8,14,11,.8)!important;box-shadow:0 8px 22px rgba(0,0,0,.32)!important;backdrop-filter:blur(4px);transform:translate(-50%,-105%);transition:transform .16s ease,border-color .16s ease,background .16s ease;z-index:2}
+.zoneCard:hover{transform:translate(-50%,-108%) scale(1.02);background:rgba(12,21,16,.91)!important;border-color:rgba(221,179,90,.5)!important;z-index:10}
+.zoneCard.current{border-color:rgba(221,179,90,.75)!important;box-shadow:0 0 0 2px rgba(221,179,90,.12),0 10px 27px rgba(0,0,0,.35)!important}.zoneCard.mastered{border-color:rgba(120,182,139,.42)!important}.zoneCard.locked{opacity:.58;filter:saturate(.55)}
+.zoneCard:nth-child(1){left:7.5%;top:76%}.zoneCard:nth-child(2){left:20%;top:77%}.zoneCard:nth-child(3){left:33%;top:62%}.zoneCard:nth-child(4){left:46.5%;top:70%}.zoneCard:nth-child(5){left:59.5%;top:78%}.zoneCard:nth-child(6){left:72.5%;top:60%}.zoneCard:nth-child(7){left:84%;top:64%}.zoneCard:nth-child(8){left:94%;top:66%}
+.zoneCard .zoneNumber{font-size:9px;letter-spacing:.12em;color:#d9b663}.zoneCard h3{font-size:13px;margin:3px 0 4px!important}.zoneCard p{display:none}.zoneCard .masteryLine{margin:5px 0!important}.zoneCard .masteryLine>span{font-size:9px}.zoneCard .masteryLine i{height:4px!important;background:#17231d!important}.zoneCard .masteryLine em{background:linear-gradient(90deg,#7c9f7d,#e0b35a)!important}.zoneCard .gateText{display:block;min-height:26px;font-size:8px;line-height:1.35;color:#91a39a}.zoneCard button{width:100%;padding:6px 7px!important;font-size:9px!important;margin-top:5px!important}
+
+/* Garage / management chrome yields visual priority to the authored stage scene. */
+.garage{background:radial-gradient(circle at 50% 15%,rgba(60,82,71,.2),rgba(3,7,5,.96))!important}.garageBox{background:linear-gradient(180deg,#16211c,#0a110e)!important;border-color:rgba(167,198,179,.15)!important;box-shadow:0 30px 90px rgba(0,0,0,.48)!important}.garageBox:has(#baseStageSceneV2.stage-hangar){background:radial-gradient(circle at 55% 8%,rgba(75,99,85,.32),transparent 42%),linear-gradient(180deg,#1c2a23,#0a120e)!important}.garageBox:has(#baseStageSceneV2.stage-yard){background:radial-gradient(circle at 48% 7%,rgba(77,95,91,.3),transparent 44%),linear-gradient(180deg,#182522,#0b120e)!important}.garageBox:has(#baseStageSceneV2.stage-industrial){background:radial-gradient(circle at 52% 6%,rgba(101,83,54,.2),transparent 40%),linear-gradient(180deg,#1b2923,#09110d)!important}.garageBox:has(#baseStageSceneV2.stage-plant){background:linear-gradient(180deg,#14221d,#08100c)!important}.garageBox>header{border-bottom-color:rgba(166,195,177,.1)!important}.garageBox>header h1{letter-spacing:-.025em}.garageBox>header p{color:#91a198!important}
+.managementCard,.floor,.inspector,.store{border-color:rgba(165,194,176,.12)!important;background:linear-gradient(180deg,rgba(20,31,25,.78),rgba(10,16,13,.77))!important;box-shadow:none!important}.managementGrid{gap:10px!important}.managementCard h2,.managementCard h3{letter-spacing:-.015em}
+
+/* V2 status chips are restrained and consistent with the illustrated surfaces. */
+[data-base-pane] .metricCard,[data-base-pane] .overviewCard,.v3WorkerCard,[data-network-route],.productionCellCard{border-color:rgba(164,195,177,.13)!important;background:rgba(13,21,17,.69)!important;box-shadow:none!important}.v3WorkerCard:hover,[data-network-route]:hover,.productionCellCard:hover{border-color:rgba(218,178,91,.28)!important;background:rgba(16,27,21,.82)!important}
+
+@media(max-width:1100px){.zoneCard{width:158px!important}.zoneCard:nth-child(8){left:92%}}
+@media(max-width:900px){
+ .zoneBox{width:min(720px,97vw)!important;max-height:96vh!important;overflow:auto!important}
+ .zoneGrid{display:grid!important;grid-template-columns:1fr!important;gap:9px!important;min-height:auto;padding:72px 12px 16px!important;background-size:auto 420px;background-position:center top;background-repeat:no-repeat;overflow:visible}
+ .zoneGrid:before{content:'МАРШРУТ ФРОНТИРА';display:block;grid-column:1;color:#cbb578;font:800 11px/1.2 system-ui;letter-spacing:.16em;padding:0 5px 3px}
+ .zoneCard,.zoneCard:hover{position:relative!important;left:auto!important;top:auto!important;width:auto!important;transform:none!important;padding:11px 12px!important;background:rgba(8,14,11,.88)!important}
+ .zoneCard p{display:block;font-size:10px;color:#879a90;margin:5px 0!important}.zoneCard .gateText{min-height:0;font-size:9px}.zoneCard button{width:auto;min-width:126px}
+}
+@media(max-width:560px){
+ .panel{backdrop-filter:blur(3px)}
+ .zoneBox>header{align-items:flex-start!important}.zoneGrid{padding-top:58px!important;background-size:auto 340px}.zoneCard h3{font-size:14px}
+ .managementGrid{gap:7px!important}
+}
+@media(prefers-reduced-motion:reduce){.zoneCard{transition:none!important}}

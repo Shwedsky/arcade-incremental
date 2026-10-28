@@ -1,0 +1,6 @@
+.ivProductionBay.refining .ivBayWorkplane{background-image:linear-gradient(180deg,rgba(8,16,12,.08),rgba(7,13,10,.22)),url('/art/industrial/refining_bay_v1.svg');background-position:center;background-size:cover;background-repeat:no-repeat}
+.ivProductionBay.fabrication .ivBayWorkplane{background-image:linear-gradient(180deg,rgba(8,14,14,.06),rgba(7,12,12,.22)),url('/art/industrial/fabrication_bay_v1.svg');background-position:center;background-size:cover;background-repeat:no-repeat}
+.ivProductionBay.heavy_assembly .ivBayWorkplane{background-image:linear-gradient(180deg,rgba(18,12,7,.04),rgba(12,8,5,.18)),url('/art/industrial/heavy_bay_v1.svg');background-position:center;background-size:cover;background-repeat:no-repeat}
+.ivProductionBay .ivMachine{opacity:.78;mix-blend-mode:normal}.ivProductionBay.running .ivMachine{opacity:.92}
+.ivProductionBay .ivBayWorkplane:before{content:'';position:absolute;inset:0;pointer-events:none;background:linear-gradient(90deg,rgba(6,11,9,.18),transparent 25% 74%,rgba(6,11,9,.12));z-index:1}.ivProductionBay .ivMachine,.ivProductionBay .ivWorkerSpot{z-index:2}
+@media(max-width:620px){.ivProductionBay.refining .ivBayWorkplane,.ivProductionBay.fabrication .ivBayWorkplane,.ivProductionBay.heavy_assembly .ivBayWorkplane{background-size:cover;background-position:center 58%}}

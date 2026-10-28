@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="800" viewBox="0 0 1400 800">
+<defs>
+ <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#334845"/><stop offset="1" stop-color="#15211d"/></linearGradient>
+ <linearGradient id="road" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#5a625c"/><stop offset="1" stop-color="#303a35"/></linearGradient>
+ <linearGradient id="water" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#35555b"/><stop offset="1" stop-color="#1f383c"/></linearGradient>
+ <filter id="shadow"><feGaussianBlur stdDeviation="9"/></filter>
+</defs>
+<rect width="1400" height="800" fill="url(#bg)"/>
+<path d="M0 560Q180 505 350 555T690 545T1030 520T1400 548V800H0Z" fill="#1b2922"/>
+<path d="M0 0h1400v155Q1190 124 1010 153T645 143T280 164T0 139Z" fill="#293a36"/>
+<path d="M1020 0Q990 145 1070 256t-27 240q-66 128-15 304h372V0Z" fill="url(#water)" opacity=".72"/>
+<g fill="#273630" opacity=".9"><path d="M71 132h236v148H71z"/><path d="M329 82h162v195H329z"/><path d="M516 116h194v138H516z"/><path d="M757 57h174v201H757z"/></g>
+<g fill="#4b5f56" opacity=".75"><rect x="91" y="151" width="52" height="104"/><rect x="159" y="171" width="122" height="84"/><rect x="353" y="104" width="112" height="151"/><rect x="542" y="139" width="62" height="93"/><rect x="616" y="151" width="72" height="81"/><rect x="781" y="84" width="124" height="153"/></g>
+<g fill="#9d7044" opacity=".65"><rect x="107" y="197" width="73" height="42"/><rect x="210" y="202" width="52" height="37"/><rect x="372" y="188" width="74" height="51"/><rect x="559" y="183" width="43" height="35"/><rect x="802" y="169" width="82" height="48"/></g>
+<g stroke="#50645a" stroke-width="8"><path d="M65 319H932"/><path d="M144 301v38M307 301v38M469 301v38M631 301v38M794 301v38"/></g>
+<g opacity=".5" stroke="#677a70" stroke-width="6"><path d="M76 591l52-88 67 45 54-82 70 62 61-91 82 73 63-116 78 79 74-88 79 73 70-87 73 59 73-82" fill="none"/><path d="M91 672h790M205 622h651"/></g>
+<path d="M105 623 C195 523 276 668 372 566 S560 478 652 574 S829 671 918 565 S1085 438 1178 526 S1289 615 1360 535" fill="none" stroke="#0b130f" stroke-width="32" opacity=".5"/>
+<path d="M105 615 C195 515 276 660 372 558 S560 470 652 566 S829 663 918 557 S1085 430 1178 518 S1289 607 1360 527" fill="none" stroke="url(#road)" stroke-width="22"/>
+<path d="M105 615 C195 515 276 660 372 558 S560 470 652 566 S829 663 918 557 S1085 430 1178 518 S1289 607 1360 527" fill="none" stroke="#d8b45d" stroke-width="3" stroke-dasharray="16 22" opacity=".55"/>
+
+<!-- environmental landmarks -->
+<g transform="translate(62 492)"><path d="M0 82l37-48 33 31 35-57 43 50 45-25 36 49z" fill="#536058"/><circle cx="61" cy="70" r="16" fill="none" stroke="#242d29" stroke-width="10"/><path d="M123 62h62" stroke="#98623e" stroke-width="13"/></g>
+<g transform="translate(365 396)"><rect x="0" y="48" width="137" height="84" fill="#304039"/><rect x="24" y="8" width="38" height="68" fill="#66766d"/><rect x="80" y="25" width="34" height="51" fill="#66766d"/><path d="M16 132h112" stroke="#a87944" stroke-width="8"/></g>
+<g transform="translate(665 367)"><path d="M0 139V12h16v127M8 25h172M171 25v128" fill="none" stroke="#52675b" stroke-width="11"/><path d="M86 25L41 139M118 25l42 114" stroke="#3e5148" stroke-width="7"/></g>
+<g transform="translate(1010 334)"><rect x="0" y="65" width="175" height="101" rx="9" fill="#31443c"/><path d="M22 65V11h22v54M74 65V0h22v65M126 65V24h22v41" fill="#66796f"/><path d="M14 108h147" stroke="#ce9046" stroke-width="10"/></g>
+<g transform="translate(1195 496)"><ellipse cx="85" cy="104" rx="90" ry="20" fill="#0a120f" opacity=".45"/><rect x="0" y="38" width="147" height="64" rx="10" fill="#5e746e"/><rect x="99" y="17" width="48" height="42" rx="6" fill="#7d9897"/><circle cx="35" cy="105" r="17" fill="#17211e"/><circle cx="112" cy="105" r="17" fill="#17211e"/></g>
+
+<!-- route node plates -->
+<g fill="#0c1511" stroke="#d2ae58" stroke-width="4">
+ <circle cx="105" cy="615" r="22"/><circle cx="279" cy="620" r="22"/><circle cx="462" cy="506" r="22"/><circle cx="650" cy="565" r="22"/>
+ <circle cx="833" cy="624" r="22"/><circle cx="1012" cy="493" r="22"/><circle cx="1178" cy="518" r="22"/><circle cx="1360" cy="527" r="22"/>
+</g>
+<g fill="#e2c76f" font-family="system-ui" font-size="18" font-weight="900" text-anchor="middle" dominant-baseline="central">
+ <text x="105" y="615">1</text><text x="279" y="620">2</text><text x="462" y="506">3</text><text x="650" y="565">4</text><text x="833" y="624">5</text><text x="1012" y="493">6</text><text x="1178" y="518">7</text><text x="1360" y="527">8</text>
+</g>
+<text x="48" y="58" fill="#a8bbb0" font-family="system-ui" font-size="22" font-weight="800" letter-spacing="5">МАРШРУТ СБОРА · ОТ СВАЛКИ К ПРОМЫШЛЕННОМУ ФРОНТИРУ</text>
+</svg>

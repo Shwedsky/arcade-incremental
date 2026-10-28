@@ -1,0 +1,42 @@
+@import './gate_a_visual_fixes.css';
+
+#ownerV6Notice{
+  position:fixed;left:50%;top:20px;z-index:10050;transform:translate(-50%,-16px);
+  min-width:min(560px,calc(100vw - 32px));max-width:min(760px,calc(100vw - 32px));
+  padding:12px 16px;border:1px solid #826b3c;border-radius:10px;background:#151c18f2;
+  color:#f2f4ef;box-shadow:0 14px 44px #0008;opacity:0;pointer-events:none;
+  transition:opacity .16s ease,transform .16s ease;font:600 14px/1.35 system-ui,sans-serif
+}
+#ownerV6Notice.show{opacity:1;transform:translate(-50%,0)}
+#ownerV6Notice[data-tone="ok"]{border-color:#3f885e}
+#ownerV6Notice[data-tone="warn"]{border-color:#a8753d}
+
+.ownerHangarMilestone{
+  margin:12px 0 16px;padding:16px;border:1px solid #75614a;border-radius:12px;
+  background:linear-gradient(135deg,#1a241f,#171d19)
+}
+.ownerHangarMilestone header{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;margin-bottom:12px}
+.ownerHangarMilestone header small{display:block;color:#aab6ae;font-size:11px;font-weight:800;letter-spacing:.08em}
+.ownerHangarMilestone header h3{margin:3px 0 5px;font-size:21px}
+.ownerHangarMilestone header p{margin:0;color:#b8c1bb;font-size:13px;max-width:720px}
+.ownerHangarMilestone .ownerHangarState{white-space:nowrap;color:#d8bc75;font-weight:800}
+.ownerHangarReqs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px 12px;margin:12px 0}
+.ownerHangarReq{display:flex;justify-content:space-between;gap:12px;padding:8px 10px;border-radius:8px;background:#101713;border:1px solid #303a34;font-size:12px}
+.ownerHangarReq.ok{border-color:#315b42}.ownerHangarReq.missing{border-color:#634638}
+.ownerHangarReq span{color:#c0c9c3}.ownerHangarReq b{white-space:nowrap}
+.ownerHangarMissing{margin:8px 0;color:#d3ae72;font-size:12px}
+.ownerHangarMilestone button{margin-top:5px}
+.ownerHangarMovedHint{margin:8px 0 0;color:#b8c1bb;font-size:12px}
+
+.ownerPlantLineStatus{display:block;margin-top:5px;font-size:10px;font-weight:900;letter-spacing:.06em;color:#bdd1c4}
+.ownerPlantLineStatus.busy{color:#d7b667}
+.ownerPlantLineHelp{display:block;margin-top:2px;font-size:9px;color:#93a39a;font-weight:600}
+.ownerPlantLegend{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:8px 14px 12px;padding:10px;border:1px solid #304139;border-radius:9px;background:#0f1713d9}
+.ownerPlantLegend span{font-size:10px;color:#aab8b0}.ownerPlantLegend b{color:#e4e9e5}
+.ownerWarehouseHelp{display:block;margin-top:3px;font-size:9px;color:#9eaaa3;font-weight:600}
+.v3ActionHint{margin-top:6px;color:#aeb9b2;font-size:11px}
+
+@media(max-width:760px){
+  .ownerHangarReqs{grid-template-columns:1fr}
+  .ownerPlantLegend{grid-template-columns:1fr}
+}

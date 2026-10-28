@@ -1,0 +1,71 @@
+/* UI Maturity V2 — second pass after screenshot review. */
+
+/* Neutral controls by default. Amber means a genuinely primary action, not every clickable thing. */
+button:not(.secondary):not(:disabled){
+  background:linear-gradient(180deg,#303a35,#252e2a)!important;
+  border-color:#4b5851!important;
+  color:#e1e7e3!important;
+}
+button:not(.secondary):not(:disabled):hover{background:#39443f!important;border-color:#69776f!important}
+[data-v3-hire]:not(:disabled),
+[data-pc-start]:not(:disabled),
+[data-special-submit]:not(:disabled),
+[data-owner-acquire-hangar]:not(:disabled),
+.zoneCard.current button:not(:disabled){
+  background:linear-gradient(180deg,#9b6d37,#76502a)!important;
+  border-color:#b58448!important;
+  color:#fff2dc!important;
+}
+[data-v3-assign]:not(:disabled),[data-op-assign]:not(:disabled),[data-pc-assign]:not(:disabled){
+  background:#222c27!important;
+  border-color:#6d5838!important;
+  color:#d8b66f!important;
+}
+[data-v3-train]:not(:disabled){background:#202925!important;border-color:#3d4943!important;color:#b6c1bb!important}
+
+/* Crew cards read as a work roster, not three shop cards. */
+.v3Workers{gap:10px!important}
+.v3WorkerCard{background:#101714!important;border-color:#2d3832!important;border-left:2px solid #59655f!important;padding:10px!important}
+.v3WorkerCard>header{padding-bottom:7px!important;border-bottom:1px solid #26312c!important}
+.v3WorkerCard>header b{font-size:15px!important}.v3WorkerCard>header span{color:#7f8d86!important}
+.v3WorkerCard>header strong{font-size:8px!important;letter-spacing:.1em!important;padding:3px 6px!important}
+.v3Idle{padding:8px 10px!important;background:#0c1210!important;border-style:solid!important}
+.v3RoleButtons{gap:4px!important}.v3RoleButtons button{min-height:31px!important;padding:6px 10px!important;font-size:10px!important}
+.v3RoleButtons button.active{background:#26241b!important;border-color:#725b34!important;color:#d2ac63!important;box-shadow:inset 2px 0 0 #b78343!important}
+.v3Assignment{padding-top:2px!important}.v3Assignment label{font-size:8px!important}.v3Assignment select{min-height:34px!important}
+.v3WorkerActions{padding-top:1px!important}
+.v3OperatorBlock{padding:9px!important;border-style:solid!important}.v3OperatorBlock p{color:#78857e!important;line-height:1.35!important}.opHead small{color:#9a7c4b!important}.opAssign{gap:6px!important}.opAssign select{min-height:34px!important}
+
+/* Production management follows the same dense control-room grammar. */
+.productionCellCard{border-left:2px solid #3c4942!important}.productionCellCard.status-running{border-left-color:#9c7942!important}
+.pcSummary,.pcSupport{border-radius:5px!important;background:#101714!important;border-color:#2d3832!important;box-shadow:none!important}
+.pcSummaryMetrics span,.pcMaterial,.pcOutput,.pcBottleneck,.pcHeavySupport{border-radius:4px!important;box-shadow:none!important}
+.pcStaff select,.pcPlanRow select{min-height:34px!important}
+
+/* Route map: the authored route remains visible; cards are labels, not modal windows. */
+.zoneCard,.zoneCard:hover{width:146px!important;padding:7px 8px!important;background:rgba(8,13,11,.88)!important}
+.zoneCard.current{width:166px!important}
+.zoneCard.current{background:rgba(13,19,16,.96)!important}
+.zoneCard h3{font-size:12px!important;line-height:1.15!important;margin:2px 0 3px!important}
+.zoneCard .zoneNumber{font-size:8px!important}.zoneCard .masteryLine{margin:3px 0!important}.zoneCard .masteryLine>span{font-size:8px!important}
+.zoneCard .gateText{display:none!important}.zoneCard.current .gateText,.zoneCard:focus-within .gateText{display:block!important;font-size:8px!important;min-height:0!important;margin-top:4px}
+.zoneCard button{min-height:28px!important;padding:5px 7px!important;font-size:8px!important;margin-top:3px!important}
+.zoneCard:not(.current) button{color:#9fa9a4!important;background:#19211d!important;border-color:#334039!important}
+
+/* Contracts / talents: remove the remaining casual-game pills and emoji-led cards. */
+.standingBuyer,.specialOrder,.contractV3Head,.specialHeader,.talentImpactV4,.talentImpactCard,.talentStateLegend{border-radius:5px!important;box-shadow:none!important}
+.standingBuyer,.specialOrder,.talentImpactCard{background:#111815!important;border-color:#303b35!important}
+.standingBuyer header strong,.specialOrder header strong,.talentImpactHead>strong{border-radius:3px!important;background:#1a211d!important;border-color:#35413b!important;color:#c9aa6a!important}
+.standingActions{gap:4px!important}.standingActions button{min-height:30px!important;padding:6px 9px!important;font-size:9px!important}
+.talentImpactV4{background:#101714!important;border-color:#303b35!important}.talentImpactCard>div>span{display:none!important}.talentImpactCard>div{margin-bottom:5px!important}.talentImpactCard{padding:9px 10px!important}.talentStateLegend i{border-radius:2px!important;box-shadow:none!important}
+
+/* Header/HUD restraint. */
+.garageMeta>b,.garageMeta>strong{font-size:10px!important;padding:7px 9px!important}
+.baseShellTab{font-size:10px!important;letter-spacing:.02em!important}
+.baseStageHero h2{letter-spacing:-.02em!important}.baseStageMetrics article{min-height:80px!important;padding:11px!important}
+
+@media(max-width:900px){
+  .zoneCard,.zoneCard:hover,.zoneCard.current{width:auto!important;padding:10px 11px!important}
+  .zoneCard .gateText{display:block!important}
+  .v3Workers{grid-template-columns:1fr!important}
+}

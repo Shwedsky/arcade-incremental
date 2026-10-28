@@ -1,0 +1,17 @@
+.garageWall.crowded:after{content:'ГАРАЖ ЗАПОЛНЕН'}
+
+/* Gate A correctness: P5 owns exactly three live production areas. */
+.stage-industrial .productionCells{grid-template-columns:repeat(3,minmax(0,1fr))}
+.stage-industrial .productionCells>div.ready{border-color:rgba(89,126,104,.46);background:#18221c}
+.stage-industrial .productionCells>div.ready span{color:#84978b}
+.stage-industrial .productionCells>div.active{border-color:rgba(86,205,123,.62);background:linear-gradient(180deg,#1d3225,#16251c);box-shadow:inset 0 0 22px rgba(71,201,111,.08)}
+.stage-industrial .productionCells>div.active span{color:#7fdb99}
+
+@media(max-width:600px){
+  .stage-industrial{min-height:430px}
+  .stage-industrial .industrialHall{inset:50px 8px 8px}
+  .stage-industrial .productionCells{left:3%;right:3%;bottom:88px;grid-template-columns:1fr;gap:5px}
+  .stage-industrial .productionCells>div{height:64px}
+  .stage-industrial .industrialBays{left:3%;right:3%;bottom:8px;width:auto;grid-template-columns:repeat(4,minmax(0,1fr))}
+  .stage-industrial .industrialBays .baseBay{height:64px}
+}

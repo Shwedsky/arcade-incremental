@@ -3,6 +3,7 @@ import {deriveEffects,type TalentId} from './progression.ts';
 import {availableGarageInventory,queuedReservations,type ReservationContext} from './resource_reservations.ts';
 import type {GarageInventory} from './garage.ts';
 import type {ComponentKind,ResourceKind} from './sim.ts';
+import {contractFamilyLabel} from './contract_board_v2.ts';
 
 const api=()=> (globalThis as any).__SALVAGE_TEST__;
 const drafts=new Map<string,number>();
@@ -12,6 +13,7 @@ let observer:MutationObserver|null=null;
 const money=(value:number)=>`${Math.round(value).toLocaleString('ru-RU')} ₽`;
 const qty=(value:number)=>Number(value||0).toLocaleString('ru-RU',{maximumFractionDigits:1});
 const safe=(value:string)=>value.replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]??ch));
+const notify=(text:string,tone:'ok'|'warn'='warn')=>window.dispatchEvent(new CustomEvent('salvage:ui-notice',{detail:{text,tone}}));
 
 function snapshot(){
   const test=api();if(!test?.getState||!test?.getContractV3View)return null;
@@ -44,23 +46,48 @@ function render(force=false){
   if(!force&&panel.dataset.contractV3==='1'&&panel.querySelector('.contractV3')&&signature===lastSignature)return;lastSignature=signature;
   const standing=(view.standing??[]).map((entry:any)=>{
     const buyer=entry.buyer,owned=freeStandingOwned(entry,data),reserved=reservedForBuyer(entry,data),progress=progressOf(state,buyer.id),done=completedOf(state,buyer.id),suggested=defaultAmount(owned,buyer.batchAmount,progress),draft=Math.max(0,Math.min(owned,drafts.get(buyer.id)??suggested)),remaining=Math.max(0,buyer.batchAmount-progress),price=buyer.unitPrice*effects.saleMultiplier,ready=owned>.001;
-    return`<article class="standingBuyer ${ready?'ready':''}" data-standing-buyer="${safe(buyer.id)}"><div class="standingBuyerHead"><div><b>${safe(buyer.name)}</b><small>${safe(buyer.label)} · постоянный канал</small></div><strong>${money(price)} / кг</strong></div><p>${safe(buyer.description)}</p><div class="standingStats"><span>Свободно<b>${qty(owned)} кг</b>${reserved>.001?`<small>В очереди ${qty(reserved)} кг</small>`:''}</span><span>До партии<b>${qty(remaining)} / ${qty(buyer.batchAmount)} кг</b></span><span>Закрыто партий<b>${done}</b></span><span>Бонус за партию<b>+${buyer.xpPerBatch} XP</b></span></div><div class="standingProgress"><i style="width:${Math.max(0,Math.min(100,progress/buyer.batchAmount*100))}%"></i></div><div class="standingControls"><input type="number" inputmode="decimal" min="0" max="${owned}" step="0.1" value="${draft.toFixed(1)}" data-standing-amount="${safe(buyer.id)}" ${ready?'':'disabled'}><button type="button" class="secondary" data-standing-max="${safe(buyer.id)}" ${ready?'':'disabled'}>MAX</button><button type="button" data-standing-submit="${safe(buyer.id)}" ${draft>.001?'':'disabled'}>Отгрузить</button></div></article>`
+    return`<article class="standingBuyer ${ready?'ready':''}" data-standing-buyer="${safe(buyer.id)}"><div class="standingBuyerHead"><div><b>${safe(buyer.name)}</b><small>${safe(buyer.label)} · постоянный канал</small></div><strong>${money(price)} / кг</strong></div><p>${safe(buyer.description)}</p><div class="standingStats"><span>Свободно<b>${qty(owned)} кг</b>${reserved>.001?`<small>В очереди ${qty(reserved)} кг</small>`:''}</span><span>До партии<b>${qty(remaining)} / ${qty(buyer.batchAmount)} кг</b></span><span>Закрыто партий<b>${done}</b></span><span>Бонус за партию<b>+${buyer.xpPerBatch} опыта</b></span></div><div class="standingProgress"><i style="width:${Math.max(0,Math.min(100,progress/buyer.batchAmount*100))}%"></i></div><div class="standingControls"><input type="number" inputmode="decimal" min="0" max="${owned}" step="0.1" value="${draft.toFixed(1)}" data-standing-amount="${safe(buyer.id)}" ${ready?'':'disabled'}><button type="button" class="secondary" data-standing-max="${safe(buyer.id)}" ${ready?'':'disabled'}>ВСЁ</button><button type="button" data-standing-submit="${safe(buyer.id)}" ${draft>.001?'':'disabled'}>Отгрузить</button></div></article>`
   }).join('');
   const specials=(view.specials??[]).map((entry:any)=>{
     const ready=specialReady(entry,data),def=entry.def,needs=(entry.needs??[]).map((need:any)=>{const owned=effectiveNeedOwned(need,data),ok=owned+1e-9>=Number(need.amount);return`<span class="${ok?'ok':'missing'}">${ok?'✓':'●'} ${safe(need.label)}: <b>${qty(owned)} / ${qty(need.amount)}</b></span>`}).join('');
-    return`<article class="specialOrder ${ready?'ready':''}" data-special-order="${safe(def.id)}"><div class="specialOrderHead"><div><b>${safe(def.name)}</b><small>СПЕЦЗАКАЗ · ${safe(String(def.family??'production').toUpperCase())}</small></div><strong>${money(entry.reward)}</strong></div><p>${safe(def.description??'')}</p><div class="specialNeeds">${needs}</div><button type="button" data-special-submit="${safe(def.id)}" ${ready?'':'disabled'}>${ready?'Сдать спецзаказ':'Не хватает свободных товаров'}</button></article>`
+    return`<article class="specialOrder ${ready?'ready':''}" data-special-order="${safe(def.id)}"><div class="specialOrderHead"><div><b>${safe(def.name)}</b><small>СПЕЦЗАКАЗ · ${safe(contractFamilyLabel(def.family))}</small></div><strong>${money(entry.reward)}</strong></div><p>${safe(def.description??'')}</p><div class="specialNeeds">${needs}</div><button type="button" data-special-submit="${safe(def.id)}" ${ready?'':'disabled'}>${ready?'Сдать спецзаказ':'Не хватает свободных товаров'}</button></article>`
   }).join('');
   panel.dataset.contractV3='1';
-  panel.innerHTML=`<div class="contractV3"><div class="contractV3Head"><div><small>КОНТРАКТЫ · V3</small><h2>Продажи и спецзаказы</h2><p>Сырьё сдавай постоянным покупателям частями. Материалы, зарезервированные Workshop Queue, защищены от продажи.</p></div><strong>${money(state.cash)}</strong></div><section class="contractSection"><div class="contractSectionHead"><div><small>СТАБИЛЬНЫЙ СБЫТ</small><h3>Постоянные покупатели</h3></div><span>Отгрузка не сбрасывает покупателя.<br>Прогресс партии сохраняется.</span></div><div class="standingGrid">${standing||'<div class="contractV3Empty">Покупатели откроются по мере роста уровня и переработки.</div>'}</div></section><section class="contractSection"><div class="contractSectionHead"><div><small>ПОВЫШЕННАЯ МАРЖА</small><h3>Спецзаказы</h3></div><span>Доступно вариантов: <b>${view.specials?.length??0}</b> · ветка «Торговля» расширяет выбор до 3.</span></div><div class="specialGrid">${specials||'<div class="contractV3Empty">Пока нет подходящих спецзаказов. Развивай переработку и промышленную цепочку.</div>'}</div></section></div>`;
+  panel.innerHTML=`<div class="contractV3"><div class="contractV3Head"><div><small>КОНТРАКТЫ</small><h2>Продажи и спецзаказы</h2><p>Сырьё сдавай постоянным покупателям частями. Материалы, зарезервированные очередью мастерской, защищены от продажи.</p></div><strong>${money(state.cash)}</strong></div><section class="contractSection"><div class="contractSectionHead"><div><small>СТАБИЛЬНЫЙ СБЫТ</small><h3>Постоянные покупатели</h3></div><span>Отгрузка не сбрасывает покупателя.<br>Прогресс партии сохраняется.</span></div><div class="standingGrid">${standing||'<div class="contractV3Empty">Покупатели откроются по мере роста уровня и переработки.</div>'}</div></section><section class="contractSection"><div class="contractSectionHead"><div><small>ПОВЫШЕННАЯ МАРЖА</small><h3>Спецзаказы</h3></div><span>Доступно вариантов: <b>${view.specials?.length??0}</b> · ветка «Торговля» расширяет выбор до 3.</span></div><div class="specialGrid">${specials||'<div class="contractV3Empty">Пока нет подходящих спецзаказов. Развивай переработку и промышленную цепочку.</div>'}</div></section></div>`;
 }
 function attach(){const panel=document.querySelector<HTMLElement>('#contractPanel');if(!panel)return;if(observed!==panel){observer?.disconnect();observed=panel;observer=new MutationObserver(()=>render(false));observer.observe(panel,{childList:true,subtree:true,characterData:true});lastSignature=''}render(false)}
 
 document.addEventListener('input',event=>{const input=(event.target as HTMLElement).closest<HTMLInputElement>('[data-standing-amount]');if(!input?.dataset.standingAmount)return;const data=snapshot(),entry=data?.view?.standing?.find((x:any)=>x.buyer.id===input.dataset.standingAmount),max=entry&&data?freeStandingOwned(entry,data):0;const value=Math.max(0,Math.min(max,Number(input.value)||0));drafts.set(input.dataset.standingAmount,value);if(Number(input.value)>max)input.value=String(max)},true);
 document.addEventListener('click',event=>{
   const target=event.target as HTMLElement;
-  const max=target.closest<HTMLElement>('[data-standing-max]');if(max?.dataset.standingMax){const id=max.dataset.standingMax,data=snapshot(),entry=data?.view?.standing?.find((x:any)=>x.buyer.id===id);if(entry&&data){drafts.set(id,freeStandingOwned(entry,data));render(true)}return}
-  const submit=target.closest<HTMLElement>('[data-standing-submit]');if(submit?.dataset.standingSubmit){const id=submit.dataset.standingSubmit,data=snapshot(),entry=data?.view?.standing?.find((x:any)=>x.buyer.id===id);if(!entry||!data)return;const free=freeStandingOwned(entry,data),input=document.querySelector<HTMLInputElement>(`[data-standing-amount="${id}"]`),requested=Math.max(0,Math.min(free,Number(input?.value)||drafts.get(id)||0));if(requested>0){api()?.submitStandingV3?.(id,requested);drafts.delete(id);render(true)}return}
-  const special=target.closest<HTMLElement>('[data-special-submit]');if(special?.dataset.specialSubmit){const data=snapshot(),entry=data?.view?.specials?.find((x:any)=>x.def.id===special.dataset.specialSubmit);if(entry&&data&&specialReady(entry,data)){api()?.submitSpecialV3?.(special.dataset.specialSubmit);render(true)}}
+  const max=target.closest<HTMLElement>('[data-standing-max]');
+  if(max?.dataset.standingMax){
+    event.preventDefault();event.stopImmediatePropagation();
+    const id=max.dataset.standingMax,data=snapshot(),entry=data?.view?.standing?.find((x:any)=>x.buyer.id===id);
+    if(entry&&data){drafts.set(id,freeStandingOwned(entry,data));render(true)}return
+  }
+  const submit=target.closest<HTMLButtonElement>('[data-standing-submit]');
+  if(submit?.dataset.standingSubmit){
+    event.preventDefault();event.stopImmediatePropagation();
+    const id=submit.dataset.standingSubmit,data=snapshot(),entry=data?.view?.standing?.find((x:any)=>x.buyer.id===id);if(!entry||!data){notify('Отгрузка не выполнена: данные заказа обновляются.');return}
+    const free=freeStandingOwned(entry,data),input=document.querySelector<HTMLInputElement>(`[data-standing-amount="${id}"]`),requested=Math.max(0,Math.min(free,Number(input?.value)||drafts.get(id)||0));
+    if(requested<=0){notify('Укажи количество для отгрузки.');return}
+    submit.disabled=true;submit.textContent='Отгружаем…';
+    const result=api()?.submitStandingV3?.(id,requested);
+    if(result?.consumed>0){drafts.delete(id);notify(`Отгружено ${qty(result.consumed)} кг · получено ${money(result.cash)}.`,'ok')}
+    else notify('Отгрузка не выполнена: свободного товара уже не хватает.');
+    render(true);requestAnimationFrame(()=>render(true));return
+  }
+  const special=target.closest<HTMLButtonElement>('[data-special-submit]');
+  if(special?.dataset.specialSubmit){
+    event.preventDefault();event.stopImmediatePropagation();
+    const data=snapshot(),entry=data?.view?.specials?.find((x:any)=>x.def.id===special.dataset.specialSubmit);
+    if(!entry||!data||!specialReady(entry,data)){notify('Спецзаказ пока нельзя сдать: проверь свободные товары.');render(true);return}
+    special.disabled=true;special.textContent='Сдаём…';
+    const ok=api()?.submitSpecialV3?.(special.dataset.specialSubmit);
+    if(ok)notify(`Спецзаказ «${entry.def.name}» сдан. Награда начислена.`,'ok');else notify('Спецзаказ не сдан: состояние товаров изменилось.');
+    render(true);requestAnimationFrame(()=>render(true));return
+  }
 },true);
 
 queueMicrotask(attach);
