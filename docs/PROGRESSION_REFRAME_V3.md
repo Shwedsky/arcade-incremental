@@ -4,28 +4,28 @@ Status: **DESIGN SOURCE OF TRUTH / NO GAMEPLAY IMPLEMENTATION YET**
 
 This document captures the owner review direction after Visual Rebuild V2 and UI Maturity V2.
 
-The goal is not to add more systems. The goal is to make the existing game understandable as a coherent incremental journey:
+The goal is not to add random systems. The goal is to turn the mechanics already present into a coherent incremental journey:
 
 > **active salvage -> stronger personal equipment -> working Garage -> business ascension -> stronger restart -> larger business -> industrial production**
 
-The main product change is that `Garage -> Hangar -> Salvage Yard -> Industrial Workshop -> Processing Plant` becomes a sequence of explicit business eras, not one continuous pile of unlock flags.
+The major product change is that `Garage -> Hangar -> Salvage Yard -> Industrial Workshop -> Processing Plant` becomes a sequence of explicit business eras rather than one continuous pile of unlock flags.
 
 ---
 
 ## 1. Core player fantasy
 
-The player should repeatedly experience this loop:
+The player repeatedly experiences this loop:
 
 1. enter the current business era with a stronger baseline than before;
 2. actively dismantle salvage and fill the current haul vehicle;
 3. explicitly return and unload the haul into base storage;
 4. process raw resources through machines;
 5. improve personal dismantling power, carrying capacity and business throughput;
-6. unlock and master the era frontier;
-7. automate already-solved work where the current era allows it;
+6. unlock and master the current era frontier;
+7. automate already-solved work where the era allows it;
 8. reach the era capstone;
 9. perform a visible **business ascension** into a larger operating tier;
-10. replay earlier field content much faster, while a new frontier again provides resistance.
+10. replay earlier field content much faster while a new frontier again provides meaningful resistance.
 
 This is incremental progression with a diegetic business promotion rather than an abstract prestige button.
 
@@ -45,7 +45,7 @@ Existing internal stages such as `starter_garage`, `equipped_garage` and `workfo
 
 ### Design rule
 
-A business ascension must be unmistakable. It must change several of:
+A business ascension must be unmistakable and change several of:
 - active haul baseline;
 - base scene;
 - worker/fleet baseline;
@@ -57,52 +57,56 @@ A business ascension must be unmistakable. It must change several of:
 
 ---
 
-## 3. Recommended reset model
+## 3. Ascension / reset model
 
-Do **not** implement a classic prestige that deletes everything and asks the player to repeat the same purchases.
+Do **not** implement a classic prestige that deletes everything and asks the player to repeat identical purchases.
 
-The preferred model is **compression into a stronger baseline**.
+Use **compression into a stronger baseline**.
 
 ### Persistent across ascension
 
 Keep:
 - business era / owned major site;
 - discovered recipes and machine knowledge;
-- purchased permanent talent nodes;
+- purchased talent nodes and their permanent ranks;
 - discovered component knowledge;
-- important fleet/crew assets awarded by the era transition;
-- lifetime statistics and achievements;
+- important fleet/crew assets awarded by the transition;
+- lifetime statistics / achievements;
 - permanent company-scale bonuses granted by the ascension.
 
-### Reset / restart within the new era
+### Reset / rebase inside the new era
 
 Reset or rebase:
 - current era XP/level pacing;
-- zone mastery for the new cycle;
+- cycle mastery for zones;
 - active frontier progression;
 - temporary/raw expedition cargo;
-- most short-term stage economy pressure;
+- most short-term economy pressure;
 - machine **tier level**, by converting completed old-tier machines into stronger new-tier baseline machines instead of deleting them.
 
 Example:
 
 `Garage Press VI -> Hangar Press Line I`
 
-The displayed level restarts, but the new Line I is materially stronger than Garage Press I.
+The displayed level restarts, but Hangar Press Line I is materially stronger than Garage Press I.
 
-### Why talents should initially remain permanent
+### Ascension is also a talent-tree expansion moment
 
-For the first implementation, purchased talents should **not** reset. Re-buying the same talent tree each era would create repetition rather than meaningful incremental growth.
+The talent tree should visibly become larger after an ascension.
 
-Instead, each business era exposes a deeper ring of the same talent tree. The player enters the next era with all earlier expertise intact and immediately feels stronger.
+Example player perception:
 
-This can be revisited later only if a second permanent meta-progression currency is intentionally designed.
+- Garage era: the player believes the branch currently contains roughly the visible first ring / first depth;
+- Hangar ascension: a second ring appears and the tree is suddenly materially deeper;
+- Yard / Workshop / Plant: later rings continue to reveal.
+
+The player should not see all future branch depth from the first session.
 
 ---
 
 ## 4. Zone / map progression
 
-The existing Z1-Z8 structure should be retained, but its role changes.
+Retain Z1-Z8, but change how they are revealed and how they function between eras.
 
 Recommended first mapping:
 
@@ -112,47 +116,55 @@ Recommended first mapping:
 - **Industrial Workshop frontier:** Z7
 - **Processing Plant frontier:** Z8
 
-This matches the current product logic well: Z4 already conceptually expects Van-scale logistics, therefore Garage should naturally climax before it.
+This fits the current mechanical logic: Z4 already conceptually expects Van-scale logistics, so Garage should naturally climax before it.
 
-### What happens after business ascension
+### Map fog / discovery
 
-Earlier zones remain accessible and their cycle mastery can restart, but the new baseline makes them dramatically easier.
+The map should not expose all eight zones and all future geography immediately.
+
+During Garage:
+- Z1-Z3 can be visible as the current era route;
+- the next frontier can appear only as a `?` / unknown destination;
+- Z5-Z8 remain completely hidden.
+
+After Hangar ascension:
+- Z4-Z5 are revealed;
+- one next unknown frontier can be teased;
+- deeper future maps remain hidden.
+
+The same rule repeats at later eras.
+
+The player should repeatedly experience: **“I thought I knew the size of the game; the business upgrade revealed more world.”**
+
+### Earlier zones after ascension
+
+Earlier zones remain accessible and their cycle mastery can restart, but the stronger baseline makes them dramatically easier.
 
 Desired power feeling:
 - current frontier at first contact: meaningful resistance;
-- current frontier near era cap: clearly fast and satisfying;
+- current frontier near era cap: fast and satisfying;
 - one era behind: very fast dismantling;
 - two or more eras behind: near-instant cleanup of ordinary objects.
 
-The player should visibly feel:
-
-> “This used to be difficult; now I destroy it almost without stopping.”
-
-Old mastered zones are also the natural candidates for worker automation.
-
-### Avoid replaying all eight as equal grind
-
-The game should not require full-length mastery grinds of all eight maps after every ascension.
-
-Old-zone replay exists primarily for:
+Old zones exist for:
 - power fantasy;
 - targeted materials;
 - quick re-mastery;
-- route setup.
+- route setup / automation.
 
-The newest frontier remains the long-form active progression target.
+Do not require eight equal-length mastery grinds after every ascension.
 
 ---
 
 ## 5. Field loop V3 — real salvage piles
 
-The field should become a continuous salvage ecosystem rather than a finite collection of similarly-shaped targets.
+The field becomes a continuous salvage ecosystem rather than a finite collection of similarly-shaped targets.
 
-### Primary object: salvage pile / wreck cluster
+### Salvage pile / wreck cluster
 
 A pile is a real gameplay object, not decoration.
 
-Breaking it produces several actual child salvage objects, for example:
+Breaking it produces several **real child salvage targets**, e.g.:
 - sheet metal;
 - cable bundle;
 - appliance body;
@@ -165,104 +177,109 @@ The child objects are then individually dismantled.
 
 ### Reward safety
 
-The parent pile owns one fixed reward budget.
-
-When it breaks, the reward budget is partitioned into the child objects. The parent must not pay a second full reward.
-
-This prevents the “matryoshka = duplicated economy” problem.
+The parent pile owns one fixed reward budget. Breaking the parent partitions that budget between the child objects; the parent does not also pay a second full reward.
 
 ### Continuous respawn
 
-While the player dismantles child objects, new piles should appear elsewhere in the active area.
+While the player clears one pile and its children, other piles respawn elsewhere to maintain a stable density.
 
-The field should target a stable density rather than becoming empty.
+Target rhythm:
 
-The intended rhythm is:
+`find pile -> crack pile -> rapidly clear children -> collect -> next pile`
 
-`find pile -> crack pile -> rapidly clear children -> magnet/pickup -> move to next pile`
-
-The player does not need to leave the map merely because every original target was destroyed.
+The map should not become empty and force an artificial exit/re-entry simply to repopulate targets.
 
 ### Zone identity
 
-Different zones must have materially different pile families and silhouettes, not only recolors/stat multipliers.
-
-Examples:
-- Z1: household scrap / cable / small frames;
-- Z2: garage clutter / pumps / motors;
-- Z3: large appliances;
-- Z4: automotive shells and drivetrain scrap;
-- later zones: increasingly industrial wreckage.
+Different zones require different pile families and silhouettes, not recolors:
+- Z1 household scrap / cable / small frames;
+- Z2 garage clutter / pumps / motors;
+- Z3 large appliances;
+- Z4 automotive shells / drivetrain scrap;
+- later zones increasingly industrial wreckage.
 
 ---
 
 ## 6. Explicit expedition unload
 
-Returning to base must have a clear gameplay action.
+Returning to base must contain a visible cargo action.
 
-Current hidden/automatic transfer is too easy to miss.
-
-### Early game
-
-At the base, cargo remains visibly inside the current haul container until the player presses:
-
+Early game:
 - `Разгрузить тележку`
 - later `Разгрузить фургон`
-- equivalent wording for larger active haul assets if introduced.
+- equivalent wording for larger active haul assets.
 
-The action should:
-- visibly transfer resources into storage;
-- count values upward or animate the transfer briefly;
-- show storage capacity pressure;
-- leave overflow in the vehicle if storage is full.
+The action must:
+- visibly transfer cargo into storage;
+- show what was transferred;
+- show storage pressure;
+- leave overflow in the vehicle when storage is full.
 
-This gives a reason to return to base and makes the field/base loop legible.
-
-### Later automation
-
-Manual unloading can later become partially or fully automated through Logistics/Automation progression.
-
-That creates meaningful evolution:
+Later progression can evolve this into:
 
 `manual unload -> assisted unload -> automatic logistics`
 
-instead of starting with an invisible automatic rule.
+This makes automation itself feel like progression.
 
 ---
 
-## 7. Power curve and progression tempo
+## 7. Combat / dismantling readability V3
 
-The owner feedback is that current power growth is not visually strong enough.
+The field should communicate power like a light RPG while preserving the automatic top-down dismantling loop.
 
-The intended field curve should be much more obvious.
+### Target HP
 
-### Target feel
+When a target is engaged, show:
+- target name;
+- `current HP / max HP`;
+- HP bar;
+- target class / rare state where relevant.
 
-For an ordinary target on the current frontier:
-- early in the era: roughly several seconds of resistance;
-- near era cap: roughly 1–2 seconds for ordinary targets;
-- prior-zone ordinary targets: sub-second / rapid chain clear.
+The current “estimated seconds to break” can remain secondary, but must not be the only explanation of durability.
 
-Large piles may remain longer because they convert into several child targets.
+### Player DPS
 
-### XP / talents
+Expose the player’s effective current dismantling DPS clearly in the HUD / character summary.
 
-Progression should provide more frequent visible decisions.
+DPS should already include:
+- base power;
+- tool multiplier;
+- talent multiplier;
+- combo multiplier when active;
+- era baseline multiplier where applicable.
 
-Recommended approach:
-- preserve the current five branch identities;
-- first change layout/reveal logic before dramatically increasing node count;
-- after pacing model is measured, expand branches from the current 8 nodes only if the player regularly goes too long without a choice.
+This lets a player understand why 500 HP takes a certain amount of time.
 
-More points can be earned more frequently, but each point should still create a perceivable gameplay effect.
+### Damage numbers
 
-Avoid filling a longer tree with meaningless +1–3% nodes.
+Do not emit a number every animation frame. Use readable damage pulses / aggregation (for example several combat ticks per second) while preserving approximately the same average DPS.
+
+Show floating damage values for those pulses.
+
+### Critical dismantling
+
+Add a lightweight crit layer because damage numbers make it readable and satisfying.
+
+Initial design target, subject to model tuning:
+- modest baseline critical chance;
+- meaningful critical damage multiplier;
+- visibly differentiated floating number / spark;
+- later Salvage talents can increase crit chance, crit damage or weak-point behavior.
+
+This should remain an arcade feedback mechanic, not become a full equipment-stat RPG.
+
+### Power-growth requirement
+
+Numeric DPS growth must also be physically obvious:
+- old ordinary targets collapse rapidly;
+- current frontier transitions from several seconds early in the era to roughly 1–2 seconds near era cap;
+- pile parents can remain more durable because they create additional breakable children.
 
 ---
 
-## 8. Talent tree V3 — radial tree + fog of knowledge
+## 8. Talent Tree V3 — radial tree, hidden future, ranks and respec
 
-The current five branches remain:
+Keep the five identities:
 - Разбор;
 - Логистика;
 - Мастерская;
@@ -271,77 +288,105 @@ The current five branches remain:
 
 ### Layout
 
-Use a central entity representing the player/current business identity.
+Use a central player/business identity with five branches radiating outward rather than five unrelated vertical columns.
 
-Five branches radiate outward from the center instead of appearing as five unrelated vertical columns.
-
-### Information reveal
+### Fog of knowledge
 
 For each branch:
 - purchased nodes are fully visible;
-- the **next node** is fully visible and can show requirements;
-- all deeper nodes appear as `?` / unknown nodes;
-- purchasing the current frontier node reveals the next node in that branch.
+- only the **next node** is fully visible with requirements;
+- deeper nodes are `?`;
+- buying the frontier node reveals the next one;
+- later rings remain completely absent until the corresponding business ascension.
 
-Example:
+The player makes decisions from the known frontier instead of solving the entire build at minute one.
 
-Before purchasing `Заточенный инструмент`:
+### Talent ranks / quality upgrades
 
-`[Заточенный инструмент] -> [?] -> [?] -> [?]`
+An already-owned node can become stronger in later eras.
 
-After purchase:
+Example concept:
 
-`[✓ Заточенный инструмент] -> [Слабые места] -> [?] -> [?]`
+`Заточенный инструмент I` — blue — `+12% dismantling power`
 
-The player makes decisions based on currently known options rather than planning the entire solved build from minute one.
+After the appropriate ascension / ring unlock:
 
-### Era depth
+`Заточенный инструмент II` — purple — `+24% dismantling power`
 
-Later rings can additionally require a business-era gate.
+Later ranks may use a stronger visual grade (gold etc.) where appropriate.
 
-Therefore a player may reach the end of currently known branch depth and see that further specialization belongs to the next business era.
+Important rules:
+- upgraded ranks must be clearly stronger, not tiny +1–3% filler;
+- a new rank costs another mastery point or an era-specific point cost;
+- rank upgrades compete with buying newly revealed nodes, creating a useful “stronger now vs broader later” choice;
+- do not make every node require many repetitive ranks. Prefer 2–3 meaningful ranks for selected foundational skills.
+
+### Talent point economy
+
+Do **not** make normal talent points infinitely farmable from repeatable trivial actions. If the player can eventually max everything by grinding, branch choice loses meaning.
+
+Preferred sources:
+- level / era progression;
+- one-time zone mastery milestones;
+- business ascension rewards;
+- one-time major / capstone contracts;
+- selected achievements.
+
+A very late endgame repeatable source can be evaluated later, but should not undermine build identity during the main progression.
+
+### Respec is required
+
+Because points are intentionally limited, the player must be able to recover from a bad build.
+
+Recommended V1 rule:
+- full talent respec available;
+- one free respec on every business ascension;
+- outside ascension, one full respec roughly every 24 hours;
+- no irreversible build traps.
+
+The 24-hour option deliberately allows temporary specialization, e.g. a logistics-heavy day followed by a workshop-heavy day, but must be monitored so it does not become mandatory daily micromanagement.
+
+The Overview / talent screen should show when the next free reset is available.
 
 ---
 
-## 9. Overview screen must actually be an overview
+## 9. Overview V2 — actual company overview
 
-`Обзор` should not be another unique management system.
-
-It should summarize the important state from nearly every unlocked detailed tab.
+`Обзор` is not another unique management system. It summarizes nearly every unlocked detailed tab.
 
 Recommended blocks:
 
-### Business / next ascension
-- current era and site;
-- short description of current business identity;
-- current era completion/progress;
-- next ascension and missing requirements.
+### Business / ascension
+- current era/site;
+- current era progress;
+- next ascension;
+- missing capstone requirements.
 
 ### Expedition
 - current zone;
-- current haul vehicle;
-- cargo `current / capacity`;
-- whether cargo needs unloading;
-- recommended next frontier.
+- current active haul vehicle;
+- cargo current/capacity;
+- unload-needed state;
+- recommended current frontier.
 
 ### Production
-- number of active/idle/blocked machines or lines;
-- current most important bottleneck;
+- active / idle / blocked machines or lines;
+- most important bottleneck;
 - nearest completion;
-- link to detailed Production screen.
+- link to Production.
 
 ### Storage
-- total fullness;
-- important low inputs;
-- important overflowing resources;
+- fullness;
+- critical low inputs;
+- overflowing / abundant resources;
 - link to Storage.
 
 ### Contracts
-- ready-to-submit contracts;
-- highest-value currently relevant order;
-- material currently blocking that order.
+- ready-to-submit orders;
+- most relevant high-value order;
+- missing material blocking it.
 
-### Crew / logistics
+### Crew / Logistics
 - active routes;
 - idle workers;
 - idle vehicles;
@@ -349,29 +394,23 @@ Recommended blocks:
 
 ### Development
 - unspent points;
-- number of currently revealed next talent choices;
-- short “next useful unlock” hint, without revealing hidden future nodes.
+- revealed next choices;
+- respec availability;
+- next era ring teaser without revealing hidden nodes.
 
 ### One explicit “what should I do now?” card
 
-Every era should expose one readable guidance chain:
+Every era exposes one readable chain:
 
-`Current problem -> suggested action -> why it helps -> next milestone`
+`current problem -> suggested action -> why it helps -> next milestone`
 
-Example:
-
-- Problem: repeated manual farming of Z1;
-- Action: assign a worker + Van;
-- Why: Z1 starts supplying bulk material passively;
-- Next milestone: Hangar.
-
-This is a lightweight contextual guide, not a long tutorial.
+This is the future in-game mini-guide. It should be contextual and compact, not a long tutorial.
 
 ---
 
 ## 10. Machines versus Production Lines
 
-This distinction must be explicit.
+This distinction is mandatory.
 
 ### Machine
 
@@ -379,244 +418,401 @@ A machine performs **one transformation step**.
 
 Examples:
 - metal -> briquette/profile;
-- cable/copper -> clean copper;
+- cable -> clean copper;
 - plastic -> granulate;
-- component inputs -> one intermediate module.
+- component inputs -> one intermediate item.
 
 Machines remain useful for:
 - small batches;
-- topping up intermediate stock;
-- choosing exactly which resource to produce;
-- keeping reserves of components needed elsewhere.
+- topping up an intermediate stock;
+- producing one exact resource;
+- keeping reserves for upgrades/contracts.
 
 ### Production Line
 
-A production line is **a managed chain of several machine steps** that targets one final output at scale.
+A line is **orchestration of several production steps toward one final output at scale**.
 
-Example conceptual line:
+Example:
 
 `raw metal -> structural profile -> subassembly -> final module`
 
-The player chooses:
-- target final product;
-- batch quantity or continuous target;
+The player configures:
+- final target product;
+- batch quantity / continuous target;
 - input priority;
-- minimum reserve floors for intermediate resources;
+- minimum reserve floors;
 - assigned staff;
-- optional heavy vehicle/support;
+- optional heavy support;
 - line priority.
 
-The line then coordinates the required steps automatically.
+The line coordinates the needed intermediate operations automatically.
 
-### Reserve rule is mandatory
+### Reserve floors are mandatory
 
-The player must be able to say, for example:
+Example:
 
-> Produce Heavy Frames, but never consume my last 50 Bearings or 20 Control Modules.
+> Produce Heavy Frames, but never consume the final 50 Bearings or 20 Control Modules.
 
-Without reserve floors, macro production will constantly destroy ingredients needed for other upgrades/contracts and will feel uncontrollable.
+Without reserves, production will constantly consume ingredients the player intended to keep for another machine, upgrade or contract.
 
-### Why both systems matter
+### Production UI must show the chain
 
-If the player needs bearings now, they run the relevant individual machine/recipe.
+A line card should visually answer:
 
-If the player needs 100 final industrial modules, they start a production line and allow it to coordinate several steps automatically.
+`What goes in? -> which intermediate stages happen? -> what comes out? -> what is blocking it now?`
 
-Thus:
+For example:
 
-`Machine = one operation.`
+`1000 Metal -> 200 Profiles -> 40 Subassemblies -> 10 Final Modules`
 
-`Production Line = orchestration of several operations toward a final target.`
+The player should be able to understand the economic meaning before pressing Start.
 
 ---
 
 ## 11. Worker roles must be self-explanatory
 
-Current runtime already gives role-specific bonuses, but that information is too hidden.
-
-The UI should never make the player guess whether a worker is useful.
+The runtime can contain specialization, but the player must never need source-code knowledge to understand it.
 
 ### Scavenger
 Primary use: field routes.
 
-Effect:
-- active/passive salvage throughput;
-- rank increases route output.
-
-Should normally not be selectable for industrial production until retrained.
-
 ### Logistician
-Primary use: movement of material.
-
-Effect candidates:
-- route throughput;
-- vehicle effective capacity / loading;
-- input-buffer feeding;
-- output clearing;
-- reduced logistics bottlenecks.
+Primary use: material movement, route throughput, input/output buffers and vehicle utilization.
 
 ### Technician
-Primary use: machines and industrial equipment.
-
-Effect candidates:
-- faster machine stages;
-- reduced downtime;
-- better yield or reduced material loss on appropriate lines.
+Primary use: machines / industrial equipment / appropriate fabrication steps.
 
 ### Operator
-Primary use: coordination of a production line/cell.
+Primary use: coordination of a whole production cell/line.
 
-Effect candidates:
-- overall cycle speed;
-- parallelism / automation behavior;
-- line switching/setup time;
-- later line-level control bonuses.
+### Assignment preview
 
-### Assignment UI rule
-
-Every worker assignment must show the result **before confirmation**.
-
-Example:
+Before confirmation, show the exact effect:
 
 `Марина — Техник ур. 3`
 
-`Heavy Assembly: -16% cycle time`
+`Heavy Assembly: 4:00 -> 3:31 (-12%)`
 
-or
+or:
 
 `Refining: no specialist bonus`
 
-Prefer filtering out completely meaningless role/slot combinations rather than offering every worker everywhere.
+If a role provides no meaningful effect in a slot, prefer disabling/filtering it rather than pretending every role is equally valid everywhere.
 
 ### Rank clarity
 
-Rank 1–5 must show a measurable delta.
+Ranks 1–5 must show explicit deltas, e.g.:
 
-Example:
+`Technician Rank 2: -9% cycle time`
 
-`Technician Rank 2: -9%`
+`Technician Rank 3: -12% cycle time`
 
-`Technician Rank 3: -12%`
+### Confirmed current UI defect to fix
 
-The player should understand why training a specific worker matters.
+The current production runtime **does apply** role/rank duration factors to actual job `endsAt`, but the display rounds durations over one minute upward to whole minutes. This means a real `4:00 -> 3:36` improvement can still be shown as `4 мин`.
+
+Required fix:
+- show exact `m:ss` or `X мин Y сек` for short cycles;
+- show base -> adjusted duration before assignment/start;
+- after start, ETA must use the adjusted job end time;
+- browser acceptance must verify that displayed ETA materially changes when the specialist changes.
 
 ---
 
-## 12. Recommended era transition example
+## 12. Garage -> Hangar proof ascension
 
 ### Garage era
 
 Player:
 - uses cart;
 - actively progresses through Z1-Z3;
-- builds/levels Garage machines;
+- builds / levels Garage machines;
 - upgrades personal tool/cart;
-- purchases currently revealed talent nodes;
+- buys revealed talent nodes / ranks;
 - completes Garage-scale contracts.
 
 ### Garage capstone
 
-When the era requirements are complete, the Overview shows a major action:
+Overview eventually exposes one major action:
 
 `ПЕРЕЙТИ В АНГАР`
 
-It explicitly previews:
+Preview explicitly lists:
 
-**You keep:**
-- talents;
-- discovered recipes;
+**Keep:**
+- purchased talents / ranks;
+- recipes / knowledge;
 - permanent equipment baseline;
-- business knowledge.
+- lifetime discoveries.
 
-**You gain:**
+**Gain:**
 - Hangar;
 - first employee baseline;
 - Van baseline;
 - larger storage/production class;
-- access to Z4-Z5 frontier.
+- access to Z4-Z5;
+- newly revealed talent ring.
 
-**You restart/rebase:**
+**Rebase:**
 - current cycle level;
 - zone mastery cycle;
-- short-term field progression;
-- Garage machine levels become Hangar-tier baseline levels.
+- short-term field economy;
+- Garage machine levels -> Hangar-tier baseline levels.
 
 ### First Hangar session
 
-Z1-Z3 are immediately much faster than before.
+Z1-Z3 immediately feel dramatically easier.
 
-The player can personally use the Van or assign it to the first worker.
+The Van has a real opportunity cost:
 
-That creates an explicit strategic choice:
+`Van for player = better active haul.`
 
-`Van for me = longer/faster active expedition.`
+`Van for worker = stronger passive route.`
 
-`Van for worker = stronger passive supply.`
+The new serious resistance starts on the Hangar frontier.
 
-The new serious resistance starts at the Hangar frontier.
-
-The same pattern repeats at Yard, Workshop and Plant scale.
+The same pattern later repeats at Yard, Workshop and Plant scale.
 
 ---
 
-## 13. What should NOT be done
+## 13. What remains from the current implementation
+
+Keep as technical/product foundations unless a proof explicitly disproves them:
+- TypeScript/Vite browser stack;
+- top-down automatic dismantling control model;
+- Z1-Z8 identifiers and broad zone themes;
+- five talent branch identities;
+- current Garage machine families and basic one-step-processing concept;
+- Storage and Contracts as distinct surfaces;
+- Workforce/Fleet V3 canonical worker/vehicle state;
+- worker ranks 1–5;
+- Production Cells V1 as a technical foundation for industrial jobs;
+- Save V10 additive migration principles;
+- BusinessStage derivation as an internal state concept;
+- offline / exactly-once production guarantees;
+- no conveyor/power-grid layout simulation.
+
+---
+
+## 14. What changes
+
+Change:
+- business stages from mostly continuous unlocks into explicit player-facing eras;
+- talent presentation from fully visible columns into radial fog-of-knowledge tree;
+- selected foundational talents into meaningful multi-rank skills;
+- talent point model to include safe respec and one-time non-level sources;
+- map from eight immediately knowable destinations into era-gated discovery;
+- field from finite objects into respawning pile -> child salvage ecology;
+- target feedback from “seconds to break” into HP + DPS + damage numbers + crit feedback;
+- hidden auto-unload into explicit unload interaction;
+- power curve so previous-era content becomes obviously easier;
+- production terminology so Machine and Line have distinct meanings;
+- production staffing so exact worker effect is visible before assignment;
+- Overview so it summarizes the whole company and tells the player what currently matters.
+
+---
+
+## 15. What is added
+
+Add:
+- explicit business ascension domain/model;
+- era-gated talent rings;
+- talent node rank/grade states;
+- talent respec/cooldown state;
+- era-gated map reveal / unknown nodes;
+- HP/DPS/crit/damage-number presentation;
+- real salvage pile parent/child targets with reward-budget partitioning;
+- continuous target-density respawn;
+- explicit cargo unload state/action;
+- contextual Overview guidance;
+- production-chain definition and reserve floors;
+- exact staffing preview and exact adjusted ETA.
+
+---
+
+## 16. Minimal implementation roadmap
+
+Do **not** build all five eras at once. The first product proof is `Garage -> Hangar`.
+
+### Phase A — correctness + clarity, no economy redesign
+
+A1. Fix production specialist ETA display:
+- exact base duration;
+- adjusted duration;
+- exact running ETA;
+- role/rank preview.
+
+A2. Overview V2:
+- summaries from existing tabs;
+- current bottleneck;
+- current recommended action;
+- Garage capstone progress placeholder.
+
+A3. Talent Tree presentation V3:
+- radial layout;
+- current nodes + one next node only;
+- deeper nodes `?`;
+- future-era rings hidden;
+- preserve current effects initially.
+
+A4. Map fog V1:
+- Garage visibly owns Z1-Z3;
+- one unknown next node;
+- deeper zones hidden;
+- no zone-economy rewrite yet.
+
+### Phase B — field readability and satisfying active loop
+
+B1. Target HP/DPS UI:
+- HP bar + numeric HP;
+- player effective DPS;
+- accurate TTK secondary label.
+
+B2. Damage pulse + crit feedback:
+- readable aggregated damage numbers;
+- baseline crit model;
+- no major control rewrite.
+
+B3. Explicit unload:
+- cart cargo remains cargo until unload;
+- storage receives cargo only via explicit action in early era;
+- clean transfer feedback.
+
+B4. Real salvage piles:
+- parent -> actual breakable children;
+- fixed reward budget;
+- continuous respawn;
+- distinct Z1-Z3 pile families first.
+
+### Phase C — progression/economy model before ascension
+
+C1. Recompute Garage-era pacing:
+- XP/hour;
+- talent-point cadence;
+- tool/cart growth;
+- Z1-Z3 target HP;
+- machine requirements;
+- expected Garage completion window.
+
+C2. Tune power curve:
+- early current frontier several seconds;
+- end-of-era current targets ~1–2 sec ordinary clear;
+- older zones collapse much faster.
+
+C3. Talent economy V3:
+- meaningful selected talent ranks;
+- one-time points from milestones/capstone contracts;
+- free respec on ascension;
+- ~24h respec outside ascension;
+- no infinite trivial farming source.
+
+### Phase D — Business Ascension V1 proof
+
+D1. Implement explicit Garage-era capstone requirements.
+
+D2. Implement `Garage -> Hangar` transition preview:
+- keep / gain / rebase summary;
+- deliberate confirm action;
+- Save migration safety.
+
+D3. Convert Garage machine capstones into Hangar baseline machine tier.
+
+D4. Grant/reveal the Hangar baseline:
+- Hangar scene;
+- Van;
+- first worker baseline or immediate first-worker acquisition path;
+- Z4-Z5 reveal;
+- new talent ring.
+
+D5. Verify Z1-Z3 power fantasy after ascension.
+
+### Phase E — Hangar management proof
+
+E1. Van choice:
+- personally use it for active haul;
+- or assign it to worker route;
+- UI explains opportunity cost.
+
+E2. Worker role clarity:
+- relevant roles only;
+- explicit bonus preview;
+- rank effect preview;
+- exact production/route outcome.
+
+E3. Overview now summarizes worker/vehicle/route state.
+
+### Phase F — Production semantics V2
+
+Only after Garage -> Hangar progression feels understandable:
+
+F1. Preserve individual Machines as one-step production.
+
+F2. Introduce Production Line orchestration on an industrial-capable stage.
+
+F3. Add line chain visualization.
+
+F4. Add reserve floors and target quantities.
+
+F5. Tie Operator/Technician/Logistician roles to clearly different line responsibilities.
+
+### Phase G — replicate proven model
+
+Once Garage -> Hangar is accepted:
+- Hangar -> Salvage Yard;
+- Yard -> Industrial Workshop;
+- Workshop -> Processing Plant.
+
+Do not start the old P6 implementation until this progression proof has been accepted, because the meaning of Plant is now downstream of the ascension/line model.
+
+---
+
+## 17. Acceptance criteria for Garage -> Hangar proof
+
+A fresh player must be able to explain without external documentation:
+- why they dismantle salvage;
+- their current DPS and why a target has its current HP/TTK;
+- what a critical hit is;
+- why they return to base;
+- exactly when cargo enters storage;
+- what each Garage machine consumes/produces;
+- why tool/cart upgrades matter;
+- which talent choices are known, which are hidden and why;
+- how talent ranks differ from new talent nodes;
+- how to respec a bad build;
+- which maps belong to the current era;
+- what is required to finish Garage;
+- what is kept, gained and rebased during ascension;
+- why Z1-Z3 are much easier after Hangar;
+- why the Van can be used by the player or by a worker;
+- what Z4-Z5 represent as the new frontier.
+
+At industrial stages, the player must additionally explain:
+- Machine vs Production Line;
+- full input -> intermediate -> output chain;
+- current bottleneck;
+- protected reserve floors;
+- why a particular worker role helps;
+- exactly how worker rank changes ETA/throughput.
+
+Green CI alone is not acceptance. The progression must be understandable by playing.
+
+---
+
+## 18. Guardrails
 
 Do not:
 - reset everything to zero without compensation;
-- make the player rebuild identical machines under identical names every era;
-- replay all eight zones as equal full-length grinds each era;
-- expose the entire solved talent tree from the beginning;
+- rebuild identical machines under identical names every era;
+- expose all eight zones from session one;
+- require all eight zones as equal full-length regrinds every era;
+- expose the entire talent tree from the beginning;
+- make talent points infinitely farmable during the main progression;
+- make daily respec mandatory for optimal play;
 - hide cargo transfer inside an automatic base transition;
-- implement salvage piles as decorative objects that cannot be dismantled;
-- duplicate rewards when a pile breaks into children;
-- make every worker role selectable everywhere with no meaningful effect;
-- call a single recipe card a “production line”;
-- turn production into belt/power/factory-layout micromanagement.
-
----
-
-## 14. Implementation order after design acceptance
-
-The first implementation should be deliberately incremental and preserve Save V10 compatibility where possible.
-
-Recommended order:
-
-1. **Overview V2** — summaries + current problem / next action / next ascension.
-2. **Talent Tree presentation V3** — radial layout + reveal frontier; initially preserve current talent effects/economy.
-3. **Explicit unload** — cart/Van cargo remains visible until player unloads.
-4. **Field salvage piles V3** — real breakable parent -> child targets + continuous respawn + reward-budget safety.
-5. **Power-curve retune** — make old zones collapse quickly and current frontier visibly accelerate with upgrades.
-6. **Business Ascension V1** — Garage -> Hangar first, with explicit carry/reset preview and stronger restart.
-7. **Production clarity V2** — machine vs line semantics, reserves, visible chains and staffing previews.
-8. Extend the same ascension model to Yard -> Industrial Workshop -> Processing Plant.
-
-Do **not** implement all five eras at once. Garage -> Hangar should be the proof slice.
-
----
-
-## 15. Acceptance criteria for the first proof slice
-
-A fresh player should be able to explain without external documentation:
-
-- why they dismantle salvage;
-- why they return to base;
-- when resources actually enter storage;
-- what each Garage machine consumes and produces;
-- why personal tool/cart upgrades matter;
-- which talent choices are currently known and which are still hidden;
-- what is required to finish the Garage era;
-- what will be kept, gained and rebased when moving to Hangar;
-- why Z1-Z3 become much easier after the ascension;
-- why the Van can be valuable either to the player or to a worker;
-- what the next frontier is.
-
-At Industrial stages, the player must additionally be able to explain:
-
-- the difference between a machine and a production line;
-- the full input -> intermediate -> output chain of the selected line;
-- which material is currently the bottleneck;
-- what reserves the line is forbidden to consume;
-- why a particular worker role helps that line;
-- exactly how worker rank changes the result.
-
-Green CI alone is not acceptance. The progression must be understandable by playing.
+- leave salvage piles decorative/non-breakable;
+- duplicate rewards in parent/child pile destruction;
+- show damage every rendering frame;
+- make every worker role valid everywhere;
+- show a production bonus that does not change the actual displayed ETA;
+- call one recipe a production line;
+- turn the game into conveyor/power/factory-layout micromanagement.
