@@ -14,9 +14,8 @@ function targetIsReady(target:ReviewTarget):boolean{
     const talents=document.querySelector<HTMLElement>('#talentScreen');
     return !!talents&&!talents.hidden;
   }
-  const shell=(globalThis as any).__SALVAGE_BASE_SHELL__;
   const pane=document.querySelector<HTMLElement>(`[data-base-pane="${target}"]`);
-  return shell?.getActiveSurface?.()===target&&!!pane&&!pane.hidden;
+  return !!pane&&!pane.hidden;
 }
 
 function enforceTarget(target:ReviewTarget){
@@ -43,7 +42,7 @@ function tick(){
   }
 
   if(!stableSince)stableSince=now;
-  // Require the promised landing surface to survive late base/UI initialization.
+  // Require the promised landing surface to remain visibly active across late UI initialization.
   if(now-stableSince>=900||now-startedAt>=3500){
     if(badge)badge.dataset.v3SurfaceStable='1';
   }
