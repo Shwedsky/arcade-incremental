@@ -65,4 +65,20 @@ function reconcileLegacyTalentContract(){
   }
 }
 
-setInterval(reconcileLegacyTalentContract,100);
+let queued=false;
+function queueReconcile(){
+  if(queued)return;queued=true;
+  queueMicrotask(()=>{queued=false;reconcileLegacyTalentContract()});
+}
+
+function installObserver(){
+  const host=document.querySelector<HTMLElement>('#talentBranches');
+  if(!host){setTimeout(installObserver,50);return}
+  const observer=new MutationObserver(queueReconcile);
+  observer.observe(host,{subtree:true,childList:true});
+  queueReconcile();
+}
+
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',installObserver,{once:true});else installObserver();
+// Fallback for state-only changes that do not replace talent DOM.
+setInterval(reconcileLegacyTalentContract,250);
