@@ -16,6 +16,7 @@ import './v3_a_visual_guard.css';
 import './v3_a_tree_grid_fix.css';
 import './v3_a_staffing_guard.ts';
 import './v3_review_presets.ts';
+import './v3_review_surface_guard.ts';
 
 const api=()=> (globalThis as any).__SALVAGE_TEST__;
 const pct=(factor:number)=>`${Math.round((1-factor)*100)}% быстрее`;
