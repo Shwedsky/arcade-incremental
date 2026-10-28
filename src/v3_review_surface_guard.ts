@@ -24,7 +24,13 @@ function enforceTarget(target:ReviewTarget){
   const runtime=(globalThis as any).__SALVAGE_TEST__,shell=(globalThis as any).__SALVAGE_BASE_SHELL__;
   const garage=document.querySelector<HTMLElement>('#garageScreen');
   if(!runtime?.forceGarage||!shell?.open||!garage)return;
-  if(garage.hidden)runtime.forceGarage();
+  if(garage.hidden){
+    // The legacy forceGarage transition is intentionally a no-op once runtime mode is already "garage".
+    // A late UI initializer may still hide the DOM after that transition, so recover visibility for the
+    // explicit DEV review session without changing normal gameplay navigation.
+    runtime.forceGarage();
+    if(garage.hidden)garage.hidden=false;
+  }
   if(target==='development')runtime.openTalents?.();
   else shell.open(target);
 }
