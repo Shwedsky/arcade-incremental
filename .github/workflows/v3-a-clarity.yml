@@ -19,8 +19,8 @@ jobs:
         run: npm run build
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
-      - name: V3-A Clarity Foundation browser acceptance
-        run: npx tsx scripts/browser-v3-a-clarity-smoke.ts
+      - name: V3-A core clarity browser acceptance
+        run: npx tsx scripts/browser-v3-a-core-smoke.ts
       - name: V3 formal DEV review presets survive reload
         run: npx tsx scripts/browser-v3-review-presets-smoke.ts
       - name: Capture V3-A formal review surfaces
