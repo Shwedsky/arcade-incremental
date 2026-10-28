@@ -2,6 +2,8 @@ import {clearResilientSave,writeResilientSave} from './save_store.ts';
 
 const SAVE_KEY='arcade-incremental-playable-v0-save-v2';
 const now=()=>Date.now();
+type ReviewSurface='overview'|'production'|'development';
+type ReviewPreset={name:string,surface:ReviewSurface};
 
 function blockUnloadOverwrite(){
   const original=Storage.prototype.setItem;
@@ -11,7 +13,7 @@ function blockUnloadOverwrite(){
   };
 }
 
-function persistPreset(save:any,name:string,surface:'overview'|'production'|'development'='overview'){
+function persistPreset(save:any,name:string,surface:ReviewSurface='overview'){
   save.v=10;save.lastSeen=now();
   const result=writeResilientSave(localStorage,SAVE_KEY,JSON.stringify(save));
   if(!result.ok){console.error('V3 review preset failed',result);return}
@@ -87,20 +89,49 @@ function installPresetPanel(){
 
 addEventListener('click',event=>{const button=(event.target as HTMLElement).closest<HTMLElement>('[data-v3-preset]');const id=button?.dataset.v3Preset;if(!id||!PRESETS[id])return;PRESETS[id]()},true);
 
-function restoreReviewSurface(){
-  const raw=sessionStorage.getItem('__v3_review_preset__');if(!raw)return;
-  let preset:any;try{preset=JSON.parse(raw)}catch{return}
-  const runtime=(globalThis as any).__SALVAGE_TEST__,baseShell=(globalThis as any).__SALVAGE_BASE_SHELL__;
-  if(!runtime?.forceGarage||!baseShell?.open)return;
-  runtime.forceGarage();
-  setTimeout(()=>{
-    if(preset.surface==='development')runtime.openTalents?.();
-    else baseShell.open(preset.surface??'overview');
-    let badge=document.querySelector<HTMLElement>('#v3PresetBadge');
-    if(!badge){badge=document.createElement('div');badge.id='v3PresetBadge';badge.className='v3PresetBadge';document.body.append(badge)}
-    badge.textContent=String(preset.name??'V3 review preset');
-  },120);
-  sessionStorage.removeItem('__v3_review_preset__');
+function badgeFor(preset:ReviewPreset){
+  let badge=document.querySelector<HTMLElement>('#v3PresetBadge');
+  if(!badge){badge=document.createElement('div');badge.id='v3PresetBadge';badge.className='v3PresetBadge';document.body.append(badge)}
+  badge.textContent=preset.name;delete badge.dataset.v3SurfaceStable;return badge;
 }
 
-setInterval(()=>{installPresetPanel();restoreReviewSurface()},250);
+function landingReady(surface:ReviewSurface){
+  const garage=document.querySelector<HTMLElement>('#garageScreen');if(!garage||garage.hidden)return false;
+  if(surface==='development'){const talents=document.querySelector<HTMLElement>('#talentScreen');return !!talents&&!talents.hidden}
+  const pane=document.querySelector<HTMLElement>(`[data-base-pane="${surface}"]`);return !!pane&&!pane.hidden;
+}
+
+function enforceLanding(preset:ReviewPreset){
+  const runtime=(globalThis as any).__SALVAGE_TEST__,baseShell=(globalThis as any).__SALVAGE_BASE_SHELL__;
+  const garage=document.querySelector<HTMLElement>('#garageScreen');if(!runtime?.forceGarage||!baseShell?.open||!garage)return false;
+  if(garage.hidden){runtime.forceGarage();garage.hidden=false}
+  if(preset.surface==='development'){
+    const talents=document.querySelector<HTMLElement>('#talentScreen');if(!talents||talents.hidden)runtime.openTalents?.();
+  }else{
+    const pane=document.querySelector<HTMLElement>(`[data-base-pane="${preset.surface}"]`);if(!pane||pane.hidden)baseShell.open(preset.surface);
+  }
+  return landingReady(preset.surface);
+}
+
+function ownLandingSession(preset:ReviewPreset){
+  const badge=badgeFor(preset),started=performance.now();let stableSince=0;
+  const timer=window.setInterval(()=>{
+    const ready=enforceLanding(preset),t=performance.now();
+    if(!ready){stableSince=0;delete badge.dataset.v3SurfaceStable;return}
+    if(!stableSince)stableSince=t;
+    if(t-stableSince>=900)badge.dataset.v3SurfaceStable='1';
+    // Keep ownership through the late P5/industrial render wave, then release it so manual review can navigate freely.
+    if(t-started>=5000&&badge.dataset.v3SurfaceStable==='1')window.clearInterval(timer);
+  },50);
+}
+
+function restoreReviewSurface(){
+  const raw=sessionStorage.getItem('__v3_review_preset__');if(!raw)return;
+  let preset:ReviewPreset;try{preset=JSON.parse(raw) as ReviewPreset}catch{sessionStorage.removeItem('__v3_review_preset__');return}
+  const runtime=(globalThis as any).__SALVAGE_TEST__,baseShell=(globalThis as any).__SALVAGE_BASE_SHELL__;
+  if(!runtime?.forceGarage||!baseShell?.open)return;
+  sessionStorage.removeItem('__v3_review_preset__');
+  ownLandingSession(preset);
+}
+
+setInterval(()=>{installPresetPanel();restoreReviewSurface()},100);
