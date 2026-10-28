@@ -25,11 +25,13 @@ try{
     await page.goto(`${ORIGIN}/?seed=v3-preset-${item.id}`);await page.waitForFunction(()=>(globalThis as any).__SALVAGE_TEST__?.getState()?.saveVersion===10);await closeOffline(page);
     await page.click('#hfDevToggle');await page.waitForSelector('#hfDevPanel:not([hidden])');await page.waitForSelector(`[data-v3-preset="${item.id}"]`);
     await Promise.all([page.waitForLoadState('load'),page.click(`[data-v3-preset="${item.id}"]`)]);
-    await page.waitForFunction(()=>(globalThis as any).__SALVAGE_TEST__?.getState()?.saveVersion===10);await page.waitForSelector('#v3PresetBadge');
-    assert.equal((await page.locator('#v3PresetBadge').innerText()).trim(),item.label,`${item.label} must restore its review badge after reload`);
+    await page.waitForFunction(({label,stage})=>{
+      const runtime=(globalThis as any).__SALVAGE_TEST__,badge=document.querySelector<HTMLElement>('#v3PresetBadge');
+      return runtime?.getState?.()?.saveVersion===10&&runtime.getState().businessStage===stage&&badge?.textContent?.trim()===label;
+    },{label:item.label,stage:item.stage});
     const state=await page.evaluate(()=>(globalThis as any).__SALVAGE_TEST__.getState());assert.equal(state.businessStage,item.stage,`${item.label} must load canonical expected business stage`);
-    await page.waitForSelector('#garageScreen:not([hidden])');
-    if(item.surface==='development')await page.waitForSelector('#talentScreen:not([hidden])');
+    await page.waitForFunction(()=>{const el=document.querySelector<HTMLElement>('#garageScreen');return !!el&&!el.hidden});
+    if(item.surface==='development')await page.waitForFunction(()=>{const el=document.querySelector<HTMLElement>('#talentScreen');return !!el&&!el.hidden});
     else await page.waitForFunction((surface:string)=>(globalThis as any).__SALVAGE_BASE_SHELL__?.getActiveSurface?.()===surface,item.surface);
     if(item.id==='garageDeveloped'){assert.equal(state.midgame.currentZone,'z3');assert.equal(state.midgame.mastery.z1,100);assert.equal(state.midgame.mastery.z2,100);assert.ok(state.midgame.mastery.z3>0&&state.midgame.mastery.z3<100)}
     if(item.id==='industrialStaffing'){assert.equal(state.workforceV3.workers.length,4);assert.equal(state.packD.industrialWorkshopOwned,true);assert.ok(state.workforceV3.workers.some((w:any)=>w.role==='technician'&&w.rank===3));assert.ok(state.workforceV3.workers.some((w:any)=>w.role==='operator'))}
