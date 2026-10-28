@@ -1,0 +1,58 @@
+/* Final V3-A desktop composition guard. Imported after the first-pass V3-A styles. */
+@media(min-width:981px){
+  .v3TalentTreeRoot{min-height:760px;padding:0 18px}
+  .v3TalentCore{width:188px;min-height:138px;z-index:3}
+  .v3TalentBranch{width:430px;z-index:5}
+  .v3TalentBranch header{max-width:390px}
+  .v3TalentSpoke{flex-wrap:nowrap;gap:5px}
+  .v3TalentLink{flex:0 0 7px;width:7px}
+  .v3TalentNode{min-width:92px;max-width:100px;min-height:82px;padding:7px 7px;gap:5px}
+  .v3TalentNode>span{flex-basis:19px;width:19px;height:19px}
+  .v3TalentNode b{font-size:10px;line-height:1.15}
+  .v3TalentNode small{font-size:8px;line-height:1.18}
+  .v3TalentNode em{font-size:8px;line-height:1.15}
+
+  .v3TalentBranch[data-v3-branch="salvage"]{left:50%;top:18px;width:470px;transform:translateX(-50%);text-align:center}
+  .v3TalentBranch[data-v3-branch="salvage"] header{margin-inline:auto}
+  .v3TalentBranch[data-v3-branch="salvage"] .v3TalentSpoke{justify-content:center}
+
+  .v3TalentBranch[data-v3-branch="trade"]{left:28px;top:176px}
+  .v3TalentBranch[data-v3-branch="logistics"]{right:28px;top:176px}
+  .v3TalentBranch[data-v3-branch="automation"]{left:28px;bottom:36px}
+  .v3TalentBranch[data-v3-branch="workshop"]{right:28px;bottom:36px}
+
+  .v3TalentBranch[data-v3-branch="trade"] .v3TalentSpoke,
+  .v3TalentBranch[data-v3-branch="automation"] .v3TalentSpoke{justify-content:flex-start}
+  .v3TalentBranch[data-v3-branch="logistics"] .v3TalentSpoke,
+  .v3TalentBranch[data-v3-branch="workshop"] .v3TalentSpoke{justify-content:flex-end}
+}
+
+/* Garage-era map must hide future geography, not merely future cards. */
+.zoneGrid.v3ZoneFog{position:relative;isolation:isolate;overflow:hidden}
+.zoneGrid.v3ZoneFog>.zoneCard{position:relative;z-index:4}
+.zoneGrid.v3ZoneFog[data-v3a-map-stage="starter_garage"]:before,
+.zoneGrid.v3ZoneFog[data-v3a-map-stage="equipped_garage"]:before,
+.zoneGrid.v3ZoneFog[data-v3a-map-stage="workforce_garage"]:before{
+  content:"";
+  position:absolute;
+  z-index:2;
+  top:-28px;right:-28px;bottom:-28px;width:58%;
+  pointer-events:none;
+  background:
+    linear-gradient(90deg,rgba(10,15,16,0) 0%,rgba(10,15,16,.78) 16%,rgba(9,14,15,.96) 46%,rgba(8,12,13,.985) 100%),
+    repeating-linear-gradient(135deg,rgba(255,255,255,.018) 0 2px,transparent 2px 13px);
+  backdrop-filter:blur(7px) saturate(.4)
+}
+.zoneGrid.v3ZoneFog[data-v3a-map-stage="starter_garage"]:after,
+.zoneGrid.v3ZoneFog[data-v3a-map-stage="equipped_garage"]:after,
+.zoneGrid.v3ZoneFog[data-v3a-map-stage="workforce_garage"]:after{
+  content:"НЕИЗВЕДАННАЯ ТЕРРИТОРИЯ";
+  position:absolute;
+  z-index:3;
+  right:8%;top:24px;
+  color:#657076;
+  letter-spacing:.18em;
+  font-size:9px;
+  pointer-events:none
+}
+.zoneGrid.v3ZoneFog>.v3UnknownZone{z-index:5}
