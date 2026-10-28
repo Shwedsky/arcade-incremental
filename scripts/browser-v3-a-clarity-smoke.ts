@@ -23,7 +23,8 @@ try{
   const openFixture=async(fixture:any,seed:string)=>{
     const context=await browser.newContext({viewport:{width:1440,height:1000},storageState:{cookies:[],origins:[{origin:ORIGIN,localStorage:[{name:SAVE_KEY,value:JSON.stringify(fixture)}]}]}}),page=await context.newPage();
     await page.goto(`${ORIGIN}/?seed=${seed}`);await page.waitForFunction(()=>(globalThis as any).__SALVAGE_TEST__?.getState()?.saveVersion===10);await closeOffline(page);
-    await page.click('#garage');await page.waitForSelector('#garageScreen:not([hidden])');await page.waitForSelector('#baseShellNav');
+    if(!(await page.locator('#garageScreen').isVisible()))await page.click('#garage');
+    await page.waitForSelector('#garageScreen:not([hidden])');await page.waitForSelector('#baseShellNav');
     return{context,page};
   };
 
