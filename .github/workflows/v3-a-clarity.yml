@@ -23,3 +23,10 @@ jobs:
         run: npx tsx scripts/browser-v3-a-clarity-smoke.ts
       - name: V3 formal DEV review presets survive reload
         run: npx tsx scripts/browser-v3-review-presets-smoke.ts
+      - name: Capture V3-A formal review surfaces
+        run: npx tsx scripts/browser-v3-a-capture.ts
+      - uses: actions/upload-artifact@v4
+        with:
+          name: v3-a-clarity-review-screenshots
+          path: visual-review-v3-a/*.png
+          if-no-files-found: error
