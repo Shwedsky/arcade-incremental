@@ -10,6 +10,8 @@ const TARGET_BY_LABEL:Record<string,ReviewTarget>={
 let activeLabel='',startedAt=0,stableSince=0;
 
 function targetIsReady(target:ReviewTarget):boolean{
+  const garage=document.querySelector<HTMLElement>('#garageScreen');
+  if(!garage||garage.hidden)return false;
   if(target==='development'){
     const talents=document.querySelector<HTMLElement>('#talentScreen');
     return !!talents&&!talents.hidden;
@@ -42,7 +44,7 @@ function tick(){
   }
 
   if(!stableSince)stableSince=now;
-  // Require the promised landing surface to remain visibly active across late UI initialization.
+  // Require the visible base + promised landing surface to survive late UI initialization.
   if(now-stableSince>=900||now-startedAt>=3500){
     if(badge)badge.dataset.v3SurfaceStable='1';
   }
