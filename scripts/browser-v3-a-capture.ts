@@ -1,3 +1,4 @@
+import assert from 'node:assert/strict';
 import {mkdir} from 'node:fs/promises';
 import {spawn,type ChildProcess} from 'node:child_process';
 import {once} from 'node:events';
@@ -16,15 +17,25 @@ async function applyPreset(page:any,id:string){
   await Promise.all([page.waitForLoadState('load'),page.click(`[data-v3-preset="${id}"]`)]);await page.waitForSelector('#v3PresetBadge');await closeOffline(page);
 }
 
+function intersects(a:any,b:any,pad=0){return a.x+pad<b.x+b.width&&a.x+a.width-pad>b.x&&a.y+pad<b.y+b.height&&a.y+a.height-pad>b.y}
+
 await mkdir(OUT,{recursive:true});const proc=server();await waitServer();const browser=await chromium.launch({headless:true});
 try{
   // Overview + map from the same developed Garage fixture.
   let context=await browser.newContext({viewport:{width:1440,height:1000}}),page=await context.newPage();await applyPreset(page,'garageDeveloped');
-  await page.waitForSelector('#v3AOverview');await page.locator('#v3AOverview').screenshot({path:`${OUT}/01-overview-garage.png`});
+  await page.waitForSelector('#v3AOverview');
+  const overviewBox=await page.locator('#v3AOverview').boundingBox(),legacyBox=await page.locator('#baseStageOverview').boundingBox();
+  assert.ok(overviewBox&&legacyBox&&overviewBox.y<legacyBox.y,'V3-A company Overview must be the first visible overview layer, above the legacy stage summary');
+  await page.locator('#v3AOverview').screenshot({path:`${OUT}/01-overview-garage.png`});
   await page.click('#zonesGarage');await page.waitForSelector('#zoneScreen:not([hidden])');await page.waitForSelector('[data-v3-unknown]');await page.locator('#zoneGrid').screenshot({path:`${OUT}/03-map-garage-fog.png`});await context.close();
 
-  // Talent reveal fixture.
-  context=await browser.newContext({viewport:{width:1440,height:1000}});page=await context.newPage();await applyPreset(page,'talentReveal');await page.waitForSelector('#talentScreen:not([hidden])');await page.waitForSelector('[data-v3-tree-root]');await page.locator('#talentBranches').screenshot({path:`${OUT}/02-talent-tree-fog.png`});await context.close();
+  // Talent reveal fixture. Desktop spokes must not overlap the core or one another.
+  context=await browser.newContext({viewport:{width:1440,height:1000}});page=await context.newPage();await applyPreset(page,'talentReveal');await page.waitForSelector('#talentScreen:not([hidden])');await page.waitForSelector('[data-v3-tree-root]');
+  const core=await page.locator('.v3TalentCore').boundingBox();assert.ok(core,'talent core must be visible');
+  const branches=await page.locator('.v3TalentBranch').evaluateAll(nodes=>nodes.map(node=>{const r=node.getBoundingClientRect();return{branch:(node as HTMLElement).dataset.v3Branch,x:r.x,y:r.y,width:r.width,height:r.height}}));
+  for(const branch of branches)assert.equal(intersects(branch,core,8),false,`${branch.branch} branch must not collide with central talent core`);
+  for(let i=0;i<branches.length;i++)for(let j=i+1;j<branches.length;j++)assert.equal(intersects(branches[i],branches[j],6),false,`${branches[i].branch} and ${branches[j].branch} branches must not overlap`);
+  await page.locator('#talentBranches').screenshot({path:`${OUT}/02-talent-tree-fog.png`});await context.close();
 
   // Industrial specialist clarity fixture.
   context=await browser.newContext({viewport:{width:1440,height:1000}});page=await context.newPage();await applyPreset(page,'industrialStaffing');await page.waitForSelector('[data-production-cell="fabrication"]');
@@ -32,5 +43,5 @@ try{
   await page.selectOption('[data-pc-worker="fabrication"]','worker-1');await page.selectOption('[data-pc-role="fabrication"]','technician');await page.waitForFunction(()=>{const el=document.querySelector<HTMLElement>('[data-production-cell="fabrication"] .pcTiming');return Number(el?.dataset.adjustedSec)>0&&Number(el?.dataset.adjustedSec)<Number(el?.dataset.baseSec)});
   await page.locator('#productionCellsV1Root').screenshot({path:`${OUT}/04-industrial-staffing-eta.png`});await context.close();
 
-  console.log('V3-A formal review screenshots captured: 4');
+  console.log('V3-A formal review screenshots + composition geometry: PASS');
 }finally{await browser.close();await stop(proc)}
