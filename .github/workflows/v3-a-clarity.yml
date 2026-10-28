@@ -32,12 +32,14 @@ jobs:
           if-no-files-found: error
       - name: Package V3-A owner review
         shell: bash
+        env:
+          SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
           rm -rf owner-review-v3a
           mkdir -p owner-review-v3a/dist
           cp -R dist/. owner-review-v3a/dist/
           cp review/START_V3A.cmd review/serve_v3a.ps1 review/README_V3A.txt owner-review-v3a/
-          printf 'Source commit: %s\n' "${GITHUB_HEAD_SHA:-$GITHUB_SHA}" > owner-review-v3a/V3A_BUILD.txt
+          printf 'Source commit: %s\n' "$SOURCE_SHA" > owner-review-v3a/V3A_BUILD.txt
           (cd owner-review-v3a && zip -r ../arcade-incremental-V3A-owner-review.zip .)
       - uses: actions/upload-artifact@v4
         with:
