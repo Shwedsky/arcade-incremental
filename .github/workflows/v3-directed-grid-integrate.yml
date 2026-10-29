@@ -1,0 +1,43 @@
+name: V3 integrate directed talent grid
+
+on:
+  push:
+    branches:
+      - feature/progression-reframe-v3-b-active-field-loop
+    paths:
+      - 'scripts/fix-v3-directed-grid.mjs'
+      - '.github/workflows/v3-directed-grid-integrate.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  integrate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Lock desktop directed talent geometry
+        run: node scripts/fix-v3-directed-grid.mjs
+      - name: Build
+        run: |
+          npm ci --no-audit --no-fund
+          npm run build
+      - name: Persist geometry fix
+        shell: bash
+        run: |
+          if git diff --quiet; then
+            echo "Directed talent grid already integrated."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/v3_a_clarity.css
+          git commit -m "fix(v3): lock talent branches below era core"
+          git push origin HEAD:feature/progression-reframe-v3-b-active-field-loop
