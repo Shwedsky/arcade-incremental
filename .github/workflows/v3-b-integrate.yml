@@ -6,6 +6,8 @@ on:
       - feature/progression-reframe-v3-b-active-field-loop
     paths:
       - 'scripts/apply-v3-b-active-field.mjs'
+      - 'scripts/v3-b-prepatch.mjs'
+      - 'scripts/v3-b-postpatch.mjs'
       - 'src/active_field_v3.ts'
       - 'src/v3_b_active_field_loop.css'
       - 'scripts/v3-b-active-field-smoke.ts'
@@ -26,8 +28,12 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
+      - name: Isolate V3-B break-target anchors
+        run: node scripts/v3-b-prepatch.mjs
       - name: Apply V3-B runtime integration
         run: node scripts/apply-v3-b-active-field.mjs
+      - name: Finalize V3-B child progression guards
+        run: node scripts/v3-b-postpatch.mjs
       - name: V3-B domain smoke
         run: npx tsx scripts/v3-b-active-field-smoke.ts
       - name: Typecheck and build
