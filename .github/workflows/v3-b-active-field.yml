@@ -28,6 +28,24 @@ jobs:
         run: npx tsx scripts/browser-v3-a-core-smoke.ts
       - name: V3-B active field browser acceptance
         run: npx tsx scripts/browser-v3-b-active-field-smoke.ts
+      - name: Legacy Owner Feedback V5 compatibility
+        id: legacy_v5
+        continue-on-error: true
+        shell: bash
+        run: npm run smoke:browser:owner-feedback-v5 > v3b-owner-v5.log 2>&1
+      - name: Upload V5 compatibility diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v3b-owner-v5-diagnostics
+          path: v3b-owner-v5.log
+          if-no-files-found: error
+      - name: Stop on V5 compatibility failure
+        if: steps.legacy_v5.outcome != 'success'
+        shell: bash
+        run: |
+          cat v3b-owner-v5.log
+          exit 1
       - name: Package V3-B owner review
         shell: bash
         env:
