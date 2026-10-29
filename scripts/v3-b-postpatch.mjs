@@ -9,4 +9,12 @@ const xpSentinel='/*V3B_BREAK_TARGET_XP*/gainXp(xpForTarget(t.classId)*zoneXpMul
 if((text.split(masterySentinel).length-1)!==1)throw new Error('postpatch mastery sentinel mismatch');
 if((text.split(xpSentinel).length-1)!==1)throw new Error('postpatch xp sentinel mismatch');
 text=text.replace(masterySentinel,guardedMastery).replace(xpSentinel,guardedXp);
+
+const hudStart=text.indexOf("  if(selected){targetEl.classList.add('show');");
+const hudEndMarker='renderProgress();updateGoal()';
+const hudEndAt=text.indexOf(hudEndMarker,hudStart);
+if(hudStart<0||hudEndAt<0)throw new Error('postpatch target HUD anchors missing');
+const hudEnd=hudEndAt+hudEndMarker.length;
+const hud=`  if(selected){targetEl.className='target panel show v3bTarget';const content=targetContent(fieldZone,selected.classId,selected.variant),effectiveDps=effectiveCombatDps(rawPlayerDps()),hp=Math.max(0,selected.hp),ratio=Math.max(0,Math.min(1,hp/selected.maxHp));targetEl.innerHTML=\`<div class="targetHead"><b>\${content.label}</b><strong>\${Math.ceil(hp)} / \${Math.round(selected.maxHp)} HP</strong></div><i class="targetHpBar"><i style="width:\${ratio*100}%"></i></i><div class="targetCombatMeta"><span>DPS <b>\${effectiveDps.toFixed(0)}</b></span><span class="v3bCritHint">Крит <b>\${Math.round(V3B_BASE_CRIT_CHANCE*100)}% ×\${V3B_BASE_CRIT_MULTIPLIER.toFixed(1)}</b></span><span>≈ \${(hp/Math.max(1,effectiveDps)).toFixed(1)}с</span></div>\`}else targetEl.className='target panel';renderProgress();updateGoal()`;
+text=text.slice(0,hudStart)+hud+text.slice(hudEnd);
 fs.writeFileSync(path,text);
