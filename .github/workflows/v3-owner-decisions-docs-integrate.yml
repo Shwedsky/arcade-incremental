@@ -1,0 +1,45 @@
+name: V3 integrate owner product decisions
+
+on:
+  push:
+    branches:
+      - feature/progression-reframe-v3-b-active-field-loop
+    paths:
+      - 'scripts/apply-v3-owner-decisions-docs.mjs'
+      - '.github/workflows/v3-owner-decisions-docs-integrate.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  integrate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Apply owner product decisions to source of truth
+        run: node scripts/apply-v3-owner-decisions-docs.mjs
+      - name: Verify canonical direction
+        shell: bash
+        run: |
+          grep -q "directed development tracks" docs/PROGRESSION_REFRAME_V3.md
+          grep -q "five explicit directed branch tracks; no radial / PoE-like web" docs/PROGRESSION_REFRAME_V3.md
+          if grep -q "Talent Tree V3 — radial tree" docs/PROGRESSION_REFRAME_V3.md; then exit 1; fi
+      - name: Persist source-of-truth update
+        shell: bash
+        run: |
+          if git diff --quiet; then
+            echo "Owner decision already integrated."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/PROGRESSION_REFRAME_V3.md
+          git commit -m "docs(v3): align source of truth with owner talent decision"
+          git push origin HEAD:feature/progression-reframe-v3-b-active-field-loop
