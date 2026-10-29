@@ -54,10 +54,12 @@ try{
   assert.equal(await page.locator(`[data-vehicle-card="${freeVan.id}"] [data-v3-sell-vehicle]`).count(),0,'assigned vehicle cannot be sold until removed from route');
 
   // OWNER CONFUSION: color must mean state only; Tier is explained separately.
+  // V3-A fog-of-knowledge is allowed to hide later-tier real nodes, so this proof
+  // verifies the CSS state contract without forcing hidden Tier II content visible.
   await page.evaluate(()=>(globalThis as any).__SALVAGE_BASE_SHELL__.open('development'));await page.waitForSelector('#talentScreen:not([hidden])');await page.waitForSelector('#talentImpactV4 .talentStateLegend');
   const legend=await page.locator('.talentStateLegend').innerText();assert.match(legend,/Зелёный.*изучено/s);assert.match(legend,/Золотой.*можно купить/s);assert.match(legend,/Серый.*закрыто/s);assert.match(legend,/Этап I \/ II \/ III.*этап развития/s);
-  const tier2=page.locator('.talentNode.tier2.unlocked').first(),tier1=page.locator('.talentNode.tier1.unlocked').first();assert.ok(await tier2.count()&&await tier1.count());
-  const colors=await page.evaluate(()=>{const one=document.querySelector<HTMLElement>('.talentNode.tier1.unlocked')!,two=document.querySelector<HTMLElement>('.talentNode.tier2.unlocked')!;return[getComputedStyle(one).backgroundColor,getComputedStyle(two).backgroundColor]});assert.equal(colors[0],colors[1],'learned Tier I and Tier II nodes must share the same state color');
+  assert.ok(await page.locator('.talentNode.unlocked:visible').count()>0,'mature fixture must show at least one learned talent');
+  const colors=await page.evaluate(()=>{const host=document.createElement('div'),one=document.createElement('button'),two=document.createElement('button');host.style.cssText='position:fixed;left:-10000px;top:-10000px';one.className='talentNode tier1 unlocked';two.className='talentNode tier2 unlocked';host.append(one,two);document.body.append(host);const result=[getComputedStyle(one).backgroundColor,getComputedStyle(two).backgroundColor];host.remove();return result});assert.equal(colors[0],colors[1],'learned Tier I and Tier II nodes must share the same state color even when fog hides a future real node');
   await page.click('#talentsClose');
 
   // OWNER REQUEST: a 100%-mastered zone must stay alive while the cart has room,
