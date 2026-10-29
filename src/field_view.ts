@@ -53,6 +53,35 @@ function drawGround(ctx:CanvasRenderingContext2D,width:number,height:number,came
   }
 }
 
+function drawPlaceIdentity(ctx:CanvasRenderingContext2D,width:number,height:number,camera:CameraView,zone:ZoneId){
+  const sx=(x:number)=>x-camera.x+camera.shakeX,sy=(y:number)=>y-camera.y+camera.shakeY;
+  ctx.save();ctx.globalAlpha=.92;
+  if(zone==='z1'){
+    // A readable neighbourhood-edge scrapyard: road, fenced yard, skip/container row and a small workshop landmark.
+    const x=sx(170),y=sy(150),w=690,h=430;
+    ctx.fillStyle='#151b18aa';ctx.fillRect(x,y,w,h);ctx.strokeStyle='#78857b88';ctx.lineWidth=3;ctx.setLineDash([12,8]);ctx.strokeRect(x,y,w,h);ctx.setLineDash([]);
+    ctx.fillStyle='#37433dcc';ctx.fillRect(sx(205),sy(185),200,92);ctx.fillStyle='#b07343';ctx.fillRect(sx(230),sy(210),52,40);ctx.fillStyle='#68736d';ctx.fillRect(sx(300),sy(210),74,40);
+    ctx.fillStyle='#242b28';ctx.fillRect(sx(620),sy(185),190,76);ctx.fillStyle='#5f756e';ctx.fillRect(sx(642),sy(204),58,44);ctx.fillRect(sx(716),sy(204),70,44);
+    ctx.fillStyle='#c89c50';ctx.font='800 13px system-ui';ctx.textAlign='left';ctx.fillText('СТАРАЯ СВАЛКА',sx(198),sy(138));
+    ctx.fillStyle='#93a09a';ctx.font='700 10px system-ui';ctx.fillText('двор приёмки',sx(198),sy(292));ctx.fillText('мастерская',sx(625),sy(279));
+    ctx.strokeStyle='#55625c88';ctx.lineWidth=6;line(ctx,sx(188),sy(330),sx(832),sy(330));
+    for(let xx=245;xx<805;xx+=112){ctx.fillStyle=xx%224?'#6f5945':'#4c6260';rr(ctx,sx(xx)-34,sy(365)-18,68,36,4);ctx.fill()}
+  }else if(zone==='z2'){
+    // Garage alley with recognizable service bays instead of an abstract empty plane.
+    ctx.fillStyle='#202729dd';ctx.fillRect(sx(120),sy(120),860,250);ctx.strokeStyle='#59656a';ctx.lineWidth=4;ctx.strokeRect(sx(120),sy(120),860,250);
+    for(let i=0;i<4;i++){const bx=sx(170+i*190),by=sy(162);ctx.fillStyle='#303a3e';ctx.fillRect(bx,by,148,145);ctx.fillStyle='#657178';ctx.fillRect(bx+14,by+34,120,92);ctx.fillStyle='#1b2224';for(let yy=by+47;yy<by+116;yy+=18)ctx.fillRect(bx+18,yy,112,4)}
+    ctx.fillStyle='#c89c50';ctx.font='800 13px system-ui';ctx.textAlign='left';ctx.fillText('ГАРАЖНЫЙ КВАРТАЛ',sx(135),sy(102));
+    ctx.fillStyle='#8d999e';ctx.font='700 10px system-ui';ctx.fillText('сервисные боксы',sx(142),sy(392));
+  }else{
+    // Later zones keep a strong industrial horizon/landmark strip so every map reads as a location.
+    const labels:Record<string,string>={z3:'СКЛАД БЫТОВОЙ ТЕХНИКИ',z4:'АВТОРАЗБОР',z5:'ПРОМЗОНА',z6:'ЗАБРОШЕННЫЙ ЗАВОД',z7:'ТЯЖЁЛЫЙ ПАРК',z8:'ПОРТОВЫЙ ТЕРМИНАЛ'};
+    ctx.fillStyle='#1c2321bb';ctx.fillRect(sx(120),sy(120),820,110);ctx.strokeStyle='#55635e88';ctx.lineWidth=3;ctx.strokeRect(sx(120),sy(120),820,110);
+    for(let i=0;i<5;i++){ctx.fillStyle=i%2?'#566861':'#755f48';ctx.fillRect(sx(155+i*150),sy(155),112,54)}
+    ctx.fillStyle='#c89c50';ctx.font='800 13px system-ui';ctx.textAlign='left';ctx.fillText(labels[zone]??'ПРОМЫШЛЕННАЯ ЗОНА',sx(135),sy(105));
+  }
+  ctx.restore();
+}
+
 function drawScrapStack(ctx:CanvasRenderingContext2D,d:Decor){
   const s=.72+d.size/82;
   ctx.save();ctx.scale(s,s);ctx.globalAlpha=.52;
@@ -147,7 +176,32 @@ function targetArtSize(t:SalvageTarget){
   if(t.classId==='medium_appliance')return 116;
   return 152;
 }
+function isEarlyScrapPile(t:SalvageTarget,zone:ZoneId){return t.classId==='large_appliance'&&(zone==='z1'||zone==='z2')}
+function drawReadablePile(ctx:CanvasRenderingContext2D,t:SalvageTarget,zone:ZoneId,hp:number){
+  const spread=hp>.72?0:hp>.35?7:15,flip=t.variant%2?1:-1;
+  targetShadow(ctx,72,12);
+  ctx.save();ctx.translate(0,5);ctx.globalAlpha=.98;
+  // Broad base of sheet metal / timber makes the silhouette read as a heap rather than one appliance.
+  ctx.fillStyle='#3d4742';ctx.fillRect(-68-spread*.3,12,136+spread*.6,18);
+  ctx.fillStyle='#76634a';ctx.save();ctx.rotate(-.12*flip);ctx.fillRect(-58,-2,70,16);ctx.restore();
+  // Refrigerator / cabinet body.
+  ctx.save();ctx.translate(-27-spread*.25,-18-spread*.08);ctx.rotate(-.12*flip);ctx.fillStyle='#a7aea8';rr(ctx,-19,-29,38,58,5);ctx.fill();ctx.fillStyle='#59635f';ctx.fillRect(-14,-18,28,4);ctx.strokeStyle='#454d49';ctx.lineWidth=2;line(ctx,0,-25,0,24);ctx.restore();
+  // Tyre and wheel/frame chunk.
+  ctx.strokeStyle='#171d1b';ctx.lineWidth=10;ctx.beginPath();ctx.arc(31+spread*.35,8,18,0,Math.PI*2);ctx.stroke();ctx.strokeStyle='#747d78';ctx.lineWidth=3;ctx.beginPath();ctx.arc(31+spread*.35,8,8,0,Math.PI*2);ctx.stroke();
+  // Pipes / rails.
+  ctx.strokeStyle='#89938d';ctx.lineWidth=7;line(ctx,-60-spread*.3,-2,48+spread*.35,-29);ctx.strokeStyle='#b26e46';ctx.lineWidth=5;line(ctx,-45,-19,57+spread*.35,-5);
+  // Cable coil.
+  ctx.strokeStyle='#bd6f43';ctx.lineWidth=6;ctx.beginPath();ctx.arc(8,-22-spread*.12,13,0,Math.PI*1.85);ctx.stroke();
+  // Crate/toolbox gives the pile a second recognizable object family.
+  ctx.fillStyle=zone==='z1'?'#87664a':'#4f6562';rr(ctx,35+spread*.2,-25,34,24,4);ctx.fill();ctx.strokeStyle='#b49062';ctx.lineWidth=2;line(ctx,40+spread*.2,-20,64+spread*.2,-6);line(ctx,64+spread*.2,-20,40+spread*.2,-6);
+  if(hp<.72){ctx.globalAlpha=.75;ctx.fillStyle='#d09a55';ctx.fillRect(-76-spread*.3,29,36,5);ctx.fillRect(28,31,44,5)}
+  if(hp<.35){ctx.globalAlpha=.9;ctx.strokeStyle='#e5b36a';ctx.lineWidth=2;line(ctx,-52,-31,-73,-43);line(ctx,45,-34,70,-48)}
+  ctx.restore();
+  ctx.save();ctx.translate(0,-72-spread*.2);ctx.fillStyle='#0e1512dd';rr(ctx,-54,-12,108,24,4);ctx.fill();ctx.strokeStyle='#7f683d';ctx.lineWidth=1;ctx.stroke();ctx.fillStyle='#e1bd76';ctx.font='800 10px system-ui';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(zone==='z1'?'КУЧА ЛОМА':'ГАРАЖНЫЙ ЗАВАЛ',0,0);ctx.restore();
+}
+
 function drawTargetVisual(ctx:CanvasRenderingContext2D,t:SalvageTarget,zone:ZoneId,hp:number){
+  if(isEarlyScrapPile(t,zone)){drawReadablePile(ctx,t,zone,hp);return}
   const artSize=targetArtSize(t);
   if(drawFieldArtFrame(ctx,artFrameForTarget(t,hp),0,0,artSize,artSize))return;
   const nested=isNestedSalvage(t,zone);if(nested)drawNestedSalvageFoundation(ctx,t,zone,hp);
@@ -157,6 +211,7 @@ function drawTargetVisual(ctx:CanvasRenderingContext2D,t:SalvageTarget,zone:Zone
 }
 
 function targetVisualRadius(t:SalvageTarget,zone:ZoneId){
+  if(isEarlyScrapPile(t,zone))return 78;
   const d=getTargetClass(t.classId),legacy=isNestedSalvage(t,zone)?d.radius+18:t.classId==='large_appliance'?d.radius+4:d.radius;
   return Math.max(legacy,targetArtSize(t)*.38);
 }
@@ -216,7 +271,7 @@ export function renderField(args:{
 }){
   const {ctx,width,height,camera,player,targets,selected,drops,sparks,texts,decor}=args,zone=args.zone??'z1',theme=zoneVisual(zone);
   const screen=(v:Vec2)=>({x:v.x-camera.x+camera.shakeX,y:v.y-camera.y+camera.shakeY});
-  syncBreakVisuals(targets,zone);advanceBreakVisuals();drawGround(ctx,width,height,camera,zone);
+  syncBreakVisuals(targets,zone);advanceBreakVisuals();drawGround(ctx,width,height,camera,zone);drawPlaceIdentity(ctx,width,height,camera,zone);
   for(const d of decor){const p=screen(d);if(p.x<-100||p.y<-100||p.x>width+100||p.y>height+100)continue;drawDecor(ctx,d,p,zone)}
   drawBreakVisuals(ctx,screen);
   if(args.vanOwned)drawVehicle(ctx,screen,args.vanLoad??0,args.vanCapacity??400,!!args.workerHere);

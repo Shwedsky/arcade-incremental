@@ -15,7 +15,7 @@ export const ZONE_CONTENT:Record<ZoneId,ZoneContentMatrix>={
     small_appliance:[v('Старый чайник','heater','electronics'),v('Тостер','heater','electronics'),v('Лампа с блоком питания','small_motor','electronics'),v('Корпус пылесоса','vacuum','motor')],
     bike_fan:[v('Старый велосипед','bike','bearing'),v('Напольный вентилятор','fan','bearing','motor'),v('Тележка на колёсах','cart','bearing'),v('Велорама с колёсами','bike','bearing')],
     medium_appliance:[v('Пылесос','vacuum','motor'),v('Микроволновка','microwave','electronics'),v('Небольшая стиралка','washer','motor','hydraulic'),v('Электропечь','oven','electronics')],
-    large_appliance:[v('Стиральная машина','washer','motor','hydraulic'),v('Холодильник','fridge','motor'),v('Кухонная плита','oven','electronics'),v('Водонагреватель','boiler','hydraulic')]
+    large_appliance:[v('Куча бытового лома','washer','motor','hydraulic'),v('Куча техники и кабеля','fridge','motor'),v('Кухонный завал','oven','electronics'),v('Куча металлолома','boiler','hydraulic')]
   },
   z2:{
     small_scrap:[v('Домкрат и крепёж','frame','metal'),v('Лоток инструмента','tool','metal'),v('Обрезки выхлопа','pipes','metal'),v('Кронштейны и уголок','sheet','metal')],
@@ -23,7 +23,7 @@ export const ZONE_CONTENT:Record<ZoneId,ZoneContentMatrix>={
     small_appliance:[v('Углошлифовальная машина','tool','motor'),v('Электродрель','tool','motor'),v('Зарядное устройство','small_motor','electronics'),v('Малый водяной насос','pump','pump')],
     bike_fan:[v('Гаражный вентилятор','fan','bearing','motor'),v('Велосипедная рама','bike','bearing'),v('Сервисная тележка','cart','bearing'),v('Вытяжной вентилятор','fan','bearing','motor')],
     medium_appliance:[v('Компрессорный блок','compressor','motor'),v('Водяной насос','pump','pump'),v('Сварочный аппарат','welder','electronics'),v('Гаражный обогреватель','heater','electronics')],
-    large_appliance:[v('Большой компрессор','compressor','motor','pump'),v('Насосная станция','pump','pump','hydraulic'),v('Бензогенератор','generator','motor','electronics'),v('Старый котёл','boiler','hydraulic')]
+    large_appliance:[v('Куча гаражного лома','compressor','motor','pump'),v('Завал насосов и труб','pump','pump','hydraulic'),v('Куча генераторов и проводки','generator','motor','electronics'),v('Котельный лом','boiler','hydraulic')]
   },
   z3:{
     small_scrap:[v('Панели от техники','sheet','metal'),v('Крепления барабана','frame','metal'),v('Полки холодильника','frame','metal'),v('Корзина деталей','cans','metal')],
