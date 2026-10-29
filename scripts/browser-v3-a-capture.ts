@@ -26,7 +26,6 @@ function intersects(a:any,b:any,pad=0){return a.x+pad<b.x+b.width&&a.x+a.width-p
 
 await mkdir(OUT,{recursive:true});const proc=server();await waitServer();const browser=await chromium.launch({headless:true});
 try{
-  // Overview + map from the same developed Garage fixture.
   let context=await browser.newContext({viewport:{width:1440,height:1000}}),page=await context.newPage();await applyPreset(page,'garageDeveloped');
   await page.waitForSelector('#v3AOverview',{timeout:TIMEOUT});
   const overviewBox=await page.locator('#v3AOverview').boundingBox(),legacyBox=await page.locator('#baseStageOverview').boundingBox();
@@ -39,14 +38,14 @@ try{
   assert.ok(routeCards.at(-1)?.unknown,'last visible route card must be the unknown next frontier');
   await page.locator('#zoneGrid').screenshot({path:`${OUT}/03-map-garage-fog.png`});await context.close();
 
-  // Talent reveal fixture. Owner decision: five explicit directed tracks, not a radial/PoE-like web.
   context=await browser.newContext({viewport:{width:1440,height:1000}});page=await context.newPage();await applyPreset(page,'talentReveal');await page.waitForSelector('#talentScreen:not([hidden])',{timeout:TIMEOUT});await page.waitForSelector('[data-v3-tree-root]',{timeout:TIMEOUT});
   const core=await page.locator('.v3TalentCore').boundingBox();assert.ok(core,'talent core must be visible');
-  const branches=await page.locator('.v3TalentBranch').evaluateAll(nodes=>nodes.map(node=>{const r=node.getBoundingClientRect();return{branch:(node as HTMLElement).dataset.v3Branch,x:r.x,y:r.y,width:r.width,height:r.height}}));
+  const branches=await page.locator('.v3TalentBranch').evaluateAll(nodes=>nodes.map(node=>{const r=node.getBoundingClientRect(),s=getComputedStyle(node);return{branch:(node as HTMLElement).dataset.v3Branch,x:r.x,y:r.y,width:r.width,height:r.height,gridRow:s.gridRowStart,gridColumn:s.gridColumnStart,alignSelf:s.alignSelf,marginTop:s.marginTop}}));
+  console.log('[V3 TALENT GEOMETRY]',JSON.stringify({core,branches}));
   assert.equal(branches.length,5,'talent presentation must keep five explicit development tracks');
   const minBranchY=Math.min(...branches.map(b=>b.y)),maxBranchY=Math.max(...branches.map(b=>b.y));
   assert.ok(core.y+core.height<minBranchY,'all talent tracks must start below the central era summary');
-  assert.ok(maxBranchY-minBranchY<24,'desktop talent tracks must share one clear starting row instead of orbiting the core');
+  assert.ok(maxBranchY-minBranchY<24,`desktop talent tracks must share one clear starting row instead of orbiting the core: ${JSON.stringify(branches.map(b=>({branch:b.branch,y:b.y,row:b.gridRow,col:b.gridColumn,align:b.alignSelf,margin:b.marginTop})))}`);
   for(let i=1;i<branches.length;i++)assert.ok(branches[i].x>branches[i-1].x,`${branches[i].branch} must be a separate left-to-right development track`);
   for(const branch of branches){
     assert.equal(intersects(branch,core,8),false,`${branch.branch} branch must not collide with central talent core`);
@@ -57,7 +56,6 @@ try{
   assert.doesNotMatch(await page.locator('#talentBranches').innerText(),/Следующее кольцо/i,'player-facing talent UI must not reintroduce radial-ring language');
   await page.locator('#talentBranches').screenshot({path:`${OUT}/02-talent-tree-fog.png`});await context.close();
 
-  // Industrial specialist clarity fixture.
   context=await browser.newContext({viewport:{width:1440,height:1000}});page=await context.newPage();await applyPreset(page,'industrialStaffing');await page.waitForSelector('[data-production-cell="fabrication"]',{timeout:TIMEOUT});
   await page.waitForFunction(()=>{const timing=document.querySelector<HTMLElement>('[data-production-cell="fabrication"] .pcTiming');const worker=document.querySelector<HTMLSelectElement>('[data-pc-worker="fabrication"]');return !worker?.value&&timing?.dataset.adjustedSec===timing?.dataset.baseSec&&timing?.textContent?.includes('Без специалиста')},null,{timeout:TIMEOUT});
   await page.selectOption('[data-pc-worker="fabrication"]','worker-1');await page.selectOption('[data-pc-role="fabrication"]','technician');await page.waitForFunction(()=>{const el=document.querySelector<HTMLElement>('[data-production-cell="fabrication"] .pcTiming');return Number(el?.dataset.adjustedSec)>0&&Number(el?.dataset.adjustedSec)<Number(el?.dataset.baseSec)},null,{timeout:TIMEOUT});
