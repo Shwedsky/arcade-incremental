@@ -297,7 +297,7 @@ For each branch:
 - only the **next node** is fully visible with requirements;
 - deeper nodes are `?`;
 - buying the frontier node reveals the next one;
-- later rings remain completely absent until the corresponding business ascension.
+- later era depths remain completely absent until the corresponding business ascension.
 
 The player makes decisions from the known frontier instead of solving the entire build at minute one.
 
@@ -309,7 +309,7 @@ Example concept:
 
 `Заточенный инструмент I` — blue — `+12% dismantling power`
 
-After the appropriate ascension / ring unlock:
+After the appropriate ascension / depth unlock:
 
 `Заточенный инструмент II` — purple — `+24% dismantling power`
 
