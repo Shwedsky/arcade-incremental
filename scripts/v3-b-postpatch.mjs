@@ -1,0 +1,15 @@
+import fs from 'node:fs';
+const path='src/main.ts';
+let text=fs.readFileSync(path,'utf8');
+if(!text.includes('// V3_B_ACTIVE_FIELD_LOOP_RUNTIME'))throw new Error('postpatch expected integrated runtime');
+const wrongMastery="const mastery=pileChild?{before:midgame.mastery[midgame.currentZone],after:midgame.mastery[midgame.currentZone],masteredNow:false}:addActiveMastery(midgame,midgame.currentZone,masteryUnitsForTarget(t.classId));";
+const wrongXp="if(!pileChild)gainXp(xpForTarget(t.classId)*zoneXpMultiplier(midgame.currentZone),t);";
+const masteryIndex=text.indexOf(wrongMastery);
+const xpIndex=text.indexOf(wrongXp);
+if(masteryIndex<0||xpIndex<0)throw new Error('postpatch expected temporary pile-parent guards');
+text=text.slice(0,masteryIndex)+'const mastery=addActiveMastery(midgame,midgame.currentZone,masteryUnitsForTarget(t.classId));'+text.slice(masteryIndex+wrongMastery.length);
+const shiftedXpIndex=text.indexOf(wrongXp);
+text=text.slice(0,shiftedXpIndex)+'gainXp(xpForTarget(t.classId)*zoneXpMultiplier(midgame.currentZone),t);'+text.slice(shiftedXpIndex+wrongXp.length);
+text=text.replace('const mastery=/*V3B_BREAK_TARGET_MASTERY*/addActiveMastery(midgame,midgame.currentZone,masteryUnitsForTarget(t.classId));',wrongMastery);
+text=text.replace('/*V3B_BREAK_TARGET_XP*/gainXp(xpForTarget(t.classId)*zoneXpMultiplier(midgame.currentZone),t);',wrongXp);
+fs.writeFileSync(path,text);
