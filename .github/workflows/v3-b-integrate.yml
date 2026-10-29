@@ -31,7 +31,22 @@ jobs:
       - name: Isolate V3-B break-target anchors
         run: node scripts/v3-b-prepatch.mjs
       - name: Apply V3-B runtime integration
-        run: node scripts/apply-v3-b-active-field.mjs
+        id: patch
+        continue-on-error: true
+        shell: bash
+        run: node scripts/apply-v3-b-active-field.mjs > v3b-patch.log 2>&1
+      - name: Upload patch diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v3b-patch-diagnostics
+          path: v3b-patch.log
+      - name: Stop on integration failure
+        if: steps.patch.outcome != 'success'
+        shell: bash
+        run: |
+          cat v3b-patch.log
+          exit 1
       - name: Finalize V3-B child progression guards
         run: node scripts/v3-b-postpatch.mjs
       - name: V3-B domain smoke
