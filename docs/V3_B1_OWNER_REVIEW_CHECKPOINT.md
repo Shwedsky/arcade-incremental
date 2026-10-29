@@ -2,11 +2,12 @@
 
 Final owner-feedback checkpoint for the V3-B review candidate.
 
-This checkpoint intentionally sits after the automated integration commit that locks the desktop talent presentation to:
+This checkpoint intentionally sits after the automated integration commits that lock the desktop talent presentation to:
 - one current-era summary row;
 - five separate directed development tracks below it;
 - fixed left-to-right branch identity;
-- vertical node progression inside every track.
+- vertical node progression inside every track;
+- uniform top alignment (`align-self: start`) and full-column width (`justify-self: stretch`) so legacy branch positioning cannot recreate a constellation/web composition.
 
 It also includes the V3-B.1 early-world readability correction already present in this branch:
 - explicit scrap-pile semantics and multi-object pile silhouettes in Z1/Z2;
