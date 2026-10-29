@@ -96,9 +96,9 @@ The talent tree should visibly become larger after an ascension.
 
 Example player perception:
 
-- Garage era: the player believes the branch currently contains roughly the visible first ring / first depth;
-- Hangar ascension: a second ring appears and the tree is suddenly materially deeper;
-- Yard / Workshop / Plant: later rings continue to reveal.
+- Garage era: the player believes the branch currently contains roughly the visible first depth;
+- Hangar ascension: a second depth appears and the tree is suddenly materially deeper;
+- Yard / Workshop / Plant: later depths continue to reveal.
 
 The player should not see all future branch depth from the first session.
 
@@ -277,7 +277,7 @@ Numeric DPS growth must also be physically obvious:
 
 ---
 
-## 8. Talent Tree V3 — radial tree, hidden future, ranks and respec
+## 8. Talent Tree V3 — directed branches, hidden future, ranks and respec
 
 Keep the five identities:
 - Разбор;
@@ -288,7 +288,7 @@ Keep the five identities:
 
 ### Layout
 
-Use a central player/business identity with five branches radiating outward rather than five unrelated vertical columns.
+Use a central player/business identity followed by five explicit **directed development tracks**. Each branch must read from known/current progress toward its next choice; it must not use a circular/radial/constellation or PoE-like web. On wide screens the five tracks may sit side by side; on narrow screens they may stack, but branch direction and progression order must stay obvious.
 
 ### Fog of knowledge
 
@@ -396,7 +396,7 @@ Recommended blocks:
 - unspent points;
 - revealed next choices;
 - respec availability;
-- next era ring teaser without revealing hidden nodes.
+- next era depth teaser without revealing hidden nodes.
 
 ### One explicit “what should I do now?” card
 
@@ -551,7 +551,7 @@ Preview explicitly lists:
 - Van baseline;
 - larger storage/production class;
 - access to Z4-Z5;
-- newly revealed talent ring.
+- newly revealed talent depth.
 
 **Rebase:**
 - current cycle level;
@@ -598,7 +598,7 @@ Keep as technical/product foundations unless a proof explicitly disproves them:
 
 Change:
 - business stages from mostly continuous unlocks into explicit player-facing eras;
-- talent presentation from fully visible columns into radial fog-of-knowledge tree;
+- talent presentation from fully visible columns into five directed fog-of-knowledge development tracks;
 - selected foundational talents into meaningful multi-rank skills;
 - talent point model to include safe respec and one-time non-level sources;
 - map from eight immediately knowable destinations into era-gated discovery;
@@ -616,7 +616,7 @@ Change:
 
 Add:
 - explicit business ascension domain/model;
-- era-gated talent rings;
+- era-gated talent depths;
 - talent node rank/grade states;
 - talent respec/cooldown state;
 - era-gated map reveal / unknown nodes;
@@ -649,7 +649,7 @@ A2. Overview V2:
 - Garage capstone progress placeholder.
 
 A3. Talent Tree presentation V3:
-- radial layout;
+- five explicit directed branch tracks; no radial / PoE-like web;
 - current nodes + one next node only;
 - deeper nodes `?`;
 - future-era rings hidden;
@@ -722,7 +722,7 @@ D4. Grant/reveal the Hangar baseline:
 - Van;
 - first worker baseline or immediate first-worker acquisition path;
 - Z4-Z5 reveal;
-- new talent ring.
+- new talent depth.
 
 D5. Verify Z1-Z3 power fantasy after ascension.
 
