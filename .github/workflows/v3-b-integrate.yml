@@ -6,6 +6,7 @@ on:
       - feature/progression-reframe-v3-b-active-field-loop
     paths:
       - 'scripts/apply-v3-b-active-field.mjs'
+      - 'scripts/v3-b-adjust-patcher.mjs'
       - 'scripts/v3-b-prepatch.mjs'
       - 'scripts/v3-b-postpatch.mjs'
       - 'src/active_field_v3.ts'
@@ -30,6 +31,8 @@ jobs:
       - run: npm ci
       - name: Isolate V3-B break-target anchors
         run: node scripts/v3-b-prepatch.mjs
+      - name: Adapt integration patch to isolated anchors
+        run: node scripts/v3-b-adjust-patcher.mjs
       - name: Apply V3-B runtime integration
         id: patch
         continue-on-error: true
