@@ -23,4 +23,16 @@ for(const [from,to] of replacements){
 }
 if(!text.includes('directed development tracks')||text.includes('## 8. Talent Tree V3 — radial tree')||text.includes('later rings remain completely absent')) throw new Error('Talent layout owner decision did not apply completely');
 fs.writeFileSync(path,text,'utf8');
-console.log('Progression Reframe V3 updated to owner-approved directed talent layout');
+
+const uiPath='src/v3_a_clarity.ts';
+let ui=fs.readFileSync(uiPath,'utf8');
+const oldUi="const era=businessEra(stage),nextRing=depth<8?(era==='garage'?'Следующее кольцо откроется после перехода бизнеса в Ангар':'Следующее кольцо откроется на более крупном этапе бизнеса'):'Открыта текущая максимальная глубина дерева';";
+const newUi="const era=businessEra(stage),nextDepth=depth<8?(era==='garage'?'Следующая глубина веток откроется после перехода бизнеса в Ангар':'Следующая глубина веток откроется на более крупном этапе бизнеса'):'Открыта текущая максимальная глубина дерева';";
+if(ui.includes(oldUi))ui=ui.replace(oldUi,newUi);else if(!ui.includes(newUi))throw new Error('Missing talent depth UI anchor');
+const oldMarkup='${nextRing}</em></div>${branches}</div>`;';
+const newMarkup='${nextDepth}</em></div>${branches}</div>`;';
+if(ui.includes(oldMarkup))ui=ui.replace(oldMarkup,newMarkup);else if(!ui.includes(newMarkup))throw new Error('Missing talent depth markup anchor');
+if(ui.includes('Следующее кольцо'))throw new Error('Residual radial-ring wording remains in player-facing talent UI');
+fs.writeFileSync(uiPath,ui,'utf8');
+
+console.log('Progression Reframe V3 and player-facing talent language updated to owner-approved directed layout');
