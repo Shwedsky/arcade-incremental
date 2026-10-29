@@ -1,0 +1,46 @@
+name: V3-B integrate active field runtime
+
+on:
+  push:
+    branches:
+      - feature/progression-reframe-v3-b-active-field-loop
+    paths:
+      - 'scripts/apply-v3-b-active-field.mjs'
+      - 'src/active_field_v3.ts'
+      - 'src/v3_b_active_field_loop.css'
+      - 'scripts/v3-b-active-field-smoke.ts'
+      - '.github/workflows/v3-b-integrate.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  integrate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Apply V3-B runtime integration
+        run: node scripts/apply-v3-b-active-field.mjs
+      - name: V3-B domain smoke
+        run: npx tsx scripts/v3-b-active-field-smoke.ts
+      - name: Typecheck and build
+        run: npm run build
+      - name: Persist integration
+        shell: bash
+        run: |
+          if git diff --quiet; then
+            echo "Runtime already integrated; nothing to commit."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/main.ts
+          git commit -m "feat(v3-b): integrate active field runtime"
+          git push origin HEAD:feature/progression-reframe-v3-b-active-field-loop
