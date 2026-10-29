@@ -1,0 +1,11 @@
+import fs from 'node:fs';
+const path='src/main.ts';
+let text=fs.readFileSync(path,'utf8');
+if(text.includes('// V3_B_ACTIVE_FIELD_LOOP_RUNTIME'))process.exit(0);
+const mastery='const mastery=addActiveMastery(midgame,midgame.currentZone,masteryUnitsForTarget(t.classId));';
+const xp='gainXp(xpForTarget(t.classId)*zoneXpMultiplier(midgame.currentZone),t);';
+if((text.split(mastery).length-1)!==1)throw new Error('prepatch mastery anchor mismatch');
+if((text.split(xp).length-1)!==1)throw new Error('prepatch xp anchor mismatch');
+text=text.replace(mastery,'const mastery=/*V3B_BREAK_TARGET_MASTERY*/addActiveMastery(midgame,midgame.currentZone,masteryUnitsForTarget(t.classId));');
+text=text.replace(xp,'/*V3B_BREAK_TARGET_XP*/gainXp(xpForTarget(t.classId)*zoneXpMultiplier(midgame.currentZone),t);');
+fs.writeFileSync(path,text);

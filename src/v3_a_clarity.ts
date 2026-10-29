@@ -85,10 +85,10 @@ function renderTalentTree(){
     return`<section class="v3TalentBranch" data-v3-branch="${branch}"><header><strong>${meta.name}</strong><small>${meta.fantasy}</small></header><div class="v3TalentSpoke">${nodeMarkup}</div></section>`;
   }).join('');
 
-  const era=businessEra(stage),nextRing=depth<8?(era==='garage'?'Следующее кольцо откроется после перехода бизнеса в Ангар':'Следующее кольцо откроется на более крупном этапе бизнеса'):'Открыта текущая максимальная глубина дерева';
+  const era=businessEra(stage),nextDepth=depth<8?(era==='garage'?'Следующая глубина веток откроется после перехода бизнеса в Ангар':'Следующая глубина веток откроется на более крупном этапе бизнеса'):'Открыта текущая максимальная глубина дерева';
   root.className='talentBranches v3TalentTree';
   root.dataset.v3aSignature=signature;
-  root.innerHTML=`<div class="v3TalentTreeRoot" data-v3-tree-root><div class="v3TalentCore"><small>ТЕКУЩАЯ ЭРА</small><b>${BUSINESS_STAGES[stage].shortTitle}</b><span>${points} свободн. оч.</span><em>${nextRing}</em></div>${branches}</div>`;
+  root.innerHTML=`<div class="v3TalentTreeRoot" data-v3-tree-root><div class="v3TalentCore"><small>ТЕКУЩАЯ ЭРА</small><b>${BUSINESS_STAGES[stage].shortTitle}</b><span>${points} свободн. оч.</span><em>${nextDepth}</em></div>${branches}</div>`;
   const summary=document.querySelector<HTMLElement>('#talentSummary');
   if(summary)summary.textContent=`Уровень ${Number(s.level??1)} · свободных очков: ${points}. Видны изученные таланты и только следующий выбор каждой ветки.`;
 }

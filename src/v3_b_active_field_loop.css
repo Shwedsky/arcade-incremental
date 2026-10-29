@@ -1,0 +1,27 @@
+.target.v3bTarget{min-width:220px;padding:10px 12px;display:grid;gap:6px}
+.target.v3bTarget .targetHead{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.target.v3bTarget .targetHead b{font-size:14px}
+.target.v3bTarget .targetHead strong{font-size:12px;font-weight:800}
+.target.v3bTarget .targetHpBar{display:block;height:7px;border-radius:999px;background:#09100ddd;overflow:hidden}
+.target.v3bTarget .targetHpBar i{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#f0b45d,#80e678);transition:width .08s linear}
+.target.v3bTarget .targetCombatMeta{display:flex;justify-content:space-between;gap:10px;font-size:11px;opacity:.88}
+.target.v3bTarget .targetCombatMeta b{font-size:11px}
+
+.baseCargoPanel{display:grid;gap:10px;min-width:280px;padding:12px;border:1px solid #ffffff18;border-radius:12px;background:#0b1310cc}
+.baseCargoPanel .baseCargoHead{display:flex;align-items:flex-start;justify-content:space-between;gap:14px}
+.baseCargoPanel .baseCargoHead small{display:block;opacity:.62;margin-bottom:3px}
+.baseCargoPanel .baseCargoHead b{font-size:16px}
+.baseCargoPanel .baseCargoHead strong{font-size:18px;white-space:nowrap}
+.baseCargoPanel .baseCargoRows{display:flex;flex-wrap:wrap;gap:6px 12px;font-size:12px;opacity:.9}
+.baseCargoPanel .baseCargoRows span{white-space:nowrap}
+.baseCargoPanel button{width:100%}
+.baseCargoPanel .cargoEmpty{opacity:.55}
+
+#vanUnload[data-mode="field-buffer"]{white-space:nowrap}
+
+.v3bCritHint{font-weight:800}
+
+@media (max-width:760px){
+  .baseCargoPanel{min-width:0;width:100%}
+  .target.v3bTarget{min-width:190px}
+}

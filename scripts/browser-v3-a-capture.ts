@@ -26,27 +26,40 @@ function intersects(a:any,b:any,pad=0){return a.x+pad<b.x+b.width&&a.x+a.width-p
 
 await mkdir(OUT,{recursive:true});const proc=server();await waitServer();const browser=await chromium.launch({headless:true});
 try{
-  // Overview + map from the same developed Garage fixture.
   let context=await browser.newContext({viewport:{width:1440,height:1000}}),page=await context.newPage();await applyPreset(page,'garageDeveloped');
   await page.waitForSelector('#v3AOverview',{timeout:TIMEOUT});
   const overviewBox=await page.locator('#v3AOverview').boundingBox(),legacyBox=await page.locator('#baseStageOverview').boundingBox();
   assert.ok(overviewBox&&legacyBox&&overviewBox.y<legacyBox.y,'V3-A company Overview must be the first visible overview layer, above the legacy stage summary');
   await page.locator('#v3AOverview').screenshot({path:`${OUT}/01-overview-garage.png`});
-  await page.click('#zonesGarage');await page.waitForSelector('#zoneScreen:not([hidden])',{timeout:TIMEOUT});await page.waitForSelector('[data-v3-unknown]',{timeout:TIMEOUT});await page.locator('#zoneGrid').screenshot({path:`${OUT}/03-map-garage-fog.png`});await context.close();
+  await page.click('#zonesGarage');await page.waitForSelector('#zoneScreen:not([hidden])',{timeout:TIMEOUT});await page.waitForSelector('[data-v3-unknown]',{timeout:TIMEOUT});
+  const routeCards=await page.locator('#zoneGrid > .zoneCard').evaluateAll(nodes=>nodes.map(node=>{const r=node.getBoundingClientRect();return{x:r.x,y:r.y,width:r.width,height:r.height,unknown:(node as HTMLElement).dataset.v3Unknown??''}}));
+  assert.ok(routeCards.length>=2,'map fog review must expose a current route plus one unknown frontier');
+  for(let i=1;i<routeCards.length;i++)assert.ok(routeCards[i].x>routeCards[i-1].x,`zone route must progress left-to-right (${i-1} -> ${i})`);
+  assert.ok(routeCards.at(-1)?.unknown,'last visible route card must be the unknown next frontier');
+  await page.locator('#zoneGrid').screenshot({path:`${OUT}/03-map-garage-fog.png`});await context.close();
 
-  // Talent reveal fixture. Desktop spokes must not overlap the core or one another.
   context=await browser.newContext({viewport:{width:1440,height:1000}});page=await context.newPage();await applyPreset(page,'talentReveal');await page.waitForSelector('#talentScreen:not([hidden])',{timeout:TIMEOUT});await page.waitForSelector('[data-v3-tree-root]',{timeout:TIMEOUT});
   const core=await page.locator('.v3TalentCore').boundingBox();assert.ok(core,'talent core must be visible');
-  const branches=await page.locator('.v3TalentBranch').evaluateAll(nodes=>nodes.map(node=>{const r=node.getBoundingClientRect();return{branch:(node as HTMLElement).dataset.v3Branch,x:r.x,y:r.y,width:r.width,height:r.height}}));
-  for(const branch of branches)assert.equal(intersects(branch,core,8),false,`${branch.branch} branch must not collide with central talent core`);
+  const branches=await page.locator('.v3TalentBranch').evaluateAll(nodes=>nodes.map(node=>{const r=node.getBoundingClientRect(),s=getComputedStyle(node);return{branch:(node as HTMLElement).dataset.v3Branch,x:r.x,y:r.y,width:r.width,height:r.height,gridRow:s.gridRowStart,gridColumn:s.gridColumnStart,alignSelf:s.alignSelf,marginTop:s.marginTop}}));
+  console.log('[V3 TALENT GEOMETRY]',JSON.stringify({core,branches}));
+  assert.equal(branches.length,5,'talent presentation must keep five explicit development tracks');
+  const minBranchY=Math.min(...branches.map(b=>b.y)),maxBranchY=Math.max(...branches.map(b=>b.y));
+  assert.ok(core.y+core.height<minBranchY,'all talent tracks must start below the central era summary');
+  assert.ok(maxBranchY-minBranchY<24,`desktop talent tracks must share one clear starting row instead of orbiting the core: ${JSON.stringify(branches.map(b=>({branch:b.branch,y:b.y,row:b.gridRow,col:b.gridColumn,align:b.alignSelf,margin:b.marginTop})))}`);
+  for(let i=1;i<branches.length;i++)assert.ok(branches[i].x>branches[i-1].x,`${branches[i].branch} must be a separate left-to-right development track`);
+  for(const branch of branches){
+    assert.equal(intersects(branch,core,8),false,`${branch.branch} branch must not collide with central talent core`);
+    const nodes=await page.locator(`[data-v3-branch="${branch.branch}"] .v3TalentNode`).evaluateAll(items=>items.map(item=>{const r=item.getBoundingClientRect();return{x:r.x,y:r.y,width:r.width,height:r.height}}));
+    for(let i=1;i<nodes.length;i++)assert.ok(nodes[i].y>nodes[i-1].y,`${branch.branch} nodes must progress downward in a directed track`);
+  }
   for(let i=0;i<branches.length;i++)for(let j=i+1;j<branches.length;j++)assert.equal(intersects(branches[i],branches[j],6),false,`${branches[i].branch} and ${branches[j].branch} branches must not overlap`);
+  assert.doesNotMatch(await page.locator('#talentBranches').innerText(),/Следующее кольцо/i,'player-facing talent UI must not reintroduce radial-ring language');
   await page.locator('#talentBranches').screenshot({path:`${OUT}/02-talent-tree-fog.png`});await context.close();
 
-  // Industrial specialist clarity fixture.
   context=await browser.newContext({viewport:{width:1440,height:1000}});page=await context.newPage();await applyPreset(page,'industrialStaffing');await page.waitForSelector('[data-production-cell="fabrication"]',{timeout:TIMEOUT});
   await page.waitForFunction(()=>{const timing=document.querySelector<HTMLElement>('[data-production-cell="fabrication"] .pcTiming');const worker=document.querySelector<HTMLSelectElement>('[data-pc-worker="fabrication"]');return !worker?.value&&timing?.dataset.adjustedSec===timing?.dataset.baseSec&&timing?.textContent?.includes('Без специалиста')},null,{timeout:TIMEOUT});
   await page.selectOption('[data-pc-worker="fabrication"]','worker-1');await page.selectOption('[data-pc-role="fabrication"]','technician');await page.waitForFunction(()=>{const el=document.querySelector<HTMLElement>('[data-production-cell="fabrication"] .pcTiming');return Number(el?.dataset.adjustedSec)>0&&Number(el?.dataset.adjustedSec)<Number(el?.dataset.baseSec)},null,{timeout:TIMEOUT});
   await page.locator('#productionCellsV1Root').screenshot({path:`${OUT}/04-industrial-staffing-eta.png`});await context.close();
 
-  console.log('V3-A formal review screenshots + composition geometry: PASS');
+  console.log('V3-A formal review screenshots + directed talent/map route geometry: PASS');
 }finally{await browser.close();await stop(proc)}

@@ -1,0 +1,87 @@
+name: v3-b-active-field-gate
+
+on:
+  pull_request:
+  push:
+    branches:
+      - feature/progression-reframe-v3-b-active-field-loop
+  workflow_dispatch:
+
+jobs:
+  v3-b-active-field:
+    runs-on: ubuntu-latest
+    timeout-minutes: 14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Typecheck and production build
+        run: npm run build
+      - name: V3-B deterministic domain smoke
+        run: npx tsx scripts/v3-b-active-field-smoke.ts
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Preserve V3-A clarity contract
+        run: npx tsx scripts/browser-v3-a-core-smoke.ts
+      - name: V3-B active field browser acceptance
+        run: npx tsx scripts/browser-v3-b-active-field-smoke.ts
+      - name: Legacy Owner Feedback V5 compatibility
+        run: npm run smoke:browser:owner-feedback-v5
+      - name: Package V3-B owner review
+        shell: bash
+        env:
+          SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          rm -rf owner-review-v3b
+          mkdir -p owner-review-v3b/dist
+          cp -R dist/. owner-review-v3b/dist/
+          cp review/START_V3B.cmd review/serve_v3b.ps1 review/README_V3B.txt owner-review-v3b/
+          printf 'Source commit: %s\n' "$SOURCE_SHA" > owner-review-v3b/V3B_BUILD.txt
+          (cd owner-review-v3b && zip -r ../arcade-incremental-V3B-owner-review.zip .)
+      - uses: actions/upload-artifact@v4
+        with:
+          name: arcade-incremental-V3B-owner-review
+          path: arcade-incremental-V3B-owner-review.zip
+          if-no-files-found: error
+
+  windows-owner-launcher:
+    runs-on: windows-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install dependencies and build
+        shell: powershell
+        run: |
+          npm install --no-audit --no-fund
+          npm run build
+      - name: Verify V3-B dependency-free Windows launcher server
+        shell: powershell
+        run: |
+          $dist = (Resolve-Path 'dist').Path
+          $server = Start-Process powershell.exe -ArgumentList @(
+            '-NoLogo', '-NoProfile', '-ExecutionPolicy', 'Bypass',
+            '-File', (Resolve-Path 'review/serve_v3b.ps1').Path,
+            '-Port', '4173', '-NoBrowser', '-DistPath', $dist
+          ) -PassThru
+          try {
+            $ok = $false
+            for ($i = 0; $i -lt 40; $i++) {
+              Start-Sleep -Milliseconds 250
+              try {
+                $response = Invoke-WebRequest -UseBasicParsing 'http://127.0.0.1:4173/' -TimeoutSec 2
+                if ($response.StatusCode -eq 200 -and $response.Content -match '<!doctype html') {
+                  $ok = $true
+                  break
+                }
+              } catch {}
+            }
+            if (-not $ok) { throw 'V3-B Windows launcher did not serve dist/index.html.' }
+          } finally {
+            if ($server -and -not $server.HasExited) { Stop-Process -Id $server.Id -Force }
+          }

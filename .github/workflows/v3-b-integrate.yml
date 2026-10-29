@@ -1,0 +1,85 @@
+name: V3-B integrate active field runtime
+
+on:
+  push:
+    branches:
+      - feature/progression-reframe-v3-b-active-field-loop
+    paths:
+      - 'scripts/apply-v3-b-active-field.mjs'
+      - 'scripts/v3-b-adjust-patcher.mjs'
+      - 'scripts/v3-b-prepatch.mjs'
+      - 'scripts/v3-b-postpatch.mjs'
+      - 'src/active_field_v3.ts'
+      - 'src/v3_b_active_field_loop.css'
+      - 'scripts/v3-b-active-field-smoke.ts'
+      - '.github/workflows/v3-b-integrate.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  integrate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Isolate V3-B break-target anchors
+        run: node scripts/v3-b-prepatch.mjs
+      - name: Adapt integration patch to isolated anchors
+        run: node scripts/v3-b-adjust-patcher.mjs
+      - name: Apply V3-B runtime integration
+        id: patch
+        continue-on-error: true
+        shell: bash
+        run: node scripts/apply-v3-b-active-field.mjs > v3b-patch.log 2>&1
+      - name: Upload patch diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v3b-patch-diagnostics
+          path: v3b-patch.log
+      - name: Stop on integration failure
+        if: steps.patch.outcome != 'success'
+        shell: bash
+        run: |
+          cat v3b-patch.log
+          exit 1
+      - name: Finalize V3-B child progression guards
+        run: node scripts/v3-b-postpatch.mjs
+      - name: V3-B domain smoke
+        run: npx tsx scripts/v3-b-active-field-smoke.ts
+      - name: Typecheck and build
+        id: build
+        continue-on-error: true
+        shell: bash
+        run: npm run build > v3b-build.log 2>&1
+      - name: Upload build diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v3b-build-diagnostics
+          path: v3b-build.log
+      - name: Stop on build failure
+        if: steps.build.outcome != 'success'
+        shell: bash
+        run: |
+          cat v3b-build.log
+          exit 1
+      - name: Persist integration
+        shell: bash
+        run: |
+          if git diff --quiet; then
+            echo "Runtime already integrated; nothing to commit."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/main.ts
+          git commit -m "feat(v3-b): integrate active field runtime"
+          git push origin HEAD:feature/progression-reframe-v3-b-active-field-loop

@@ -1,0 +1,51 @@
+name: V3 integrate owner product decisions
+
+on:
+  push:
+    branches:
+      - feature/progression-reframe-v3-b-active-field-loop
+    paths:
+      - 'scripts/apply-v3-owner-decisions-docs.mjs'
+      - '.github/workflows/v3-owner-decisions-docs-integrate.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  integrate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Apply owner product decisions
+        run: node scripts/apply-v3-owner-decisions-docs.mjs
+      - name: Verify canonical and player-facing direction
+        shell: bash
+        run: |
+          grep -q "directed development tracks" docs/PROGRESSION_REFRAME_V3.md
+          grep -q "five explicit directed branch tracks; no radial / PoE-like web" docs/PROGRESSION_REFRAME_V3.md
+          grep -q "Следующая глубина веток" src/v3_a_clarity.ts
+          if grep -q "Talent Tree V3 — radial tree" docs/PROGRESSION_REFRAME_V3.md; then exit 1; fi
+          if grep -q "Следующее кольцо" src/v3_a_clarity.ts; then exit 1; fi
+      - name: Build after owner-decision update
+        run: |
+          npm ci --no-audit --no-fund
+          npm run build
+      - name: Persist owner decision
+        shell: bash
+        run: |
+          if git diff --quiet; then
+            echo "Owner decision already integrated."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/PROGRESSION_REFRAME_V3.md src/v3_a_clarity.ts
+          git commit -m "fix(v3): align source and UI with directed talent branches"
+          git push origin HEAD:feature/progression-reframe-v3-b-active-field-loop
